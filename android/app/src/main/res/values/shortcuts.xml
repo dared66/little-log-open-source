@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_diaper">Log diaper</string>
+    <string name="shortcut_nursing_left">Start nursing left</string>
+    <string name="shortcut_nursing_right">Start nursing right</string>
+    <string name="shortcut_sleep">Start sleep</string>
+</resources>

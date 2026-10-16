@@ -1,0 +1,1 @@
+Historical configuration patch retained at the owner’s request. Use ../configure_google.py for the current app. The archived script assumes the old project layout and must not be run against the current app.

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="voice_feature_diaper">
+        <item>diaper</item>
+        <item>diaper form</item>
+        <item>log diaper</item>
+    </string-array>
+    <string-array name="voice_feature_nursing_left">
+        <item>left nursing</item>
+        <item>start nursing left</item>
+        <item>start nursing on the left side</item>
+    </string-array>
+    <string-array name="voice_feature_nursing_right">
+        <item>right nursing</item>
+        <item>start nursing right</item>
+        <item>start nursing on the right side</item>
+    </string-array>
+    <string-array name="voice_feature_sleep">
+        <item>sleep</item>
+        <item>start sleep</item>
+        <item>start a nap</item>
+    </string-array>
+    <string-array name="voice_feature_wet_diaper">
+        <item>wet diaper</item>
+        <item>add a wet diaper</item>
+        <item>log a wet diaper</item>
+    </string-array>
+    <string-array name="voice_feature_dirty_diaper">
+        <item>dirty diaper</item>
+        <item>add a dirty diaper</item>
+        <item>log a dirty diaper</item>
+    </string-array>
+    <string-array name="voice_feature_both_diaper">
+        <item>wet and dirty diaper</item>
+        <item>add a wet and dirty diaper</item>
+    </string-array>
+    <string-array name="voice_feature_dry_diaper">
+        <item>dry diaper</item>
+        <item>add a dry diaper</item>
+    </string-array>
+    <string-array name="voice_feature_pumping">
+        <item>pumping</item>
+        <item>start pumping</item>
+    </string-array>
+    <string-array name="voice_feature_finish_sleep">
+        <item>finish sleep</item>
+        <item>stop sleep</item>
+        <item>end sleep</item>
+    </string-array>
+    <string-array name="voice_feature_finish_nursing">
+        <item>finish nursing</item>
+        <item>stop nursing</item>
+        <item>end nursing</item>
+    </string-array>
+    <string-array name="voice_feature_finish_pumping">
+        <item>finish pumping</item>
+        <item>stop pumping</item>
+        <item>end pumping</item>
+    </string-array>
+    <string-array name="voice_queries_add_diaper">
+        <item>add a $kind diaper</item>
+        <item>log a $kind diaper</item>
+        <item>record a $kind diaper</item>
+        <item>add a diaper</item>
+        <item>log a diaper</item>
+    </string-array>
+    <string-array name="voice_queries_start_nursing">
+        <item>start nursing on the $side side</item>
+        <item>start nursing on $side</item>
+        <item>start $side nursing</item>
+        <item>start nursing</item>
+    </string-array>
+    <string-array name="voice_queries_start_sleep">
+        <item>start sleep</item>
+        <item>start a nap</item>
+    </string-array>
+    <string-array name="voice_queries_finish_sleep">
+        <item>finish sleep</item>
+        <item>stop sleep</item>
+        <item>end sleep</item>
+    </string-array>
+    <string-array name="voice_queries_finish_nursing">
+        <item>finish nursing</item>
+        <item>stop nursing</item>
+        <item>end nursing</item>
+    </string-array>
+    <string-array name="voice_queries_start_pumping">
+        <item>start pumping</item>
+    </string-array>
+    <string-array name="voice_queries_finish_pumping">
+        <item>finish pumping with $amount $unit</item>
+        <item>stop pumping with $amount $unit</item>
+        <item>end pumping with $amount $unit</item>
+        <item>finish pumping</item>
+        <item>stop pumping</item>
+        <item>end pumping</item>
+    </string-array>
+    <string-array name="voice_feature_last_diaper">
+        <item>when was the last diaper</item>
+        <item>when was the last diaper change</item>
+    </string-array>
+    <string-array name="voice_queries_last_diaper">
+        <item>when was the last diaper</item>
+        <item>when was the last diaper change</item>
+        <item>how long since the last diaper</item>
+    </string-array>
+    <string-array name="voice_feature_last_wet_diaper">
+        <item>when was the last wet diaper</item>
+        <item>how long since the last wet diaper</item>
+    </string-array>
+    <string-array name="voice_queries_last_wet_diaper">
+        <item>when was the last wet diaper</item>
+        <item>how long since the last wet diaper</item>
+    </string-array>
+    <string-array name="voice_feature_last_dirty_diaper">
+        <item>when was the last dirty diaper</item>
+        <item>when was the last poopy diaper</item>
+    </string-array>
+    <string-array name="voice_queries_last_dirty_diaper">
+        <item>when was the last dirty diaper</item>
+        <item>when was the last poopy diaper</item>
+        <item>how long since the last dirty diaper</item>
+    </string-array>
+    <string-array name="voice_feature_last_feed">
+        <item>when was the last feed</item>
+        <item>when was the last feeding</item>
+    </string-array>
+    <string-array name="voice_queries_last_feed">
+        <item>when was the last feed</item>
+        <item>when was the last feeding</item>
+        <item>when did my baby last eat</item>
+        <item>when was my baby last fed</item>
+        <item>how long since the last feed</item>
+    </string-array>
+    <string-array name="voice_feature_last_bottle">
+        <item>when was the last bottle</item>
+        <item>when was the last bottle feed</item>
+    </string-array>
+    <string-array name="voice_queries_last_bottle">
+        <item>when was the last bottle</item>
+        <item>when was the last bottle feed</item>
+        <item>how long since the last bottle</item>
+    </string-array>
+    <string-array name="voice_feature_last_nursing">
+        <item>when was the last nursing session</item>
+        <item>when did my baby last nurse</item>
+    </string-array>
+    <string-array name="voice_queries_last_nursing">
+        <item>when was the last nursing session</item>
+        <item>when did my baby last nurse</item>
+        <item>how long since the last nursing session</item>
+    </string-array>
+    <string-array name="voice_feature_last_solids">
+        <item>when were solids last logged</item>
+        <item>when was the last solids</item>
+    </string-array>
+    <string-array name="voice_queries_last_solids">
+        <item>when was the last solids meal</item>
+        <item>when were solids last logged</item>
+        <item>when was the last solids</item>
+        <item>when did my baby last eat solids</item>
+    </string-array>
+    <string-array name="voice_feature_last_sleep">
+        <item>when did the last sleep start</item>
+        <item>when did my baby last fall asleep</item>
+    </string-array>
+    <string-array name="voice_queries_last_sleep">
+        <item>when did the last sleep start</item>
+        <item>when did my baby last fall asleep</item>
+        <item>when was the last sleep</item>
+        <item>when was the last nap</item>
+    </string-array>
+    <string-array name="voice_feature_last_wake">
+        <item>when did my baby last wake up</item>
+        <item>when did the baby wake up</item>
+    </string-array>
+    <string-array name="voice_queries_last_wake">
+        <item>when did my baby last wake up</item>
+        <item>when did the baby wake up</item>
+        <item>when was the last wake up</item>
+        <item>how long has my baby been awake</item>
+    </string-array>
+    <string-array name="voice_feature_last_pumping">
+        <item>when was the last pumping session</item>
+        <item>when did I last pump</item>
+    </string-array>
+    <string-array name="voice_queries_last_pumping">
+        <item>when was the last pumping session</item>
+        <item>when did I last pump</item>
+        <item>how long since the last pumping session</item>
+    </string-array>
+    <string-array name="voice_feature_sleep_status">
+        <item>is my baby asleep</item>
+        <item>is the baby sleeping</item>
+    </string-array>
+    <string-array name="voice_queries_sleep_status">
+        <item>is my baby asleep</item>
+        <item>is the baby sleeping</item>
+        <item>how long has my baby been asleep</item>
+    </string-array>
+</resources>

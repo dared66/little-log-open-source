@@ -1,0 +1,9 @@
+{
+  "issuer_id": "APP_STORE_CONNECT_ISSUER_ID",
+  "key_id": "APP_STORE_CONNECT_KEY_ID",
+  "api_key_file": "/absolute/path/to/AuthKey_KEY_ID.p8",
+  "team_id": "APPLE_DEVELOPER_TEAM_ID",
+  "certificate_sha1": "DEVELOPMENT_CERTIFICATE_SHA1",
+  "device_udid": "IPHONE_UDID",
+  "simulator_udid": "IOS_SIMULATOR_UDID"
+}

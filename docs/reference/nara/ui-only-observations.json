@@ -1,0 +1,58 @@
+{
+  "evidence_kind": "Observed UI labels and synthetic inputs; not CSV or backend schema",
+  "collected_on": "2026-10-13",
+  "version": "Nara Baby Android 2.8.2 (405)",
+  "timezone": "America/Los_Angeles",
+  "pregnancy_due_date": {
+    "profile": "Schema Pregnancy",
+    "entered_date": "2027-01-13",
+    "present_in_native_csv": false
+  },
+  "appointments": [
+    {
+      "note_marker": "SCHEMA pregnancy-appointment-upcoming-31",
+      "display_group": "Upcoming",
+      "local_date": "2026-10-14",
+      "display_time": "12:19pm",
+      "appointment_type": "Schema ultrasound",
+      "present_in_pregnancy_csv": false,
+      "present_in_parent_csv_after_creation": false
+    },
+    {
+      "note_marker": "SCHEMA pregnancy-appointment-past-32",
+      "display_group": "Past",
+      "local_date": "2026-10-12",
+      "display_time": "12:25pm",
+      "appointment_type": "Schema checkup",
+      "questions_and_notes": "SCHEMA pregnancy-appointment-past-32",
+      "present_in_pregnancy_csv": false,
+      "present_in_parent_csv_after_creation": false,
+      "evidence_retention": "Screenshot retained privately; omitted from public source."
+    }
+  ],
+  "appointment_form_labels": [
+    "Date / time",
+    "Appointment type",
+    "Questions & notes",
+    "Add Photo"
+  ],
+  "appointment_limits": [
+    "Displayed times establish minute precision only; no native source ID or epoch was exported.",
+    "Past edit form exposed the same date/type/questions-notes/photo fields; no separate result, follow-up or attendance field was observed."
+  ],
+  "photo_attachment": {
+    "note_marker": "SCHEMA pregnancy-journal-photo-30",
+    "synthetic_image": "Little Log branding mark",
+    "attachment_shown_before_save": true,
+    "entry_saved": true,
+    "native_csv_has_journal_note": true,
+    "native_csv_has_photo_column_url_or_bytes": false,
+    "limitation": "Screenshot shows the attachment before saving; CSV confirms the saved journal note, not independent post-save media retrieval.",
+    "evidence_retention": "Screenshot retained privately; omitted from public source."
+  },
+  "solid_food_allergy": {
+    "observed_ui_label": "Allergic Reaction",
+    "csv_field": "[Solid Feed] Food: allergy=true",
+    "mapping": "Explicit true => Reaction observed; explicit false => No reaction observed; omitted => Not recorded. LOVE/LIKE/DISLIKE are preferences."
+  }
+}

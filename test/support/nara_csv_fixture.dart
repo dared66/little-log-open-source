@@ -1,0 +1,11 @@
+// Synthetic values; column names and layout match the user-supplied Nara CSV.
+const naraCsvFixture =
+    r'''Type,Profile Name,Start Date/time,Start Date/time (Epoch),Created By Caregiver,Last Updated By Caregiver,Note,Time Zone,[Diaper] Type,[Diaper] Detail,[Diaper] Dirty Color,[Diaper] Dirty Texture,[Bottle Feed] Type,[Bottle Feed] Breast Milk Volume,[Bottle Feed] Breast Milk Volume Unit,[Bottle Feed] Formula Name,[Bottle Feed] Formula Volume,[Bottle Feed] Formula Volume Unit,[Bottle Feed] Volume,[Bottle Feed] Volume Unit,[Breastfeed] Begin Side,[Breastfeed] End Side,[Breastfeed] Left Duration (Seconds),[Breastfeed] Right Duration (Seconds),[Pump] Duration (Seconds),[Pump] End Date/time,[Pump] End Date/time (Epoch),[Pump] Left Volume,[Pump] Left Volume Unit,[Pump] Right Volume,[Pump] Right Volume Unit,[Pump] Total Volume,[Pump] Total Volume Unit,[Profile] Birth Date,[Profile] Birth Date (Adjusted),[Profile] Sex,[Profile] Type,_familyKey,_profileKey,_activityKey
+Diaper,Robin,2026-01-09 09:46:40,1767980800000,Alex,Sam,"Two colors, ""quoted"" note
+Second line 👶",America/Los_Angeles,Dirty Wet,Blowout,GREEN YELLOW,MUSH RUN,,,,,,,,,,,,,,,,,,,,,,,,,,test-family,test-baby,diaper-1
+Bottle Feed,Robin,2026-01-09 09:46:40,1767980800000,Alex,Sam,,America/Los_Angeles,,,,,Breast Milk,3.5,FLOZ,,,,,,,,,,,,,,,,,,,,,,,test-family,test-baby,bottle-1
+Breastfeed,Robin,2026-01-09 09:46:40,1767980800000,Alex,Sam,,America/Los_Angeles,,,,,,,,,,,,,LEFT,LEFT.nonTimer,600,300,,,,,,,,,,,,,,test-family,test-baby,nursing-1
+Pump,Robin,2026-01-09 09:46:40,1767980800000,Alex,Sam,,America/Los_Angeles,,,,,,,,,,,,,,,,,1200,2026-01-09 10:06:40,1767982000000,1.2,FLOZ,0.55,FLOZ,,,,,,,test-family,test-baby,pump-1
+Pump,,2026-01-09 09:46:40,1767980800000,Alex,Sam,,America/Los_Angeles,,,,,,,,,,,,,,,,,1200,2026-01-09 10:06:40,1767982000000,,,,,12,FLOZ,,,,,test-family,,unassigned-pump
+Profile,Robin,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,2026-01-01,,FEMALE,CHILD,test-family,test-baby
+''';

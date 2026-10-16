@@ -1,0 +1,11 @@
+Type,Profile Name,Start Date/time,Start Date/time (Epoch),Created By Caregiver,Last Updated By Caregiver,Note,Time Zone,[Pregnancy Mood] Mood,[Pregnancy Mood] Strength,[Pregnancy Symptoms] Symptom,[Pregnancy Medicines] Medicine,[Pregnancy Health] Weight,[Pregnancy Health] Weight Unit,[Pregnancy Health] Temperature,[Pregnancy Health] Temperature Unit,[Pregnancy Health] Glucose,[Pregnancy Health] Glucose Unit,[Pregnancy Health] Systolic Blood Pressure,[Pregnancy Health] Systolic Blood Pressure Unit,[Pregnancy Health] Diastolic Blood Pressure,[Pregnancy Health] Diastolic Blood Pressure Unit,[Profile] Birth Date,[Profile] Birth Date (Adjusted),[Profile] Sex,[Profile] Type,_familyKey,_profileKey,_activityKey
+Pregnancy Journal,Schema Pregnancy,2026-10-13 12:11:42,1791918702000,Migration QA,Migration QA,"SCHEMA pregnancy-journal-photo-30
+Synthetic photo attached 👶",America/Los_Angeles,,,,,,,,,,,,,,,,,,,synthetic-family-002,synthetic-profile-003,synthetic-activity-031
+Pregnancy Mood,Schema Pregnancy,2026-10-13 12:11:35,1791918695000,Migration QA,Migration QA,SCHEMA pregnancy-mood-29,America/Los_Angeles,ANXIOUS,LOW,,,,,,,,,,,,,,,,,synthetic-family-002,synthetic-profile-003,synthetic-activity-032
+Pregnancy Symptoms,Schema Pregnancy,2026-10-13 12:09:15,1791918555000,Migration QA,Migration QA,SCHEMA pregnancy-symptoms-28,America/Los_Angeles,,,"Fatigue
+Nausea
+Schema symptom",,,,,,,,,,,,,,,,synthetic-family-002,synthetic-profile-003,synthetic-activity-033
+Pregnancy Medicines,Schema Pregnancy,2026-10-13 12:06:39,1791918399000,Migration QA,Migration QA,SCHEMA pregnancy-medication-27,America/Los_Angeles,,,,"Schema drops, 2 (DROP)
+Schema syrup, 0.5 (TSP)",,,,,,,,,,,,,,,synthetic-family-002,synthetic-profile-003,synthetic-activity-034
+Pregnancy Health,Schema Pregnancy,2026-10-13 12:05:16,1791918316000,Migration QA,Migration QA,SCHEMA pregnancy-vitals-26,America/Los_Angeles,,,,,160.5,LB,98.2,F,5.3,MMOLL,120,MMHG,80,MMHG,,,,,synthetic-family-002,synthetic-profile-003,synthetic-activity-035
+Profile,Schema Pregnancy,,,,,,,,,,,,,,,,,,,,,,,,PREGNANCY,synthetic-family-002,synthetic-profile-003

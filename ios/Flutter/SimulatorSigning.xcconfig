@@ -1,0 +1,4 @@
+// Google Sign-In stores credentials in the app's own Keychain group.
+CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*] = Runner/Simulator.entitlements
+CODE_SIGN_IDENTITY[sdk=iphonesimulator*] = -
+CODE_SIGNING_ALLOWED[sdk=iphonesimulator*] = YES

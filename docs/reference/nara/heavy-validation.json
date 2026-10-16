@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-13",
+  "branch": "polish/activity-rows-swipe-reminders",
+  "source_base_commit": "db9f0775a8c631369c7911818082bc19e7b96cec",
+  "tested_context": "Combined open polish worktree, including its pre-existing uncommitted polish changes. Only migration files and the two targeted test fixes are checked in by this task.",
+  "flutter_unit_widget_tests": {
+    "passed": 346,
+    "post_fix_rechecks": [
+      "full journey: passed",
+      "swipe visibility and reduced motion: passed"
+    ]
+  },
+  "python_tests": {
+    "passed": 8
+  },
+  "analysis": "passed",
+  "native_ios": {
+    "passed": 270,
+    "build": 52,
+    "device": "iPhone 17 Pro simulator",
+    "suite": "integration_test/heavy_validation_test.dart"
+  },
+  "native_android": {
+    "passed": 270,
+    "build": 52,
+    "device": "emulator-5580",
+    "suite": "integration_test/heavy_validation_test.dart",
+    "initial_passed": 267,
+    "initial_failures": 3,
+    "resolved_rechecks": {
+      "journey": "Scoped menu choice to BottomSheet to avoid matching the active timer beneath it. Rerun passed.",
+      "swipe_demo": "Fixed test viewport so the initial row is offscreen on tall emulators. Rerun passed.",
+      "performance": "Connected the existing Android profiler marker port with adb reverse. 10,000-record performance test passed; temporary reverse route removed."
+    }
+  },
+  "interrupted_imports": {
+    "passed": 6,
+    "scenarios": [
+      "before commit",
+      "during: 0ms",
+      "during: 1ms",
+      "during: 5ms",
+      "during: 20ms",
+      "after commit and undo"
+    ],
+    "tool": "tool/import_crash_probe.dart"
+  },
+  "nara_csv_stress": {
+    "passed": true,
+    "derived_source_activities": 4600,
+    "destination_activities": 6400,
+    "profile_records": 1,
+    "csv_input_bytes": 1979500,
+    "csv_backup_bytes": 6598464,
+    "preview_ms": 249,
+    "total_ms": 3682,
+    "checks": [
+      "complete coverage",
+      "component ID uniqueness",
+      "reimport",
+      "CSV/JSON backups",
+      "disk reopen",
+      "malformed final row rejection",
+      "atomic reports",
+      "undo preserves manual record",
+      "deleted component deduplication"
+    ]
+  },
+  "data_scope": "Synthetic data in isolated databases/emulators only; no live Drive probe or production import.",
+  "source_file_sha256": {
+    "lib/services/nara_csv.dart": "b798344be86d17cd576f3ae5cc3d951dfe3724adf6ea82c22119d172c8d48a78",
+    "lib/services/nara_csv_activities.dart": "5d1ba0ba85b7acb3845d24b0d525381f11181a35337c0ba344b2907829b98612",
+    "lib/services/history_import.dart": "8a2402e847f61f7948084243eda6f3f75e29fb5d3460d1fa91a87cdc716fe5aa",
+    "tool/nara_csv_stress_probe.dart": "8b47dc8d9407bfa2b7a49326fa6777e4e8fe323324b5fce9b855a40741e15411"
+  },
+  "normal_apps_restored": {
+    "android_emulator": 52,
+    "ios_simulator": 52,
+    "installed_and_launched": true
+  }
+}

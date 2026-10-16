@@ -1,0 +1,70 @@
+{
+  "checked_on": "2026-10-13",
+  "scope": "Synthetic fixtures and isolated database/UI/sync tests; no production imports or connected Drive writes",
+  "fixture_checks": {
+    "fixture_count": 6,
+    "final_activity_rows": 35,
+    "final_profile_rows": 3,
+    "distinct_csv_types": 26,
+    "unique_activity_ids": 35,
+    "row_widths_and_hashes": "passed",
+    "non_identifier_cells_preserved": "passed",
+    "unicode_quoted_multiline_note": "passed",
+    "same_id_open_and_completed_sleep": "passed",
+    "sleep_completed_seconds": 586,
+    "unassigned_pumps": 2,
+    "zero_duration_total_only_pump": "passed",
+    "appointment_omission_from_pregnancy_and_second_parent_export": "passed",
+    "no_media_columns_in_pregnancy_export": "passed",
+    "documentation_links": "passed"
+  },
+  "implemented_child_csv_importer": {
+    "default_activities": 30,
+    "activities_with_unassigned_pumps": 32,
+    "profile_records": 1,
+    "source_activity_rows_represented_with_pumps": 23,
+    "all_completed_baby_types_supported": true,
+    "default_excluded_unassigned_pumps": 2,
+    "unsupported_rows_with_pumps": 0,
+    "regression_test_count": 112,
+    "regression_tests": "test/import/ and test/history_import_test.dart",
+    "verified": [
+      "per-type mappings and unit conversion",
+      "stable one-to-many identity and changed-source-group rejection",
+      "original fields and attribution",
+      "all ten categories in import preview",
+      "editing retains component provenance",
+      "repeat imports and deleted-record deduplication",
+      "CSV/JSON backup, disk persistence and undo",
+      "two-device synthetic CSV sync, removal and undo"
+    ],
+    "static_analysis": "passed",
+    "native_build_verification": {
+      "little_log_version": "1.0.0",
+      "build_number": 51,
+      "android": "Installed and launched on dedicated emulator-5580",
+      "ios": "Installed and launched on iPhone 17 Pro simulator",
+      "source_baseline": "db9f0775a8c631369c7911818082bc19e7b96cec plus uncommitted migration changes",
+      "source_file_sha256": {
+        "lib/services/nara_csv.dart": "b798344be86d17cd576f3ae5cc3d951dfe3724adf6ea82c22119d172c8d48a78",
+        "lib/services/nara_csv_activities.dart": "5d1ba0ba85b7acb3845d24b0d525381f11181a35337c0ba344b2907829b98612",
+        "lib/services/history_import.dart": "8a2402e847f61f7948084243eda6f3f75e29fb5d3460d1fa91a87cdc716fe5aa"
+      }
+    },
+    "native_android_import": {
+      "source": "Original app-generated synthetic child CSV via Android DocumentsUI",
+      "original_export_sha256": "f0130222c6ecd21d7da67d10157f816a97c61127ee6492f2bf41158d9381af3f",
+      "local_test_baby": "Schema Baby",
+      "included_unassigned_pumps": true,
+      "activities_added": 32,
+      "profile_included": true,
+      "unsupported_exclusions": 0,
+      "reimport_duplicates_including_profile": 33,
+      "reimport_new_entries": 0,
+      "original_export_bytes_unchanged": true,
+      "preview_screenshot": "evidence/little-log-import-preview.png",
+      "saved_report_screenshot": "evidence/little-log-import-saved.png"
+    }
+  },
+  "polish_heavy_validation": "heavy-validation.json"
+}

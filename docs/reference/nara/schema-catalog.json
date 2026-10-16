@@ -1,0 +1,3228 @@
+{
+  "schema_basis": "Observed Android app-generated CSV, not Nara backend JSON/API schema",
+  "collected_on": "2026-10-13",
+  "nara_version": "2.8.2",
+  "nara_version_code": 405,
+  "android_api": 36,
+  "timezone": "America/Los_Angeles",
+  "little_log_baseline": "db9f0775a8c631369c7911818082bc19e7b96cec",
+  "final_activity_rows": 35,
+  "final_profile_rows": 3,
+  "distinct_csv_types": 26,
+  "exports": [
+    {
+      "fixture": "fixtures/child-final.csv",
+      "original_export_sha256": "f0130222c6ecd21d7da67d10157f816a97c61127ee6492f2bf41158d9381af3f",
+      "fixture_sha256": "12d584ff2b46fac8e3bee7a1bce0ba199cd0caff86c411b8e4a93f48e61cc518",
+      "rows": 24,
+      "columns": 70,
+      "transformation": "Only nonempty family/profile/activity IDs replaced consistently; CSV reserialized with CRLF; all other decoded cells and row widths preserved."
+    },
+    {
+      "fixture": "fixtures/postpartum.csv",
+      "original_export_sha256": "8b7fc27b4d086140ba59594fd4e02c6fbfd0d8a415238cdb90861c13c1848965",
+      "fixture_sha256": "63635ad7375ce5b285f3e23e6295f7a476e68b3bdb6a235b12b96970d97123b2",
+      "rows": 8,
+      "columns": 29,
+      "transformation": "Only nonempty family/profile/activity IDs replaced consistently; CSV reserialized with CRLF; all other decoded cells and row widths preserved."
+    },
+    {
+      "fixture": "fixtures/pregnancy.csv",
+      "original_export_sha256": "8f4bac5b9beb789050170014db25c6a0481bb3bca983821ca078895e2ade5837",
+      "fixture_sha256": "01c7c6d50e47cfc4c6f697ee4c2cbbb3efd5091c52eb997e977a462508d0964f",
+      "rows": 6,
+      "columns": 29,
+      "transformation": "Only nonempty family/profile/activity IDs replaced consistently; CSV reserialized with CRLF; all other decoded cells and row widths preserved."
+    },
+    {
+      "fixture": "fixtures/child-open-timer.csv",
+      "original_export_sha256": "27e2ca2d2c2228f22b5125f5c5835557a899e96807ab73d47266a06c465dc848",
+      "fixture_sha256": "ac86f790b8e3287c2b92dd8b8b23a656b3a7ada04b4360d5988acf624b6e67bf",
+      "rows": 19,
+      "columns": 70,
+      "transformation": "Only nonempty family/profile/activity IDs replaced consistently; CSV reserialized with CRLF; all other decoded cells and row widths preserved."
+    },
+    {
+      "fixture": "fixtures/child-completed-baseline.csv",
+      "original_export_sha256": "e73de60ca705f051899adb5b1a8a83d4d9b80986da547b87ea6090e03aff7a08",
+      "fixture_sha256": "88cd3a893db2551303d98a1d69316f2c4ec503a9564a1c9a54c4f9521411a396",
+      "rows": 19,
+      "columns": 70,
+      "transformation": "Only nonempty family/profile/activity IDs replaced consistently; CSV reserialized with CRLF; all other decoded cells and row widths preserved."
+    },
+    {
+      "fixture": "fixtures/postpartum-after-appointments.csv",
+      "original_export_sha256": "8b7fc27b4d086140ba59594fd4e02c6fbfd0d8a415238cdb90861c13c1848965",
+      "fixture_sha256": "63635ad7375ce5b285f3e23e6295f7a476e68b3bdb6a235b12b96970d97123b2",
+      "rows": 8,
+      "columns": 29,
+      "transformation": "Only nonempty family/profile/activity IDs replaced consistently; CSV reserialized with CRLF; all other decoded cells and row widths preserved."
+    }
+  ],
+  "inventories": {
+    "child-final.csv": {
+      "source_sha256": "12d584ff2b46fac8e3bee7a1bce0ba199cd0caff86c411b8e4a93f48e61cc518",
+      "column_count": 70,
+      "columns": [
+        "Type",
+        "Profile Name",
+        "Start Date/time",
+        "Start Date/time (Epoch)",
+        "Created By Caregiver",
+        "Last Updated By Caregiver",
+        "Note",
+        "Time Zone",
+        "[Breastfeed] Begin Side",
+        "[Breastfeed] End Side",
+        "[Breastfeed] Left Duration (Seconds)",
+        "[Breastfeed] Right Duration (Seconds)",
+        "[Pump] Duration (Seconds)",
+        "[Pump] End Date/time",
+        "[Pump] End Date/time (Epoch)",
+        "[Pump] Left Volume",
+        "[Pump] Left Volume Unit",
+        "[Pump] Right Volume",
+        "[Pump] Right Volume Unit",
+        "[Pump] Total Volume",
+        "[Pump] Total Volume Unit",
+        "[Medical] Medication",
+        "[Medical] Temperature",
+        "[Medical] Temperature Unit",
+        "[Sleep] Duration (Seconds)",
+        "[Sleep] End Date/time",
+        "[Sleep] End Date/time (Epoch)",
+        "[Diaper] Type",
+        "[Diaper] Detail",
+        "[Diaper] Dirty Color",
+        "[Diaper] Dirty Texture",
+        "[Routine] Routine",
+        "[Solid Feed] Food",
+        "[Solid Feed] Meal",
+        "[Combo Feed] Begin Side",
+        "[Combo Feed] End Side",
+        "[Combo Feed] Left Duration (Seconds)",
+        "[Combo Feed] Right Duration (Seconds)",
+        "[Combo Feed] Type",
+        "[Combo Feed] Breast Milk Volume",
+        "[Combo Feed] Breast Milk Volume Unit",
+        "[Combo Feed] Formula Name",
+        "[Combo Feed] Formula Volume",
+        "[Combo Feed] Formula Volume Unit",
+        "[Combo Feed] Volume",
+        "[Combo Feed] Volume Unit",
+        "[Bottle Feed] Type",
+        "[Bottle Feed] Breast Milk Volume",
+        "[Bottle Feed] Breast Milk Volume Unit",
+        "[Bottle Feed] Formula Name",
+        "[Bottle Feed] Formula Volume",
+        "[Bottle Feed] Formula Volume Unit",
+        "[Bottle Feed] Volume",
+        "[Bottle Feed] Volume Unit",
+        "[Baby First] Baby First",
+        "[Growth] Head Size",
+        "[Growth] Head Size Unit",
+        "[Growth] Height",
+        "[Growth] Height Unit",
+        "[Growth] Weight",
+        "[Growth] Weight Unit",
+        "[Milestone] Milestone",
+        "[Vaccine] Vaccine",
+        "[Profile] Birth Date",
+        "[Profile] Birth Date (Adjusted)",
+        "[Profile] Sex",
+        "[Profile] Type",
+        "_familyKey",
+        "_profileKey",
+        "_activityKey"
+      ],
+      "row_count": 24,
+      "observed_row_widths": {
+        "69": 1,
+        "70": 23
+      },
+      "types": {
+        "Baby First": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Baby First] Baby First": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Baby First] Baby First": [
+              "Schema first smile"
+            ]
+          }
+        },
+        "Bottle Feed": {
+          "count": 2,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 2,
+            "Last Updated By Caregiver": 2,
+            "Note": 2,
+            "Profile Name": 2,
+            "Start Date/time": 2,
+            "Start Date/time (Epoch)": 2,
+            "Time Zone": 2,
+            "Type": 2,
+            "[Bottle Feed] Breast Milk Volume": 1,
+            "[Bottle Feed] Breast Milk Volume Unit": 1,
+            "[Bottle Feed] Formula Name": 1,
+            "[Bottle Feed] Formula Volume": 1,
+            "[Bottle Feed] Formula Volume Unit": 1,
+            "[Bottle Feed] Type": 2,
+            "_activityKey": 2,
+            "_familyKey": 2,
+            "_profileKey": 2
+          },
+          "synthetic_activity_values": {
+            "[Bottle Feed] Breast Milk Volume": [
+              "3.5"
+            ],
+            "[Bottle Feed] Breast Milk Volume Unit": [
+              "FLOZ"
+            ],
+            "[Bottle Feed] Formula Name": [
+              "Aptamil"
+            ],
+            "[Bottle Feed] Formula Volume": [
+              "90"
+            ],
+            "[Bottle Feed] Formula Volume Unit": [
+              "ML"
+            ],
+            "[Bottle Feed] Type": [
+              "Breast Milk",
+              "Formula"
+            ]
+          }
+        },
+        "Breastfeed": {
+          "count": 2,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 2,
+            "Last Updated By Caregiver": 2,
+            "Note": 2,
+            "Profile Name": 2,
+            "Start Date/time": 2,
+            "Start Date/time (Epoch)": 2,
+            "Time Zone": 2,
+            "Type": 2,
+            "[Breastfeed] Begin Side": 2,
+            "[Breastfeed] End Side": 2,
+            "[Breastfeed] Left Duration (Seconds)": 2,
+            "[Breastfeed] Right Duration (Seconds)": 2,
+            "_activityKey": 2,
+            "_familyKey": 2,
+            "_profileKey": 2
+          },
+          "synthetic_activity_values": {
+            "[Breastfeed] Begin Side": [
+              "LEFT"
+            ],
+            "[Breastfeed] End Side": [
+              "RIGHT",
+              "RIGHT.nonTimer"
+            ],
+            "[Breastfeed] Left Duration (Seconds)": [
+              "264",
+              "600"
+            ],
+            "[Breastfeed] Right Duration (Seconds)": [
+              "300",
+              "33"
+            ]
+          }
+        },
+        "Combo Feed": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Combo Feed] Begin Side": 1,
+            "[Combo Feed] Breast Milk Volume": 1,
+            "[Combo Feed] Breast Milk Volume Unit": 1,
+            "[Combo Feed] End Side": 1,
+            "[Combo Feed] Formula Name": 1,
+            "[Combo Feed] Formula Volume": 1,
+            "[Combo Feed] Formula Volume Unit": 1,
+            "[Combo Feed] Left Duration (Seconds)": 1,
+            "[Combo Feed] Right Duration (Seconds)": 1,
+            "[Combo Feed] Type": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Combo Feed] Begin Side": [
+              "LEFT"
+            ],
+            "[Combo Feed] Breast Milk Volume": [
+              "1.5"
+            ],
+            "[Combo Feed] Breast Milk Volume Unit": [
+              "FLOZ"
+            ],
+            "[Combo Feed] End Side": [
+              "RIGHT.nonTimer"
+            ],
+            "[Combo Feed] Formula Name": [
+              "Aptamil"
+            ],
+            "[Combo Feed] Formula Volume": [
+              "60"
+            ],
+            "[Combo Feed] Formula Volume Unit": [
+              "ML"
+            ],
+            "[Combo Feed] Left Duration (Seconds)": [
+              "360"
+            ],
+            "[Combo Feed] Right Duration (Seconds)": [
+              "180"
+            ],
+            "[Combo Feed] Type": [
+              "Breast Milk Formula"
+            ]
+          }
+        },
+        "Diaper": {
+          "count": 4,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 4,
+            "Last Updated By Caregiver": 4,
+            "Note": 4,
+            "Profile Name": 4,
+            "Start Date/time": 4,
+            "Start Date/time (Epoch)": 4,
+            "Time Zone": 4,
+            "Type": 4,
+            "[Diaper] Detail": 1,
+            "[Diaper] Dirty Color": 1,
+            "[Diaper] Dirty Texture": 1,
+            "[Diaper] Type": 4,
+            "_activityKey": 4,
+            "_familyKey": 4,
+            "_profileKey": 4
+          },
+          "synthetic_activity_values": {
+            "[Diaper] Detail": [
+              "Blowout Rash"
+            ],
+            "[Diaper] Dirty Color": [
+              "BLACK BROWN GRAY GREEN RED YELLOW"
+            ],
+            "[Diaper] Dirty Texture": [
+              "MUCOUS MUSH PEBBLE RUN SOLID"
+            ],
+            "[Diaper] Type": [
+              "Dirty",
+              "Dirty Wet",
+              "Dry",
+              "Wet"
+            ]
+          }
+        },
+        "Growth": {
+          "count": 3,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 3,
+            "Last Updated By Caregiver": 3,
+            "Note": 3,
+            "Profile Name": 3,
+            "Start Date/time": 3,
+            "Start Date/time (Epoch)": 3,
+            "Time Zone": 3,
+            "Type": 3,
+            "[Growth] Head Size": 3,
+            "[Growth] Head Size Unit": 3,
+            "[Growth] Height": 2,
+            "[Growth] Height Unit": 2,
+            "[Growth] Weight": 2,
+            "[Growth] Weight Unit": 2,
+            "_activityKey": 3,
+            "_familyKey": 3,
+            "_profileKey": 3
+          },
+          "synthetic_activity_values": {
+            "[Growth] Head Size": [
+              "15.25",
+              "40.5"
+            ],
+            "[Growth] Head Size Unit": [
+              "CM",
+              "IN"
+            ],
+            "[Growth] Height": [
+              "23.75",
+              "62"
+            ],
+            "[Growth] Height Unit": [
+              "CM",
+              "IN"
+            ],
+            "[Growth] Weight": [
+              "12.21875",
+              "6.4"
+            ],
+            "[Growth] Weight Unit": [
+              "KG",
+              "LB"
+            ]
+          }
+        },
+        "Medical": {
+          "count": 2,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 2,
+            "Last Updated By Caregiver": 2,
+            "Note": 2,
+            "Profile Name": 2,
+            "Start Date/time": 2,
+            "Start Date/time (Epoch)": 2,
+            "Time Zone": 2,
+            "Type": 2,
+            "[Medical] Medication": 1,
+            "[Medical] Temperature": 2,
+            "[Medical] Temperature Unit": 2,
+            "_activityKey": 2,
+            "_familyKey": 2,
+            "_profileKey": 2
+          },
+          "synthetic_activity_values": {
+            "[Medical] Medication": [
+              "Amoxicillin, 1.25 (ML)\nPanadol, 2.5 (MG)"
+            ],
+            "[Medical] Temperature": [
+              "36.6",
+              "99.1"
+            ],
+            "[Medical] Temperature Unit": [
+              "C",
+              "F"
+            ]
+          }
+        },
+        "Milestone": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Milestone] Milestone": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Milestone] Milestone": [
+              "Looks at your face"
+            ]
+          }
+        },
+        "Profile": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Profile Name": 1,
+            "Type": 1,
+            "[Profile] Birth Date": 1,
+            "[Profile] Birth Date (Adjusted)": 1,
+            "[Profile] Sex": 1,
+            "[Profile] Type": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Profile] Birth Date": [
+              "2026-09-13"
+            ],
+            "[Profile] Birth Date (Adjusted)": [
+              "2026-10-13"
+            ],
+            "[Profile] Sex": [
+              "FEMALE"
+            ],
+            "[Profile] Type": [
+              "CHILD"
+            ]
+          }
+        },
+        "Pump": {
+          "count": 2,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 2,
+          "populated_columns": {
+            "Created By Caregiver": 2,
+            "Last Updated By Caregiver": 2,
+            "Note": 2,
+            "Start Date/time": 2,
+            "Start Date/time (Epoch)": 2,
+            "Time Zone": 2,
+            "Type": 2,
+            "[Pump] Duration (Seconds)": 2,
+            "[Pump] End Date/time": 2,
+            "[Pump] End Date/time (Epoch)": 2,
+            "[Pump] Left Volume": 1,
+            "[Pump] Left Volume Unit": 1,
+            "[Pump] Right Volume": 1,
+            "[Pump] Right Volume Unit": 1,
+            "[Pump] Total Volume": 1,
+            "[Pump] Total Volume Unit": 1,
+            "_activityKey": 2,
+            "_familyKey": 2
+          },
+          "synthetic_activity_values": {
+            "[Pump] Duration (Seconds)": [
+              "0",
+              "1200"
+            ],
+            "[Pump] End Date/time": [
+              "2026-10-13 11:38:46",
+              "2026-10-13 13:03:00"
+            ],
+            "[Pump] End Date/time (Epoch)": [
+              "1791916726441",
+              "1791921780000"
+            ],
+            "[Pump] Left Volume": [
+              "1.25"
+            ],
+            "[Pump] Left Volume Unit": [
+              "FLOZ"
+            ],
+            "[Pump] Right Volume": [
+              "0.75"
+            ],
+            "[Pump] Right Volume Unit": [
+              "FLOZ"
+            ],
+            "[Pump] Total Volume": [
+              "110"
+            ],
+            "[Pump] Total Volume Unit": [
+              "ML"
+            ]
+          }
+        },
+        "Routine": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Routine] Routine": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Routine] Routine": [
+              "Bath"
+            ]
+          }
+        },
+        "Sleep": {
+          "count": 2,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 2,
+            "Last Updated By Caregiver": 2,
+            "Note": 2,
+            "Profile Name": 2,
+            "Start Date/time": 2,
+            "Start Date/time (Epoch)": 2,
+            "Time Zone": 2,
+            "Type": 2,
+            "[Sleep] Duration (Seconds)": 2,
+            "[Sleep] End Date/time": 2,
+            "[Sleep] End Date/time (Epoch)": 2,
+            "_activityKey": 2,
+            "_familyKey": 2,
+            "_profileKey": 2
+          },
+          "synthetic_activity_values": {
+            "[Sleep] Duration (Seconds)": [
+              "2700",
+              "586"
+            ],
+            "[Sleep] End Date/time": [
+              "2026-10-13 11:33:38",
+              "2026-10-13 11:43:38"
+            ],
+            "[Sleep] End Date/time (Epoch)": [
+              "1791916418000",
+              "1791917018000"
+            ]
+          }
+        },
+        "Solid Feed": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Solid Feed] Food": 1,
+            "[Solid Feed] Meal": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Solid Feed] Food": [
+              "Apple: allergy=true; amountKey=ALL; preparationKeyz=PUREE; reactionKey=LOVE; note=Synthetic food note\nBanana: amountKey=SOME; preparationKeyz=RAW; reactionKey=LIKE"
+            ],
+            "[Solid Feed] Meal": [
+              "BREAKFAST"
+            ]
+          }
+        },
+        "Vaccine": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Vaccine] Vaccine": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Vaccine] Vaccine": [
+              "DTaP\nHepB"
+            ]
+          }
+        }
+      },
+      "limitations": [
+        "A recognized type can still contain fields or values the importer rejects.",
+        "Only populated fields in this export are observed; blank fields do not prove absence.",
+        "This inventory is not an import validation or proof of complete activity coverage."
+      ]
+    },
+    "postpartum.csv": {
+      "source_sha256": "63635ad7375ce5b285f3e23e6295f7a476e68b3bdb6a235b12b96970d97123b2",
+      "column_count": 29,
+      "columns": [
+        "Type",
+        "Profile Name",
+        "Start Date/time",
+        "Start Date/time (Epoch)",
+        "Created By Caregiver",
+        "Last Updated By Caregiver",
+        "Note",
+        "Time Zone",
+        "[Postpartum Routine] Routine",
+        "[Postpartum Mood] Mood",
+        "[Postpartum Mood] Strength",
+        "[Postpartum Health] Medicine",
+        "[Postpartum Health] Symptom",
+        "[Postpartum Health] Temperature",
+        "[Postpartum Health] Temperature Unit",
+        "[Postpartum Diet] Food",
+        "[Postpartum Diet] Meal",
+        "[Postpartum Hydration] Volume",
+        "[Postpartum Hydration] Volume Unit",
+        "[Postpartum Sleep] Duration (Seconds)",
+        "[Postpartum Sleep] End Date/time",
+        "[Postpartum Sleep] End Date/time (Epoch)",
+        "[Profile] Birth Date",
+        "[Profile] Birth Date (Adjusted)",
+        "[Profile] Sex",
+        "[Profile] Type",
+        "_familyKey",
+        "_profileKey",
+        "_activityKey"
+      ],
+      "row_count": 8,
+      "observed_row_widths": {
+        "28": 1,
+        "29": 7
+      },
+      "types": {
+        "Postpartum Diet": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Diet] Food": 1,
+            "[Postpartum Diet] Meal": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Diet] Food": [
+              "Schema salad: foodCategoryKey=GRAIN; note=Synthetic parent food note"
+            ],
+            "[Postpartum Diet] Meal": [
+              "LUNCH"
+            ]
+          }
+        },
+        "Postpartum Health": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Health] Medicine": 1,
+            "[Postpartum Health] Symptom": 1,
+            "[Postpartum Health] Temperature": 1,
+            "[Postpartum Health] Temperature Unit": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Health] Medicine": [
+              "Schema supplement, 1 (TAB)"
+            ],
+            "[Postpartum Health] Symptom": [
+              "Constipation\nHeadache"
+            ],
+            "[Postpartum Health] Temperature": [
+              "36.7"
+            ],
+            "[Postpartum Health] Temperature Unit": [
+              "C"
+            ]
+          }
+        },
+        "Postpartum Hydration": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Hydration] Volume": 1,
+            "[Postpartum Hydration] Volume Unit": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Hydration] Volume": [
+              "1.5"
+            ],
+            "[Postpartum Hydration] Volume Unit": [
+              "GLASS"
+            ]
+          }
+        },
+        "Postpartum Journal": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {}
+        },
+        "Postpartum Mood": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Mood] Mood": 1,
+            "[Postpartum Mood] Strength": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Mood] Mood": [
+              "HAPPY"
+            ],
+            "[Postpartum Mood] Strength": [
+              "MEDIUM"
+            ]
+          }
+        },
+        "Postpartum Routine": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Routine] Routine": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Routine] Routine": [
+              "Schema walk"
+            ]
+          }
+        },
+        "Postpartum Sleep": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Sleep] Duration (Seconds)": 1,
+            "[Postpartum Sleep] End Date/time": 1,
+            "[Postpartum Sleep] End Date/time (Epoch)": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Sleep] Duration (Seconds)": [
+              "1800"
+            ],
+            "[Postpartum Sleep] End Date/time": [
+              "2026-10-13 11:59:38"
+            ],
+            "[Postpartum Sleep] End Date/time (Epoch)": [
+              "1791917978000"
+            ]
+          }
+        },
+        "Profile": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Profile Name": 1,
+            "Type": 1,
+            "[Profile] Type": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Profile] Type": [
+              "PARENT"
+            ]
+          }
+        }
+      },
+      "limitations": [
+        "A recognized type can still contain fields or values the importer rejects.",
+        "Only populated fields in this export are observed; blank fields do not prove absence.",
+        "This inventory is not an import validation or proof of complete activity coverage."
+      ]
+    },
+    "pregnancy.csv": {
+      "source_sha256": "01c7c6d50e47cfc4c6f697ee4c2cbbb3efd5091c52eb997e977a462508d0964f",
+      "column_count": 29,
+      "columns": [
+        "Type",
+        "Profile Name",
+        "Start Date/time",
+        "Start Date/time (Epoch)",
+        "Created By Caregiver",
+        "Last Updated By Caregiver",
+        "Note",
+        "Time Zone",
+        "[Pregnancy Mood] Mood",
+        "[Pregnancy Mood] Strength",
+        "[Pregnancy Symptoms] Symptom",
+        "[Pregnancy Medicines] Medicine",
+        "[Pregnancy Health] Weight",
+        "[Pregnancy Health] Weight Unit",
+        "[Pregnancy Health] Temperature",
+        "[Pregnancy Health] Temperature Unit",
+        "[Pregnancy Health] Glucose",
+        "[Pregnancy Health] Glucose Unit",
+        "[Pregnancy Health] Systolic Blood Pressure",
+        "[Pregnancy Health] Systolic Blood Pressure Unit",
+        "[Pregnancy Health] Diastolic Blood Pressure",
+        "[Pregnancy Health] Diastolic Blood Pressure Unit",
+        "[Profile] Birth Date",
+        "[Profile] Birth Date (Adjusted)",
+        "[Profile] Sex",
+        "[Profile] Type",
+        "_familyKey",
+        "_profileKey",
+        "_activityKey"
+      ],
+      "row_count": 6,
+      "observed_row_widths": {
+        "28": 1,
+        "29": 5
+      },
+      "types": {
+        "Pregnancy Health": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Pregnancy Health] Diastolic Blood Pressure": 1,
+            "[Pregnancy Health] Diastolic Blood Pressure Unit": 1,
+            "[Pregnancy Health] Glucose": 1,
+            "[Pregnancy Health] Glucose Unit": 1,
+            "[Pregnancy Health] Systolic Blood Pressure": 1,
+            "[Pregnancy Health] Systolic Blood Pressure Unit": 1,
+            "[Pregnancy Health] Temperature": 1,
+            "[Pregnancy Health] Temperature Unit": 1,
+            "[Pregnancy Health] Weight": 1,
+            "[Pregnancy Health] Weight Unit": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Pregnancy Health] Diastolic Blood Pressure": [
+              "80"
+            ],
+            "[Pregnancy Health] Diastolic Blood Pressure Unit": [
+              "MMHG"
+            ],
+            "[Pregnancy Health] Glucose": [
+              "5.3"
+            ],
+            "[Pregnancy Health] Glucose Unit": [
+              "MMOLL"
+            ],
+            "[Pregnancy Health] Systolic Blood Pressure": [
+              "120"
+            ],
+            "[Pregnancy Health] Systolic Blood Pressure Unit": [
+              "MMHG"
+            ],
+            "[Pregnancy Health] Temperature": [
+              "98.2"
+            ],
+            "[Pregnancy Health] Temperature Unit": [
+              "F"
+            ],
+            "[Pregnancy Health] Weight": [
+              "160.5"
+            ],
+            "[Pregnancy Health] Weight Unit": [
+              "LB"
+            ]
+          }
+        },
+        "Pregnancy Journal": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {}
+        },
+        "Pregnancy Medicines": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Pregnancy Medicines] Medicine": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Pregnancy Medicines] Medicine": [
+              "Schema drops, 2 (DROP)\nSchema syrup, 0.5 (TSP)"
+            ]
+          }
+        },
+        "Pregnancy Mood": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Pregnancy Mood] Mood": 1,
+            "[Pregnancy Mood] Strength": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Pregnancy Mood] Mood": [
+              "ANXIOUS"
+            ],
+            "[Pregnancy Mood] Strength": [
+              "LOW"
+            ]
+          }
+        },
+        "Pregnancy Symptoms": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Pregnancy Symptoms] Symptom": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Pregnancy Symptoms] Symptom": [
+              "Fatigue\nNausea\nSchema symptom"
+            ]
+          }
+        },
+        "Profile": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Profile Name": 1,
+            "Type": 1,
+            "[Profile] Type": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Profile] Type": [
+              "PREGNANCY"
+            ]
+          }
+        }
+      },
+      "limitations": [
+        "A recognized type can still contain fields or values the importer rejects.",
+        "Only populated fields in this export are observed; blank fields do not prove absence.",
+        "This inventory is not an import validation or proof of complete activity coverage."
+      ]
+    },
+    "child-open-timer.csv": {
+      "source_sha256": "ac86f790b8e3287c2b92dd8b8b23a656b3a7ada04b4360d5988acf624b6e67bf",
+      "column_count": 70,
+      "columns": [
+        "Type",
+        "Profile Name",
+        "Start Date/time",
+        "Start Date/time (Epoch)",
+        "Created By Caregiver",
+        "Last Updated By Caregiver",
+        "Note",
+        "Time Zone",
+        "[Sleep] Duration (Seconds)",
+        "[Sleep] End Date/time",
+        "[Sleep] End Date/time (Epoch)",
+        "[Diaper] Type",
+        "[Diaper] Detail",
+        "[Diaper] Dirty Color",
+        "[Diaper] Dirty Texture",
+        "[Medical] Medication",
+        "[Medical] Temperature",
+        "[Medical] Temperature Unit",
+        "[Routine] Routine",
+        "[Pump] Duration (Seconds)",
+        "[Pump] End Date/time",
+        "[Pump] End Date/time (Epoch)",
+        "[Pump] Left Volume",
+        "[Pump] Left Volume Unit",
+        "[Pump] Right Volume",
+        "[Pump] Right Volume Unit",
+        "[Pump] Total Volume",
+        "[Pump] Total Volume Unit",
+        "[Solid Feed] Food",
+        "[Solid Feed] Meal",
+        "[Combo Feed] Begin Side",
+        "[Combo Feed] End Side",
+        "[Combo Feed] Left Duration (Seconds)",
+        "[Combo Feed] Right Duration (Seconds)",
+        "[Combo Feed] Type",
+        "[Combo Feed] Breast Milk Volume",
+        "[Combo Feed] Breast Milk Volume Unit",
+        "[Combo Feed] Formula Name",
+        "[Combo Feed] Formula Volume",
+        "[Combo Feed] Formula Volume Unit",
+        "[Combo Feed] Volume",
+        "[Combo Feed] Volume Unit",
+        "[Breastfeed] Begin Side",
+        "[Breastfeed] End Side",
+        "[Breastfeed] Left Duration (Seconds)",
+        "[Breastfeed] Right Duration (Seconds)",
+        "[Bottle Feed] Type",
+        "[Bottle Feed] Breast Milk Volume",
+        "[Bottle Feed] Breast Milk Volume Unit",
+        "[Bottle Feed] Formula Name",
+        "[Bottle Feed] Formula Volume",
+        "[Bottle Feed] Formula Volume Unit",
+        "[Bottle Feed] Volume",
+        "[Bottle Feed] Volume Unit",
+        "[Baby First] Baby First",
+        "[Growth] Head Size",
+        "[Growth] Head Size Unit",
+        "[Growth] Height",
+        "[Growth] Height Unit",
+        "[Growth] Weight",
+        "[Growth] Weight Unit",
+        "[Milestone] Milestone",
+        "[Vaccine] Vaccine",
+        "[Profile] Birth Date",
+        "[Profile] Birth Date (Adjusted)",
+        "[Profile] Sex",
+        "[Profile] Type",
+        "_familyKey",
+        "_profileKey",
+        "_activityKey"
+      ],
+      "row_count": 19,
+      "observed_row_widths": {
+        "69": 1,
+        "70": 18
+      },
+      "types": {
+        "Baby First": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Baby First] Baby First": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Baby First] Baby First": [
+              "Schema first smile"
+            ]
+          }
+        },
+        "Bottle Feed": {
+          "count": 2,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 2,
+            "Last Updated By Caregiver": 2,
+            "Note": 2,
+            "Profile Name": 2,
+            "Start Date/time": 2,
+            "Start Date/time (Epoch)": 2,
+            "Time Zone": 2,
+            "Type": 2,
+            "[Bottle Feed] Breast Milk Volume": 1,
+            "[Bottle Feed] Breast Milk Volume Unit": 1,
+            "[Bottle Feed] Formula Name": 1,
+            "[Bottle Feed] Formula Volume": 1,
+            "[Bottle Feed] Formula Volume Unit": 1,
+            "[Bottle Feed] Type": 2,
+            "_activityKey": 2,
+            "_familyKey": 2,
+            "_profileKey": 2
+          },
+          "synthetic_activity_values": {
+            "[Bottle Feed] Breast Milk Volume": [
+              "3.5"
+            ],
+            "[Bottle Feed] Breast Milk Volume Unit": [
+              "FLOZ"
+            ],
+            "[Bottle Feed] Formula Name": [
+              "Aptamil"
+            ],
+            "[Bottle Feed] Formula Volume": [
+              "90"
+            ],
+            "[Bottle Feed] Formula Volume Unit": [
+              "ML"
+            ],
+            "[Bottle Feed] Type": [
+              "Breast Milk",
+              "Formula"
+            ]
+          }
+        },
+        "Breastfeed": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Breastfeed] Begin Side": 1,
+            "[Breastfeed] End Side": 1,
+            "[Breastfeed] Left Duration (Seconds)": 1,
+            "[Breastfeed] Right Duration (Seconds)": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Breastfeed] Begin Side": [
+              "LEFT"
+            ],
+            "[Breastfeed] End Side": [
+              "RIGHT.nonTimer"
+            ],
+            "[Breastfeed] Left Duration (Seconds)": [
+              "600"
+            ],
+            "[Breastfeed] Right Duration (Seconds)": [
+              "300"
+            ]
+          }
+        },
+        "Combo Feed": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Combo Feed] Begin Side": 1,
+            "[Combo Feed] Breast Milk Volume": 1,
+            "[Combo Feed] Breast Milk Volume Unit": 1,
+            "[Combo Feed] End Side": 1,
+            "[Combo Feed] Formula Name": 1,
+            "[Combo Feed] Formula Volume": 1,
+            "[Combo Feed] Formula Volume Unit": 1,
+            "[Combo Feed] Left Duration (Seconds)": 1,
+            "[Combo Feed] Right Duration (Seconds)": 1,
+            "[Combo Feed] Type": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Combo Feed] Begin Side": [
+              "LEFT"
+            ],
+            "[Combo Feed] Breast Milk Volume": [
+              "1.5"
+            ],
+            "[Combo Feed] Breast Milk Volume Unit": [
+              "FLOZ"
+            ],
+            "[Combo Feed] End Side": [
+              "RIGHT.nonTimer"
+            ],
+            "[Combo Feed] Formula Name": [
+              "Aptamil"
+            ],
+            "[Combo Feed] Formula Volume": [
+              "60"
+            ],
+            "[Combo Feed] Formula Volume Unit": [
+              "ML"
+            ],
+            "[Combo Feed] Left Duration (Seconds)": [
+              "360"
+            ],
+            "[Combo Feed] Right Duration (Seconds)": [
+              "180"
+            ],
+            "[Combo Feed] Type": [
+              "Breast Milk Formula"
+            ]
+          }
+        },
+        "Diaper": {
+          "count": 4,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 4,
+            "Last Updated By Caregiver": 4,
+            "Note": 4,
+            "Profile Name": 4,
+            "Start Date/time": 4,
+            "Start Date/time (Epoch)": 4,
+            "Time Zone": 4,
+            "Type": 4,
+            "[Diaper] Detail": 1,
+            "[Diaper] Dirty Color": 1,
+            "[Diaper] Dirty Texture": 1,
+            "[Diaper] Type": 4,
+            "_activityKey": 4,
+            "_familyKey": 4,
+            "_profileKey": 4
+          },
+          "synthetic_activity_values": {
+            "[Diaper] Detail": [
+              "Blowout Rash"
+            ],
+            "[Diaper] Dirty Color": [
+              "BLACK BROWN GRAY GREEN RED YELLOW"
+            ],
+            "[Diaper] Dirty Texture": [
+              "MUCOUS MUSH PEBBLE RUN SOLID"
+            ],
+            "[Diaper] Type": [
+              "Dirty",
+              "Dirty Wet",
+              "Dry",
+              "Wet"
+            ]
+          }
+        },
+        "Growth": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Growth] Head Size": 1,
+            "[Growth] Head Size Unit": 1,
+            "[Growth] Height": 1,
+            "[Growth] Height Unit": 1,
+            "[Growth] Weight": 1,
+            "[Growth] Weight Unit": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Growth] Head Size": [
+              "40.5"
+            ],
+            "[Growth] Head Size Unit": [
+              "CM"
+            ],
+            "[Growth] Height": [
+              "62"
+            ],
+            "[Growth] Height Unit": [
+              "CM"
+            ],
+            "[Growth] Weight": [
+              "6.4"
+            ],
+            "[Growth] Weight Unit": [
+              "KG"
+            ]
+          }
+        },
+        "Medical": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Medical] Medication": 1,
+            "[Medical] Temperature": 1,
+            "[Medical] Temperature Unit": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Medical] Medication": [
+              "Amoxicillin, 1.25 (ML)\nPanadol, 2.5 (MG)"
+            ],
+            "[Medical] Temperature": [
+              "99.1"
+            ],
+            "[Medical] Temperature Unit": [
+              "F"
+            ]
+          }
+        },
+        "Milestone": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Milestone] Milestone": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Milestone] Milestone": [
+              "Looks at your face"
+            ]
+          }
+        },
+        "Profile": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Profile Name": 1,
+            "Type": 1,
+            "[Profile] Birth Date": 1,
+            "[Profile] Birth Date (Adjusted)": 1,
+            "[Profile] Type": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Profile] Birth Date": [
+              "2026-09-13"
+            ],
+            "[Profile] Birth Date (Adjusted)": [
+              "2026-10-13"
+            ],
+            "[Profile] Type": [
+              "CHILD"
+            ]
+          }
+        },
+        "Pump": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 1,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Pump] Duration (Seconds)": 1,
+            "[Pump] End Date/time": 1,
+            "[Pump] End Date/time (Epoch)": 1,
+            "[Pump] Left Volume": 1,
+            "[Pump] Left Volume Unit": 1,
+            "[Pump] Right Volume": 1,
+            "[Pump] Right Volume Unit": 1,
+            "_activityKey": 1,
+            "_familyKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Pump] Duration (Seconds)": [
+              "1200"
+            ],
+            "[Pump] End Date/time": [
+              "2026-10-13 11:38:46"
+            ],
+            "[Pump] End Date/time (Epoch)": [
+              "1791916726441"
+            ],
+            "[Pump] Left Volume": [
+              "1.25"
+            ],
+            "[Pump] Left Volume Unit": [
+              "FLOZ"
+            ],
+            "[Pump] Right Volume": [
+              "0.75"
+            ],
+            "[Pump] Right Volume Unit": [
+              "FLOZ"
+            ]
+          }
+        },
+        "Routine": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Routine] Routine": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Routine] Routine": [
+              "Bath"
+            ]
+          }
+        },
+        "Sleep": {
+          "count": 2,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 2,
+            "Last Updated By Caregiver": 2,
+            "Note": 2,
+            "Profile Name": 2,
+            "Start Date/time": 2,
+            "Start Date/time (Epoch)": 2,
+            "Time Zone": 2,
+            "Type": 2,
+            "[Sleep] Duration (Seconds)": 1,
+            "[Sleep] End Date/time": 1,
+            "[Sleep] End Date/time (Epoch)": 1,
+            "_activityKey": 2,
+            "_familyKey": 2,
+            "_profileKey": 2
+          },
+          "synthetic_activity_values": {
+            "[Sleep] Duration (Seconds)": [
+              "2700"
+            ],
+            "[Sleep] End Date/time": [
+              "2026-10-13 11:33:38"
+            ],
+            "[Sleep] End Date/time (Epoch)": [
+              "1791916418000"
+            ]
+          }
+        },
+        "Solid Feed": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Solid Feed] Food": 1,
+            "[Solid Feed] Meal": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Solid Feed] Food": [
+              "Apple: allergy=true; amountKey=ALL; preparationKeyz=PUREE; reactionKey=LOVE; note=Synthetic food note\nBanana: amountKey=SOME; preparationKeyz=RAW; reactionKey=LIKE"
+            ],
+            "[Solid Feed] Meal": [
+              "BREAKFAST"
+            ]
+          }
+        },
+        "Vaccine": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Vaccine] Vaccine": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Vaccine] Vaccine": [
+              "DTaP\nHepB"
+            ]
+          }
+        }
+      },
+      "limitations": [
+        "A recognized type can still contain fields or values the importer rejects.",
+        "Only populated fields in this export are observed; blank fields do not prove absence.",
+        "This inventory is not an import validation or proof of complete activity coverage."
+      ]
+    },
+    "child-completed-baseline.csv": {
+      "source_sha256": "88cd3a893db2551303d98a1d69316f2c4ec503a9564a1c9a54c4f9521411a396",
+      "column_count": 70,
+      "columns": [
+        "Type",
+        "Profile Name",
+        "Start Date/time",
+        "Start Date/time (Epoch)",
+        "Created By Caregiver",
+        "Last Updated By Caregiver",
+        "Note",
+        "Time Zone",
+        "[Sleep] Duration (Seconds)",
+        "[Sleep] End Date/time",
+        "[Sleep] End Date/time (Epoch)",
+        "[Diaper] Type",
+        "[Diaper] Detail",
+        "[Diaper] Dirty Color",
+        "[Diaper] Dirty Texture",
+        "[Medical] Medication",
+        "[Medical] Temperature",
+        "[Medical] Temperature Unit",
+        "[Routine] Routine",
+        "[Pump] Duration (Seconds)",
+        "[Pump] End Date/time",
+        "[Pump] End Date/time (Epoch)",
+        "[Pump] Left Volume",
+        "[Pump] Left Volume Unit",
+        "[Pump] Right Volume",
+        "[Pump] Right Volume Unit",
+        "[Pump] Total Volume",
+        "[Pump] Total Volume Unit",
+        "[Solid Feed] Food",
+        "[Solid Feed] Meal",
+        "[Combo Feed] Begin Side",
+        "[Combo Feed] End Side",
+        "[Combo Feed] Left Duration (Seconds)",
+        "[Combo Feed] Right Duration (Seconds)",
+        "[Combo Feed] Type",
+        "[Combo Feed] Breast Milk Volume",
+        "[Combo Feed] Breast Milk Volume Unit",
+        "[Combo Feed] Formula Name",
+        "[Combo Feed] Formula Volume",
+        "[Combo Feed] Formula Volume Unit",
+        "[Combo Feed] Volume",
+        "[Combo Feed] Volume Unit",
+        "[Breastfeed] Begin Side",
+        "[Breastfeed] End Side",
+        "[Breastfeed] Left Duration (Seconds)",
+        "[Breastfeed] Right Duration (Seconds)",
+        "[Bottle Feed] Type",
+        "[Bottle Feed] Breast Milk Volume",
+        "[Bottle Feed] Breast Milk Volume Unit",
+        "[Bottle Feed] Formula Name",
+        "[Bottle Feed] Formula Volume",
+        "[Bottle Feed] Formula Volume Unit",
+        "[Bottle Feed] Volume",
+        "[Bottle Feed] Volume Unit",
+        "[Baby First] Baby First",
+        "[Growth] Head Size",
+        "[Growth] Head Size Unit",
+        "[Growth] Height",
+        "[Growth] Height Unit",
+        "[Growth] Weight",
+        "[Growth] Weight Unit",
+        "[Milestone] Milestone",
+        "[Vaccine] Vaccine",
+        "[Profile] Birth Date",
+        "[Profile] Birth Date (Adjusted)",
+        "[Profile] Sex",
+        "[Profile] Type",
+        "_familyKey",
+        "_profileKey",
+        "_activityKey"
+      ],
+      "row_count": 19,
+      "observed_row_widths": {
+        "69": 1,
+        "70": 18
+      },
+      "types": {
+        "Baby First": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Baby First] Baby First": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Baby First] Baby First": [
+              "Schema first smile"
+            ]
+          }
+        },
+        "Bottle Feed": {
+          "count": 2,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 2,
+            "Last Updated By Caregiver": 2,
+            "Note": 2,
+            "Profile Name": 2,
+            "Start Date/time": 2,
+            "Start Date/time (Epoch)": 2,
+            "Time Zone": 2,
+            "Type": 2,
+            "[Bottle Feed] Breast Milk Volume": 1,
+            "[Bottle Feed] Breast Milk Volume Unit": 1,
+            "[Bottle Feed] Formula Name": 1,
+            "[Bottle Feed] Formula Volume": 1,
+            "[Bottle Feed] Formula Volume Unit": 1,
+            "[Bottle Feed] Type": 2,
+            "_activityKey": 2,
+            "_familyKey": 2,
+            "_profileKey": 2
+          },
+          "synthetic_activity_values": {
+            "[Bottle Feed] Breast Milk Volume": [
+              "3.5"
+            ],
+            "[Bottle Feed] Breast Milk Volume Unit": [
+              "FLOZ"
+            ],
+            "[Bottle Feed] Formula Name": [
+              "Aptamil"
+            ],
+            "[Bottle Feed] Formula Volume": [
+              "90"
+            ],
+            "[Bottle Feed] Formula Volume Unit": [
+              "ML"
+            ],
+            "[Bottle Feed] Type": [
+              "Breast Milk",
+              "Formula"
+            ]
+          }
+        },
+        "Breastfeed": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Breastfeed] Begin Side": 1,
+            "[Breastfeed] End Side": 1,
+            "[Breastfeed] Left Duration (Seconds)": 1,
+            "[Breastfeed] Right Duration (Seconds)": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Breastfeed] Begin Side": [
+              "LEFT"
+            ],
+            "[Breastfeed] End Side": [
+              "RIGHT.nonTimer"
+            ],
+            "[Breastfeed] Left Duration (Seconds)": [
+              "600"
+            ],
+            "[Breastfeed] Right Duration (Seconds)": [
+              "300"
+            ]
+          }
+        },
+        "Combo Feed": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Combo Feed] Begin Side": 1,
+            "[Combo Feed] Breast Milk Volume": 1,
+            "[Combo Feed] Breast Milk Volume Unit": 1,
+            "[Combo Feed] End Side": 1,
+            "[Combo Feed] Formula Name": 1,
+            "[Combo Feed] Formula Volume": 1,
+            "[Combo Feed] Formula Volume Unit": 1,
+            "[Combo Feed] Left Duration (Seconds)": 1,
+            "[Combo Feed] Right Duration (Seconds)": 1,
+            "[Combo Feed] Type": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Combo Feed] Begin Side": [
+              "LEFT"
+            ],
+            "[Combo Feed] Breast Milk Volume": [
+              "1.5"
+            ],
+            "[Combo Feed] Breast Milk Volume Unit": [
+              "FLOZ"
+            ],
+            "[Combo Feed] End Side": [
+              "RIGHT.nonTimer"
+            ],
+            "[Combo Feed] Formula Name": [
+              "Aptamil"
+            ],
+            "[Combo Feed] Formula Volume": [
+              "60"
+            ],
+            "[Combo Feed] Formula Volume Unit": [
+              "ML"
+            ],
+            "[Combo Feed] Left Duration (Seconds)": [
+              "360"
+            ],
+            "[Combo Feed] Right Duration (Seconds)": [
+              "180"
+            ],
+            "[Combo Feed] Type": [
+              "Breast Milk Formula"
+            ]
+          }
+        },
+        "Diaper": {
+          "count": 4,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 4,
+            "Last Updated By Caregiver": 4,
+            "Note": 4,
+            "Profile Name": 4,
+            "Start Date/time": 4,
+            "Start Date/time (Epoch)": 4,
+            "Time Zone": 4,
+            "Type": 4,
+            "[Diaper] Detail": 1,
+            "[Diaper] Dirty Color": 1,
+            "[Diaper] Dirty Texture": 1,
+            "[Diaper] Type": 4,
+            "_activityKey": 4,
+            "_familyKey": 4,
+            "_profileKey": 4
+          },
+          "synthetic_activity_values": {
+            "[Diaper] Detail": [
+              "Blowout Rash"
+            ],
+            "[Diaper] Dirty Color": [
+              "BLACK BROWN GRAY GREEN RED YELLOW"
+            ],
+            "[Diaper] Dirty Texture": [
+              "MUCOUS MUSH PEBBLE RUN SOLID"
+            ],
+            "[Diaper] Type": [
+              "Dirty",
+              "Dirty Wet",
+              "Dry",
+              "Wet"
+            ]
+          }
+        },
+        "Growth": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Growth] Head Size": 1,
+            "[Growth] Head Size Unit": 1,
+            "[Growth] Height": 1,
+            "[Growth] Height Unit": 1,
+            "[Growth] Weight": 1,
+            "[Growth] Weight Unit": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Growth] Head Size": [
+              "40.5"
+            ],
+            "[Growth] Head Size Unit": [
+              "CM"
+            ],
+            "[Growth] Height": [
+              "62"
+            ],
+            "[Growth] Height Unit": [
+              "CM"
+            ],
+            "[Growth] Weight": [
+              "6.4"
+            ],
+            "[Growth] Weight Unit": [
+              "KG"
+            ]
+          }
+        },
+        "Medical": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Medical] Medication": 1,
+            "[Medical] Temperature": 1,
+            "[Medical] Temperature Unit": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Medical] Medication": [
+              "Amoxicillin, 1.25 (ML)\nPanadol, 2.5 (MG)"
+            ],
+            "[Medical] Temperature": [
+              "99.1"
+            ],
+            "[Medical] Temperature Unit": [
+              "F"
+            ]
+          }
+        },
+        "Milestone": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Milestone] Milestone": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Milestone] Milestone": [
+              "Looks at your face"
+            ]
+          }
+        },
+        "Profile": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Profile Name": 1,
+            "Type": 1,
+            "[Profile] Birth Date": 1,
+            "[Profile] Birth Date (Adjusted)": 1,
+            "[Profile] Type": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Profile] Birth Date": [
+              "2026-09-13"
+            ],
+            "[Profile] Birth Date (Adjusted)": [
+              "2026-10-13"
+            ],
+            "[Profile] Type": [
+              "CHILD"
+            ]
+          }
+        },
+        "Pump": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 1,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Pump] Duration (Seconds)": 1,
+            "[Pump] End Date/time": 1,
+            "[Pump] End Date/time (Epoch)": 1,
+            "[Pump] Left Volume": 1,
+            "[Pump] Left Volume Unit": 1,
+            "[Pump] Right Volume": 1,
+            "[Pump] Right Volume Unit": 1,
+            "_activityKey": 1,
+            "_familyKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Pump] Duration (Seconds)": [
+              "1200"
+            ],
+            "[Pump] End Date/time": [
+              "2026-10-13 11:38:46"
+            ],
+            "[Pump] End Date/time (Epoch)": [
+              "1791916726441"
+            ],
+            "[Pump] Left Volume": [
+              "1.25"
+            ],
+            "[Pump] Left Volume Unit": [
+              "FLOZ"
+            ],
+            "[Pump] Right Volume": [
+              "0.75"
+            ],
+            "[Pump] Right Volume Unit": [
+              "FLOZ"
+            ]
+          }
+        },
+        "Routine": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Routine] Routine": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Routine] Routine": [
+              "Bath"
+            ]
+          }
+        },
+        "Sleep": {
+          "count": 2,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 2,
+            "Last Updated By Caregiver": 2,
+            "Note": 2,
+            "Profile Name": 2,
+            "Start Date/time": 2,
+            "Start Date/time (Epoch)": 2,
+            "Time Zone": 2,
+            "Type": 2,
+            "[Sleep] Duration (Seconds)": 2,
+            "[Sleep] End Date/time": 2,
+            "[Sleep] End Date/time (Epoch)": 2,
+            "_activityKey": 2,
+            "_familyKey": 2,
+            "_profileKey": 2
+          },
+          "synthetic_activity_values": {
+            "[Sleep] Duration (Seconds)": [
+              "2700",
+              "586"
+            ],
+            "[Sleep] End Date/time": [
+              "2026-10-13 11:33:38",
+              "2026-10-13 11:43:38"
+            ],
+            "[Sleep] End Date/time (Epoch)": [
+              "1791916418000",
+              "1791917018000"
+            ]
+          }
+        },
+        "Solid Feed": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Solid Feed] Food": 1,
+            "[Solid Feed] Meal": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Solid Feed] Food": [
+              "Apple: allergy=true; amountKey=ALL; preparationKeyz=PUREE; reactionKey=LOVE; note=Synthetic food note\nBanana: amountKey=SOME; preparationKeyz=RAW; reactionKey=LIKE"
+            ],
+            "[Solid Feed] Meal": [
+              "BREAKFAST"
+            ]
+          }
+        },
+        "Vaccine": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Vaccine] Vaccine": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Vaccine] Vaccine": [
+              "DTaP\nHepB"
+            ]
+          }
+        }
+      },
+      "limitations": [
+        "A recognized type can still contain fields or values the importer rejects.",
+        "Only populated fields in this export are observed; blank fields do not prove absence.",
+        "This inventory is not an import validation or proof of complete activity coverage."
+      ]
+    },
+    "postpartum-after-appointments.csv": {
+      "source_sha256": "63635ad7375ce5b285f3e23e6295f7a476e68b3bdb6a235b12b96970d97123b2",
+      "column_count": 29,
+      "columns": [
+        "Type",
+        "Profile Name",
+        "Start Date/time",
+        "Start Date/time (Epoch)",
+        "Created By Caregiver",
+        "Last Updated By Caregiver",
+        "Note",
+        "Time Zone",
+        "[Postpartum Routine] Routine",
+        "[Postpartum Mood] Mood",
+        "[Postpartum Mood] Strength",
+        "[Postpartum Health] Medicine",
+        "[Postpartum Health] Symptom",
+        "[Postpartum Health] Temperature",
+        "[Postpartum Health] Temperature Unit",
+        "[Postpartum Diet] Food",
+        "[Postpartum Diet] Meal",
+        "[Postpartum Hydration] Volume",
+        "[Postpartum Hydration] Volume Unit",
+        "[Postpartum Sleep] Duration (Seconds)",
+        "[Postpartum Sleep] End Date/time",
+        "[Postpartum Sleep] End Date/time (Epoch)",
+        "[Profile] Birth Date",
+        "[Profile] Birth Date (Adjusted)",
+        "[Profile] Sex",
+        "[Profile] Type",
+        "_familyKey",
+        "_profileKey",
+        "_activityKey"
+      ],
+      "row_count": 8,
+      "observed_row_widths": {
+        "28": 1,
+        "29": 7
+      },
+      "types": {
+        "Postpartum Diet": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Diet] Food": 1,
+            "[Postpartum Diet] Meal": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Diet] Food": [
+              "Schema salad: foodCategoryKey=GRAIN; note=Synthetic parent food note"
+            ],
+            "[Postpartum Diet] Meal": [
+              "LUNCH"
+            ]
+          }
+        },
+        "Postpartum Health": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Health] Medicine": 1,
+            "[Postpartum Health] Symptom": 1,
+            "[Postpartum Health] Temperature": 1,
+            "[Postpartum Health] Temperature Unit": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Health] Medicine": [
+              "Schema supplement, 1 (TAB)"
+            ],
+            "[Postpartum Health] Symptom": [
+              "Constipation\nHeadache"
+            ],
+            "[Postpartum Health] Temperature": [
+              "36.7"
+            ],
+            "[Postpartum Health] Temperature Unit": [
+              "C"
+            ]
+          }
+        },
+        "Postpartum Hydration": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Hydration] Volume": 1,
+            "[Postpartum Hydration] Volume Unit": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Hydration] Volume": [
+              "1.5"
+            ],
+            "[Postpartum Hydration] Volume Unit": [
+              "GLASS"
+            ]
+          }
+        },
+        "Postpartum Journal": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {}
+        },
+        "Postpartum Mood": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Mood] Mood": 1,
+            "[Postpartum Mood] Strength": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Mood] Mood": [
+              "HAPPY"
+            ],
+            "[Postpartum Mood] Strength": [
+              "MEDIUM"
+            ]
+          }
+        },
+        "Postpartum Routine": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Routine] Routine": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Routine] Routine": [
+              "Schema walk"
+            ]
+          }
+        },
+        "Postpartum Sleep": {
+          "count": 1,
+          "recognized_by_current_csv_importer": false,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Created By Caregiver": 1,
+            "Last Updated By Caregiver": 1,
+            "Note": 1,
+            "Profile Name": 1,
+            "Start Date/time": 1,
+            "Start Date/time (Epoch)": 1,
+            "Time Zone": 1,
+            "Type": 1,
+            "[Postpartum Sleep] Duration (Seconds)": 1,
+            "[Postpartum Sleep] End Date/time": 1,
+            "[Postpartum Sleep] End Date/time (Epoch)": 1,
+            "_activityKey": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Postpartum Sleep] Duration (Seconds)": [
+              "1800"
+            ],
+            "[Postpartum Sleep] End Date/time": [
+              "2026-10-13 11:59:38"
+            ],
+            "[Postpartum Sleep] End Date/time (Epoch)": [
+              "1791917978000"
+            ]
+          }
+        },
+        "Profile": {
+          "count": 1,
+          "recognized_by_current_csv_importer": true,
+          "rows_without_profile": 0,
+          "populated_columns": {
+            "Profile Name": 1,
+            "Type": 1,
+            "[Profile] Type": 1,
+            "_familyKey": 1,
+            "_profileKey": 1
+          },
+          "synthetic_activity_values": {
+            "[Profile] Type": [
+              "PARENT"
+            ]
+          }
+        }
+      },
+      "limitations": [
+        "A recognized type can still contain fields or values the importer rejects.",
+        "Only populated fields in this export are observed; blank fields do not prove absence.",
+        "This inventory is not an import validation or proof of complete activity coverage."
+      ]
+    }
+  },
+  "observed_types": {
+    "Baby First": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Baby First] Baby First": [
+          "Schema first smile"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-018",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA baby-first-08"
+        }
+      ]
+    },
+    "Bottle Feed": {
+      "final_row_count": 2,
+      "populated_specific_fields": {
+        "[Bottle Feed] Breast Milk Volume": [
+          "3.5"
+        ],
+        "[Bottle Feed] Breast Milk Volume Unit": [
+          "FLOZ"
+        ],
+        "[Bottle Feed] Formula Name": [
+          "Aptamil"
+        ],
+        "[Bottle Feed] Formula Volume": [
+          "90"
+        ],
+        "[Bottle Feed] Formula Volume Unit": [
+          "ML"
+        ],
+        "[Bottle Feed] Type": [
+          "Breast Milk",
+          "Formula"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-015",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA bottle-formula-ml-02"
+        },
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-016",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA bottle-milk-floz-01"
+        }
+      ]
+    },
+    "Breastfeed": {
+      "final_row_count": 2,
+      "populated_specific_fields": {
+        "[Breastfeed] Begin Side": [
+          "LEFT"
+        ],
+        "[Breastfeed] End Side": [
+          "RIGHT",
+          "RIGHT.nonTimer"
+        ],
+        "[Breastfeed] Left Duration (Seconds)": [
+          "264",
+          "600"
+        ],
+        "[Breastfeed] Right Duration (Seconds)": [
+          "300",
+          "33"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-001",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA nursing-timer-36"
+        },
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-014",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA nursing-manual-both-03"
+        }
+      ]
+    },
+    "Combo Feed": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Combo Feed] Begin Side": [
+          "LEFT"
+        ],
+        "[Combo Feed] Breast Milk Volume": [
+          "1.5"
+        ],
+        "[Combo Feed] Breast Milk Volume Unit": [
+          "FLOZ"
+        ],
+        "[Combo Feed] End Side": [
+          "RIGHT.nonTimer"
+        ],
+        "[Combo Feed] Formula Name": [
+          "Aptamil"
+        ],
+        "[Combo Feed] Formula Volume": [
+          "60"
+        ],
+        "[Combo Feed] Formula Volume Unit": [
+          "ML"
+        ],
+        "[Combo Feed] Left Duration (Seconds)": [
+          "360"
+        ],
+        "[Combo Feed] Right Duration (Seconds)": [
+          "180"
+        ],
+        "[Combo Feed] Type": [
+          "Breast Milk Formula"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-013",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA combo-mixed-04"
+        }
+      ]
+    },
+    "Diaper": {
+      "final_row_count": 4,
+      "populated_specific_fields": {
+        "[Diaper] Detail": [
+          "Blowout Rash"
+        ],
+        "[Diaper] Dirty Color": [
+          "BLACK BROWN GRAY GREEN RED YELLOW"
+        ],
+        "[Diaper] Dirty Texture": [
+          "MUCOUS MUSH PEBBLE RUN SOLID"
+        ],
+        "[Diaper] Type": [
+          "Dirty",
+          "Dirty Wet",
+          "Dry",
+          "Wet"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-005",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA diaper-dirty-16"
+        },
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-006",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA diaper-wet-15"
+        },
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-007",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA diaper-dry-14"
+        },
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-008",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA diaper-all-observations-13"
+        }
+      ]
+    },
+    "Growth": {
+      "final_row_count": 3,
+      "populated_specific_fields": {
+        "[Growth] Head Size": [
+          "15.25",
+          "40.5"
+        ],
+        "[Growth] Head Size Unit": [
+          "CM",
+          "IN"
+        ],
+        "[Growth] Height": [
+          "23.75",
+          "62"
+        ],
+        "[Growth] Height Unit": [
+          "CM",
+          "IN"
+        ],
+        "[Growth] Weight": [
+          "12.21875",
+          "6.4"
+        ],
+        "[Growth] Weight Unit": [
+          "KG",
+          "LB"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-019",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA growth-metric-09"
+        },
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-022",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA growth-imperial-33"
+        },
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-023",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA growth-head-only-inch-33b"
+        }
+      ]
+    },
+    "Medical": {
+      "final_row_count": 2,
+      "populated_specific_fields": {
+        "[Medical] Medication": [
+          "Amoxicillin, 1.25 (ML)\nPanadol, 2.5 (MG)"
+        ],
+        "[Medical] Temperature": [
+          "36.6",
+          "99.1"
+        ],
+        "[Medical] Temperature Unit": [
+          "C",
+          "F"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-003",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA medical-temperature-only-34"
+        },
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-009",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA medical-multi-dose-temp-11"
+        }
+      ]
+    },
+    "Milestone": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Milestone] Milestone": [
+          "Looks at your face"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-020",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA milestone-curated-10"
+        }
+      ]
+    },
+    "Postpartum Diet": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Postpartum Diet] Food": [
+          "Schema salad: foodCategoryKey=GRAIN; note=Synthetic parent food note"
+        ],
+        "[Postpartum Diet] Meal": [
+          "LUNCH"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/postpartum.csv",
+          "activity_id": "synthetic-activity-028",
+          "profile_id": "synthetic-profile-002",
+          "note_marker": "SCHEMA parent-nutrition-20"
+        }
+      ]
+    },
+    "Postpartum Health": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Postpartum Health] Medicine": [
+          "Schema supplement, 1 (TAB)"
+        ],
+        "[Postpartum Health] Symptom": [
+          "Constipation\nHeadache"
+        ],
+        "[Postpartum Health] Temperature": [
+          "36.7"
+        ],
+        "[Postpartum Health] Temperature Unit": [
+          "C"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/postpartum.csv",
+          "activity_id": "synthetic-activity-027",
+          "profile_id": "synthetic-profile-002",
+          "note_marker": "SCHEMA parent-health-symptoms-med-temp-21"
+        }
+      ]
+    },
+    "Postpartum Hydration": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Postpartum Hydration] Volume": [
+          "1.5"
+        ],
+        "[Postpartum Hydration] Volume Unit": [
+          "GLASS"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/postpartum.csv",
+          "activity_id": "synthetic-activity-029",
+          "profile_id": "synthetic-profile-002",
+          "note_marker": "SCHEMA parent-hydration-glass-19"
+        }
+      ]
+    },
+    "Postpartum Journal": {
+      "final_row_count": 1,
+      "populated_specific_fields": {},
+      "samples": [
+        {
+          "fixture": "fixtures/postpartum.csv",
+          "activity_id": "synthetic-activity-025",
+          "profile_id": "synthetic-profile-002",
+          "note_marker": "SCHEMA parent-journal-23"
+        }
+      ]
+    },
+    "Postpartum Mood": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Postpartum Mood] Mood": [
+          "HAPPY"
+        ],
+        "[Postpartum Mood] Strength": [
+          "MEDIUM"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/postpartum.csv",
+          "activity_id": "synthetic-activity-026",
+          "profile_id": "synthetic-profile-002",
+          "note_marker": "SCHEMA parent-mood-22"
+        }
+      ]
+    },
+    "Postpartum Routine": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Postpartum Routine] Routine": [
+          "Schema walk"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/postpartum.csv",
+          "activity_id": "synthetic-activity-024",
+          "profile_id": "synthetic-profile-002",
+          "note_marker": "SCHEMA parent-routine-24"
+        }
+      ]
+    },
+    "Postpartum Sleep": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Postpartum Sleep] Duration (Seconds)": [
+          "1800"
+        ],
+        "[Postpartum Sleep] End Date/time": [
+          "2026-10-13 11:59:38"
+        ],
+        "[Postpartum Sleep] End Date/time (Epoch)": [
+          "1791917978000"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/postpartum.csv",
+          "activity_id": "synthetic-activity-030",
+          "profile_id": "synthetic-profile-002",
+          "note_marker": "SCHEMA parent-sleep-25"
+        }
+      ]
+    },
+    "Pregnancy Health": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Pregnancy Health] Diastolic Blood Pressure": [
+          "80"
+        ],
+        "[Pregnancy Health] Diastolic Blood Pressure Unit": [
+          "MMHG"
+        ],
+        "[Pregnancy Health] Glucose": [
+          "5.3"
+        ],
+        "[Pregnancy Health] Glucose Unit": [
+          "MMOLL"
+        ],
+        "[Pregnancy Health] Systolic Blood Pressure": [
+          "120"
+        ],
+        "[Pregnancy Health] Systolic Blood Pressure Unit": [
+          "MMHG"
+        ],
+        "[Pregnancy Health] Temperature": [
+          "98.2"
+        ],
+        "[Pregnancy Health] Temperature Unit": [
+          "F"
+        ],
+        "[Pregnancy Health] Weight": [
+          "160.5"
+        ],
+        "[Pregnancy Health] Weight Unit": [
+          "LB"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/pregnancy.csv",
+          "activity_id": "synthetic-activity-035",
+          "profile_id": "synthetic-profile-003",
+          "note_marker": "SCHEMA pregnancy-vitals-26"
+        }
+      ]
+    },
+    "Pregnancy Journal": {
+      "final_row_count": 1,
+      "populated_specific_fields": {},
+      "samples": [
+        {
+          "fixture": "fixtures/pregnancy.csv",
+          "activity_id": "synthetic-activity-031",
+          "profile_id": "synthetic-profile-003",
+          "note_marker": "SCHEMA pregnancy-journal-photo-30"
+        }
+      ]
+    },
+    "Pregnancy Medicines": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Pregnancy Medicines] Medicine": [
+          "Schema drops, 2 (DROP)\nSchema syrup, 0.5 (TSP)"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/pregnancy.csv",
+          "activity_id": "synthetic-activity-034",
+          "profile_id": "synthetic-profile-003",
+          "note_marker": "SCHEMA pregnancy-medication-27"
+        }
+      ]
+    },
+    "Pregnancy Mood": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Pregnancy Mood] Mood": [
+          "ANXIOUS"
+        ],
+        "[Pregnancy Mood] Strength": [
+          "LOW"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/pregnancy.csv",
+          "activity_id": "synthetic-activity-032",
+          "profile_id": "synthetic-profile-003",
+          "note_marker": "SCHEMA pregnancy-mood-29"
+        }
+      ]
+    },
+    "Pregnancy Symptoms": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Pregnancy Symptoms] Symptom": [
+          "Fatigue\nNausea\nSchema symptom"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/pregnancy.csv",
+          "activity_id": "synthetic-activity-033",
+          "profile_id": "synthetic-profile-003",
+          "note_marker": "SCHEMA pregnancy-symptoms-28"
+        }
+      ]
+    },
+    "Profile": {
+      "final_row_count": 3,
+      "populated_specific_fields": {
+        "[Profile] Birth Date": [
+          "2026-09-13"
+        ],
+        "[Profile] Birth Date (Adjusted)": [
+          "2026-10-13"
+        ],
+        "[Profile] Sex": [
+          "FEMALE"
+        ],
+        "[Profile] Type": [
+          "CHILD",
+          "PARENT",
+          "PREGNANCY"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": null,
+          "profile_id": "synthetic-profile-001",
+          "note_marker": null
+        },
+        {
+          "fixture": "fixtures/postpartum.csv",
+          "activity_id": null,
+          "profile_id": "synthetic-profile-002",
+          "note_marker": null
+        },
+        {
+          "fixture": "fixtures/pregnancy.csv",
+          "activity_id": null,
+          "profile_id": "synthetic-profile-003",
+          "note_marker": null
+        }
+      ]
+    },
+    "Pump": {
+      "final_row_count": 2,
+      "populated_specific_fields": {
+        "[Pump] Duration (Seconds)": [
+          "0",
+          "1200"
+        ],
+        "[Pump] End Date/time": [
+          "2026-10-13 11:38:46",
+          "2026-10-13 13:03:00"
+        ],
+        "[Pump] End Date/time (Epoch)": [
+          "1791916726441",
+          "1791921780000"
+        ],
+        "[Pump] Left Volume": [
+          "1.25"
+        ],
+        "[Pump] Left Volume Unit": [
+          "FLOZ"
+        ],
+        "[Pump] Right Volume": [
+          "0.75"
+        ],
+        "[Pump] Right Volume Unit": [
+          "FLOZ"
+        ],
+        "[Pump] Total Volume": [
+          "110"
+        ],
+        "[Pump] Total Volume Unit": [
+          "ML"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-002",
+          "profile_id": null,
+          "note_marker": "SCHEMA pump-total-ml-35"
+        },
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-011",
+          "profile_id": null,
+          "note_marker": "SCHEMA pump-sides-floz-06"
+        }
+      ]
+    },
+    "Routine": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Routine] Routine": [
+          "Bath"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-010",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA routine-bath-07"
+        }
+      ]
+    },
+    "Sleep": {
+      "final_row_count": 2,
+      "populated_specific_fields": {
+        "[Sleep] Duration (Seconds)": [
+          "2700",
+          "586"
+        ],
+        "[Sleep] End Date/time": [
+          "2026-10-13 11:33:38",
+          "2026-10-13 11:43:38"
+        ],
+        "[Sleep] End Date/time (Epoch)": [
+          "1791916418000",
+          "1791917018000"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-004",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA sleep-timer-18"
+        },
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-017",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA sleep-manual-17"
+        }
+      ]
+    },
+    "Solid Feed": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Solid Feed] Food": [
+          "Apple: allergy=true; amountKey=ALL; preparationKeyz=PUREE; reactionKey=LOVE; note=Synthetic food note\nBanana: amountKey=SOME; preparationKeyz=RAW; reactionKey=LIKE"
+        ],
+        "[Solid Feed] Meal": [
+          "BREAKFAST"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-012",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA solids-multi-food-05"
+        }
+      ]
+    },
+    "Vaccine": {
+      "final_row_count": 1,
+      "populated_specific_fields": {
+        "[Vaccine] Vaccine": [
+          "DTaP\nHepB"
+        ]
+      },
+      "samples": [
+        {
+          "fixture": "fixtures/child-final.csv",
+          "activity_id": "synthetic-activity-021",
+          "profile_id": "synthetic-profile-001",
+          "note_marker": "SCHEMA vaccines-multi-12"
+        }
+      ]
+    }
+  }
+}

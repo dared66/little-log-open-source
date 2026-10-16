@@ -1,0 +1,7 @@
+What’s new
+
+• See how long it’s been since the last activity right on your Quick Log buttons. Turn this on in Quick Log → Customize.
+
+• Live timers have been improved. Please try them in the app and on your Lock Screen, including pausing, resuming and finishing a session.
+
+• There’s a new Help screen in Settings with the full list of Siri commands, plus help with setup, sharing and other common questions.

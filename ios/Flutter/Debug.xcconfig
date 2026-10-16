@@ -1,0 +1,4 @@
+GOOGLE_IOS_REVERSED_CLIENT_ID=
+#include? "GoogleConfig.xcconfig"
+#include "Generated.xcconfig"
+#include "SimulatorSigning.xcconfig"

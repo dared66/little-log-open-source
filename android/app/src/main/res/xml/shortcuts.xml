@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <shortcut android:shortcutId="diaper" android:enabled="true"
+        android:icon="@drawable/shortcut_diaper"
+        android:shortcutShortLabel="@string/shortcut_diaper">
+        <intent android:action="app.littlelog.quick.diaper"
+            android:targetPackage="app.littlelog.little_log"
+            android:targetClass="app.littlelog.little_log.MainActivity"/>
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_diaper"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="nursing_left" android:enabled="true"
+        android:icon="@drawable/shortcut_nursing"
+        android:shortcutShortLabel="@string/shortcut_nursing_left">
+        <intent android:action="app.littlelog.quick.nursing_left"
+            android:targetPackage="app.littlelog.little_log"
+            android:targetClass="app.littlelog.little_log.MainActivity"/>
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_nursing_left"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="nursing_right" android:enabled="true"
+        android:icon="@drawable/shortcut_nursing"
+        android:shortcutShortLabel="@string/shortcut_nursing_right">
+        <intent android:action="app.littlelog.quick.nursing_right"
+            android:targetPackage="app.littlelog.little_log"
+            android:targetClass="app.littlelog.little_log.MainActivity"/>
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_nursing_right"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="sleep" android:enabled="true"
+        android:icon="@drawable/shortcut_sleep"
+        android:shortcutShortLabel="@string/shortcut_sleep">
+        <intent android:action="app.littlelog.quick.sleep"
+            android:targetPackage="app.littlelog.little_log"
+            android:targetClass="app.littlelog.little_log.MainActivity"/>
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_sleep"/>
+        </capability-binding>
+    </shortcut>
+    <!-- Voice inventory entries have no launcher intent or label. -->
+    <shortcut android:shortcutId="wet_diaper">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_wet_diaper"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="dirty_diaper">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_dirty_diaper"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="both_diaper">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_both_diaper"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="dry_diaper">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_dry_diaper"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="pumping">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_pumping"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="finish_sleep">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_finish_sleep"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="finish_nursing">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_finish_nursing"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="finish_pumping">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_finish_pumping"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="last_diaper">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_last_diaper"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="last_wet_diaper">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_last_wet_diaper"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="last_dirty_diaper">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_last_dirty_diaper"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="last_feed">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_last_feed"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="last_bottle">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_last_bottle"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="last_nursing">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_last_nursing"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="last_solids">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_last_solids"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="last_sleep">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_last_sleep"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="last_wake">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_last_wake"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="last_pumping">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_last_pumping"/>
+        </capability-binding>
+    </shortcut>
+    <shortcut android:shortcutId="sleep_status">
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="@array/voice_feature_sleep_status"/>
+        </capability-binding>
+    </shortcut>
+    <capability android:name="actions.intent.OPEN_APP_FEATURE">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity">
+            <url-template android:value="littlelog://voice/{feature}"/>
+            <parameter android:name="feature" android:key="feature" android:required="true" app:shortcutMatchRequired="true"/>
+        </intent>
+        <intent android:action="android.intent.action.MAIN" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity"/>
+    </capability>
+    <capability android:name="custom.actions.intent.ADD_DIAPER" app:queryPatterns="@array/voice_queries_add_diaper">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity">
+            <url-template android:value="littlelog://voice/add_diaper{?kind}"/>
+            <parameter android:name="kind" android:key="kind" android:mimeType="https://schema.org/Text" android:required="true"/>
+        </intent>
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/open_diaper"/>
+    </capability>
+    <capability android:name="custom.actions.intent.START_NURSING" app:queryPatterns="@array/voice_queries_start_nursing">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity">
+            <url-template android:value="littlelog://voice/nursing{?side}"/>
+            <parameter android:name="side" android:key="side" android:mimeType="https://schema.org/Text" android:required="true"/>
+        </intent>
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/open_nursing"/>
+    </capability>
+    <capability android:name="custom.actions.intent.START_SLEEP" app:queryPatterns="@array/voice_queries_start_sleep">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/sleep"/>
+    </capability>
+    <capability android:name="custom.actions.intent.FINISH_SLEEP" app:queryPatterns="@array/voice_queries_finish_sleep">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/finish_sleep"/>
+    </capability>
+    <capability android:name="custom.actions.intent.FINISH_NURSING" app:queryPatterns="@array/voice_queries_finish_nursing">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/finish_nursing"/>
+    </capability>
+    <capability android:name="custom.actions.intent.START_PUMPING" app:queryPatterns="@array/voice_queries_start_pumping">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/pumping"/>
+    </capability>
+    <capability android:name="custom.actions.intent.FINISH_PUMPING" app:queryPatterns="@array/voice_queries_finish_pumping">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity">
+            <url-template android:value="littlelog://voice/finish_pumping{?amount,unit}"/>
+            <parameter android:name="amount" android:key="amount" android:mimeType="https://schema.org/Number" android:required="true"/>
+            <parameter android:name="unit" android:key="unit" android:mimeType="https://schema.org/Text" android:required="true"/>
+        </intent>
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/review_pumping"/>
+    </capability>
+    <capability android:name="custom.actions.intent.LAST_DIAPER" app:queryPatterns="@array/voice_queries_last_diaper">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/last_diaper"/>
+    </capability>
+    <capability android:name="custom.actions.intent.LAST_WET_DIAPER" app:queryPatterns="@array/voice_queries_last_wet_diaper">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/last_wet_diaper"/>
+    </capability>
+    <capability android:name="custom.actions.intent.LAST_DIRTY_DIAPER" app:queryPatterns="@array/voice_queries_last_dirty_diaper">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/last_dirty_diaper"/>
+    </capability>
+    <capability android:name="custom.actions.intent.LAST_FEED" app:queryPatterns="@array/voice_queries_last_feed">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/last_feed"/>
+    </capability>
+    <capability android:name="custom.actions.intent.LAST_BOTTLE" app:queryPatterns="@array/voice_queries_last_bottle">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/last_bottle"/>
+    </capability>
+    <capability android:name="custom.actions.intent.LAST_NURSING" app:queryPatterns="@array/voice_queries_last_nursing">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/last_nursing"/>
+    </capability>
+    <capability android:name="custom.actions.intent.LAST_SOLIDS" app:queryPatterns="@array/voice_queries_last_solids">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/last_solids"/>
+    </capability>
+    <capability android:name="custom.actions.intent.LAST_SLEEP" app:queryPatterns="@array/voice_queries_last_sleep">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/last_sleep"/>
+    </capability>
+    <capability android:name="custom.actions.intent.LAST_WAKE" app:queryPatterns="@array/voice_queries_last_wake">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/last_wake"/>
+    </capability>
+    <capability android:name="custom.actions.intent.LAST_PUMPING" app:queryPatterns="@array/voice_queries_last_pumping">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/last_pumping"/>
+    </capability>
+    <capability android:name="custom.actions.intent.SLEEP_STATUS" app:queryPatterns="@array/voice_queries_sleep_status">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="app.littlelog.little_log" android:targetClass="app.littlelog.little_log.MainActivity" android:data="littlelog://voice/sleep_status"/>
+    </capability>
+</shortcuts>

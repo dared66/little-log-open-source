@@ -1,0 +1,10 @@
+{
+  "RUN_LIVE_DRIVE": false,
+  "LIVE_MODE": "read",
+  "LIVE_ACCOUNT": "tester@example.com",
+  "LIVE_OWNER": "owner@example.com",
+  "LIVE_FILE_ID": "",
+  "LIVE_RECIPIENT": "",
+  "LIVE_QA_BABY": "Synthetic QA baby",
+  "LIVE_VERIFY_BOTH": false
+}
