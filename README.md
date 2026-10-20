@@ -50,6 +50,8 @@ Never place client secrets or access/refresh tokens in the app.
 
 See [configuration storage](docs/CONFIGURATION.md) for the separation between
 public examples, private maintainer settings, encrypted keys and opt-in live tests.
+Maintainers should also read the [publication process](docs/PUBLICATION.md) for
+repository roles and safe updates from private development.
 
 ## Data and synchronization
 

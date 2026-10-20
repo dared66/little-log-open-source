@@ -1,3 +1,27 @@
+# Public source and private history
+
+Read [the publication process](docs/PUBLICATION.md) before committing, opening a
+pull request, building a release, or moving changes between repositories.
+
+The public repository is `dared66/little-log-open-source`. It starts at the audited
+snapshot `6e47da94afe8735a4cbe8d093696617f0be29f6a`; the original source repository
+and configuration repository remain private with their existing histories.
+Never publish those private histories: do not push their branches or tags, mirror
+repositories, merge unrelated histories, or open a public PR from a private branch.
+Transfer reviewed source changes onto a branch based on public main, audit every
+outgoing commit and its metadata, then use a public pull request and required CI.
+
+Keep real test account addresses, Drive references, family records, screenshots
+with private content, tokens and keys out of public commits, PR text, logs and
+artifacts. Local configuration stays ignored; passwords, tokens and private keys
+belong in the encrypted private configuration store. Public OAuth client IDs in
+`config/google.production.json` are intentional application identifiers.
+
+Public CI must remain independent of private accounts and configuration. Keep
+both `publication` and `test` checks required, secret scanning and push protection
+enabled, and inspect CI for the exact resulting commit after publishing or merging.
+No automatic synchronization or release-source switch is implied by this split.
+
 # Backwards compatibility — absolute requirement
 
 **NEVER break backwards compatibility.** This is a standing user directive set October 15, 2026, applying to every branch and release.

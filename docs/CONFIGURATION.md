@@ -58,3 +58,7 @@ authentication uses the platform SDK; test account passwords are not build setti
 Apple signing identities remain in the operating-system Keychain. Android release
 signing remains optional and local in ignored `android/key.properties` and
 `android/.signing/`; debug builds require neither.
+
+Repository roles, history isolation and future updates are documented in the
+[publication process](PUBLICATION.md). Read it before transferring private changes
+into the public repository.
