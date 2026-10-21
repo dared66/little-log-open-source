@@ -40,7 +40,10 @@ repository to deliver an update.
    noreply identity. The initial snapshot uses
    `Little Log Contributors <contributors@users.noreply.github.com>`.
    CI rejects other author/committer emails in outgoing history, without printing
-   the rejected addresses. Commit messages and other personal details still
+   the rejected addresses. GitHub-generated preview and merge commits use
+   account settings: verify the chosen address and make it primary before opening
+   a PR. Merely adding an address does not change that default. A settings change
+   does not erase metadata from preview commits GitHub already generated. Commit messages and other personal details still
    require manual review.
 4. Stage only reviewed files. Run the publication guard on staged content and on
    every outgoing commit, using the full public base SHA:
