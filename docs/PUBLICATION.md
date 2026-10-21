@@ -35,8 +35,13 @@ repository to deliver an update.
 3. Review all outgoing files and commit metadata. Include docs, fixtures, images,
    deleted files, messages, author/committer emails, tags, PR text and artifacts.
    Use example addresses and made-up test records. Choose a public-safe author
-   and committer identity; the initial snapshot uses
+   and committer identity. The maintainer approved `krupa@krupapc.dev` for public
+   commit metadata on October 21, 2026. Contributors should use their GitHub
+   noreply identity. The initial snapshot uses
    `Little Log Contributors <contributors@users.noreply.github.com>`.
+   CI rejects other author/committer emails in outgoing history, without printing
+   the rejected addresses. Commit messages and other personal details still
+   require manual review.
 4. Stage only reviewed files. Run the publication guard on staged content and on
    every outgoing commit, using the full public base SHA:
 

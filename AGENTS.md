@@ -35,6 +35,10 @@ resulting commit and wait for every required job to finish. Fix failures and
 verify the follow-up run before reporting completion. Local tests do not replace
 this check.
 
+Use `krupa@krupapc.dev` for maintainer commit metadata (explicitly approved by
+the maintainer on October 21, 2026), or a GitHub noreply identity. The publication
+guard rejects other author/committer email addresses in outgoing commits.
+
 # Backwards compatibility — absolute requirement
 
 **NEVER break backwards compatibility.** This is a standing user directive set October 15, 2026, applying to every branch and release.

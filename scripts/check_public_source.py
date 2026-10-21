@@ -11,6 +11,8 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
 PRIVATE_SUFFIXES = {'.p8', '.p12', '.pem', '.key', '.jks', '.keystore', '.mobileprovision'}
+# Public maintainer address explicitly approved on October 21, 2026.
+PUBLIC_EMAILS = {'krupa@krupapc.dev', 'noreply@github.com'}
 LIVE_ASSIGNMENT = re.compile(
     r'''["']?(LIVE_(?:ACCOUNT|OWNER|RECIPIENT|FILE_ID|QA_BABY))["']?\s*[:=]\s*["']([^"'\r\n]*)["']'''
 )
@@ -53,6 +55,23 @@ def check_index(root, private_values=()):
     return findings
 
 
+def check_metadata(root, commit, private_values=()):
+    data = subprocess.check_output([
+        'git', 'show', '-s', '--format=%ae%x00%ce%x00%B', commit,
+    ], cwd=root)
+    author, committer, message = data.split(b'\0', 2)
+    findings = []
+    for kind, raw in (('author', author), ('committer', committer)):
+        email = raw.decode('utf-8', errors='replace').strip()
+        if (email not in PUBLIC_EMAILS
+                and not re.fullmatch(r'[^@\s<>]+@users\.noreply\.github\.com', email)):
+            findings.append((f'{commit[:12]}:metadata',
+                             f'{kind} email is not an approved public identity'))
+    if any(value and value in data for value in private_values):
+        findings.append((f'{commit[:12]}:metadata', 'known private test reference'))
+    return findings
+
+
 def check_history(root, base, private_values=()):
     if base and not re.fullmatch(r'[0-9a-f]{40}', base):
         raise ValueError('Expected a full base commit SHA')
@@ -60,6 +79,7 @@ def check_history(root, base, private_values=()):
     commits = subprocess.check_output(['git', 'rev-list', span], cwd=root).decode().splitlines()
     findings = []
     for commit in commits:
+        findings.extend(check_metadata(root, commit, private_values))
         paths = subprocess.check_output([
             'git', 'diff-tree', '--root', '--no-commit-id', '--name-only',
             '--diff-filter=ACMRT', '-r', '-z', commit,

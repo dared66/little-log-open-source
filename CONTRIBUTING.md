@@ -49,3 +49,8 @@ See [third-party notices](THIRD_PARTY_NOTICES.md) when adding dependencies or as
 Maintainers moving changes from private development must follow the
 [publication process](docs/PUBLICATION.md), including review of outgoing commit
 history and metadata.
+
+Use a GitHub noreply address in commit author and committer metadata. The
+maintainer also explicitly approved `krupa@krupapc.dev` as a public identity.
+The publication check rejects other commit metadata addresses without printing
+them; adding an identity requires an explicit publication decision.
