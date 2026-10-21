@@ -457,6 +457,8 @@ class _ActiveSessionsState extends State<ActiveSessions> {
         ? ['resume', 'finish']
         : method == 'sleep'
         ? ['finish']
+        : method == 'nursing'
+        ? ['switch', 'pause']
         : ['pause'];
     final controls = Wrap(
       alignment: WrapAlignment.end,
@@ -465,7 +467,11 @@ class _ActiveSessionsState extends State<ActiveSessions> {
         for (final action in actions)
           Semantics(
             label:
-                '${action == 'review' ? 'Enter amount for' : action} $method',
+                '${action == 'review'
+                    ? 'Enter amount for'
+                    : action == 'switch'
+                    ? 'Switch sides for'
+                    : action} $method',
             child: TextButton(
               key: ValueKey('$action-live-$method'),
               onPressed: changing || c.recording || c.working
@@ -473,6 +479,7 @@ class _ActiveSessionsState extends State<ActiveSessions> {
                   : () => act(familyId, id, method, revision, action),
               child: Text(switch (action) {
                 'review' => 'Add amount',
+                'switch' => 'Switch sides',
                 'pause' => 'Pause',
                 'resume' => 'Resume',
                 _ => 'Finish',
@@ -484,7 +491,7 @@ class _ActiveSessionsState extends State<ActiveSessions> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final stacked =
-            constraints.maxWidth < 300 ||
+            constraints.maxWidth < (method == 'nursing' ? 420 : 300) ||
             MediaQuery.textScalerOf(context).scale(14) > 20;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -524,7 +531,7 @@ class _ActiveSessionsState extends State<ActiveSessions> {
             phase: nursing.paused ? 'paused' : 'running',
             revision: nursing.revision,
             detail:
-                '${sessionDuration(Duration(seconds: nursing.secondsFor('left', now) + nursing.secondsFor('right', now)))} · ${nursing.paused ? 'paused' : 'timer running'}',
+                '${sessionDuration(Duration(seconds: nursing.secondsFor('left', now) + nursing.secondsFor('right', now)))} · ${nursing.paused ? 'paused' : '${nursing.side == 'left' ? 'Left' : 'Right'} side running'}',
           ),
         for (final timer in c.timers)
           sessionTile(

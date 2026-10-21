@@ -53,6 +53,15 @@ class LiveTimers(private val context: Context, private val storageName: String =
         val method = session.getString("method")
         val next = JSONObject(session.toString())
         when (action) {
+            "switch" -> {
+                if (method != "nursing" || phase != "running") return null
+                val side = session.optString("side").ifEmpty {
+                    when (session.optString("detail")) { "Left side running" -> "left"; "Right side running" -> "right"; else -> "" }
+                }
+                if (side !in listOf("left", "right")) return null
+                next.put("side", if (side == "left") "right" else "left")
+                next.put("detail", if (side == "left") "Right side running" else "Left side running")
+            }
             "pause" -> {
                 if (phase != "running" || method == "sleep") return null
                 next.put("elapsedSeconds", ((now / 1000.0) - session.getDouble("startedAt")).coerceAtLeast(0.0))
@@ -61,7 +70,10 @@ class LiveTimers(private val context: Context, private val storageName: String =
             "resume" -> {
                 if (phase != "paused") return null
                 next.put("startedAt", now / 1000.0 - session.getDouble("elapsedSeconds"))
-                next.put("phase", "running").put("detail", "Timer running")
+                val detail = if (method == "nursing" && session.optString("side") in listOf("left", "right"))
+                    if (session.getString("side") == "left") "Left side running" else "Right side running"
+                    else "Timer running"
+                next.put("phase", "running").put("detail", detail)
             }
             "finish" -> {
                 if (method != "sleep" && phase != "paused") return null
@@ -155,9 +167,10 @@ class LiveTimers(private val context: Context, private val storageName: String =
                 .setContentIntent(PendingIntent.getActivity(context, id.hashCode(), Intent(context, MainActivity::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
                 .setDeleteIntent(actionIntent(session, "dismiss"))
             val actions = if (phase == "review") listOf("review") else if (phase == "paused") listOf("resume", "finish")
-                else if (session.getString("method") == "sleep") listOf("finish") else listOf("pause")
+                else if (session.getString("method") == "sleep") listOf("finish")
+                else if (session.getString("method") == "nursing") listOf("switch", "pause") else listOf("pause")
             actions.forEach { action ->
-                val label = when (action) { "review" -> "Add amount"; "resume" -> "Resume"; "pause" -> "Pause"; else -> "Finish" }
+                val label = when (action) { "switch" -> "Switch sides"; "review" -> "Add amount"; "resume" -> "Resume"; "pause" -> "Pause"; else -> "Finish" }
                 builder.addAction(NotificationCompat.Action.Builder(0, label,
                     actionIntent(session, action, session.getString("method") == "pumping" && action in listOf("finish", "review"))).build())
             }

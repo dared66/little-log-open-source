@@ -2,21 +2,25 @@
 
 ## Repository roles
 
-- `dared66/little-log-open-source` is the public source and contribution repository.
+- `dared66/little-log-open-source` is the sole active app repository for
+  development, contributions and official release builds. Use its `main` as the
+  baseline for new work. This was confirmed by the maintainer on October 21, 2026.
   Its independent history starts at audited snapshot
   `6e47da94afe8735a4cbe8d093696617f0be29f6a`.
-- `dared66/little-log` is the private source repository, retaining its original
-  history and existing development branches. Cleaning a source tree did not
-  sanitize that history. Keep the repository private.
+- `dared66/little-log` is a private historical backup, retaining its original
+  history and unfinished branches. Do not continue app development, merge app
+  changes or build releases there. Cleaning a source tree did not sanitize its
+  history. Keep the repository private. Transfer any unfinished feature through
+  the reviewed process below before continuing it in the public repository.
 - `dared66/little-log-config` is the private maintainer configuration repository.
   Account references remain private; passwords, tokens and keys are encrypted
   with SOPS/age. The decryption key stays outside Git in the OS Keychain.
 
-These repositories are not automatically synchronized. A build uses its current
-checkout and does not automatically select the newest source from another repo.
-Public main may lag private main; record and compare the exact revisions before
-claiming they contain the same changes. Never change a repository's visibility to
-publish an update.
+The private source repository is retained for recovery and reference, not as a
+second main. No ongoing private-to-public synchronization is required: new app
+work happens directly in public branches. The configuration repository remains
+private and active. Never change its visibility or publish the historical source
+repository to deliver an update.
 
 ## Moving a change into the public repository
 
@@ -66,14 +70,21 @@ Do not include live-test definitions, account passwords, tokens or signing secre
 in app build definitions: compiled definitions are extractable from binaries.
 See [configuration storage](CONFIGURATION.md) for the existing setup commands.
 
-Before distributing a release, identify the source repository, exact revision,
-version/build and intended channels. Fetch that repository's main and run the
-existing release baseline check. That check compares ancestry within the current
-repository; it does not verify parity with the other repository. Compare source
-changes explicitly when incorporating private fixes into a public-source build.
-Preserve build 54/58 compatibility and the existing build-number/device policy.
-Moving app-store release automation or publishing a release requires an explicit
-release task; repository publication does not silently rewire those systems.
+Before distributing an official release, use a public-source checkout, fetch
+public `origin/main`, and run `python3 scripts/release_preflight.py`. It rejects
+an unexpected origin, history without the audited public starting commit, and
+sources missing fixes already merged into public main. The iPhone release-build
+helper runs this gate before building. Local-only development builds and public
+PR CI require no signing secrets; they remain usable by contributors and forks.
+Fork distributors must adapt the maintainer release policy for their own app.
+
+Record the public source revision, version/build and intended channels for each
+release. Preserve build 54/58 compatibility and the existing build-number/device
+policy. Publishing a new App Store, TestFlight or Play release still requires an
+explicit release task; selecting public source does not authorize distribution.
+There is no hosted signed-release workflow to move: the existing CI builds a
+public-source debug APK, while maintainer signing/install helpers run locally
+from this public checkout with ignored local configuration.
 
 ## Existing protections and incident handling
 

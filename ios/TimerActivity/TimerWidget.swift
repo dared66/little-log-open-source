@@ -64,6 +64,10 @@ struct CareTimerWidget: Widget {
             let revision = context.state.revision ?? 0
             HStack(spacing: 8) {
                 if context.state.currentPhase == "running" && method(context.state) != "sleep" {
+                    if method(context.state) == "nursing", context.state.nursingSide != nil {
+                        Button(intent: SwitchNursingSideIntent(sessionID: id, revision: revision)) { Label("Switch sides", systemImage: "arrow.left.arrow.right") }
+                            .accessibilityLabel("Switch nursing sides")
+                    }
                     Button(intent: PauseLiveTimerIntent(sessionID: id, revision: revision)) { Label("Pause", systemImage: "pause.fill") }
                         .accessibilityLabel("Pause " + method(context.state))
                 } else {
@@ -107,10 +111,9 @@ struct CareTimerWidget: Widget {
                 DynamicIslandExpandedRegion(.leading) { icon(context.state) }
                 DynamicIslandExpandedRegion(.trailing) { timer(context.state).font(.title2).frame(width: 100) }
                 DynamicIslandExpandedRegion(.bottom) {
-                    HStack {
+                    VStack(alignment: .leading, spacing: 8) {
                         VStack(alignment: .leading) { Text(context.state.title).font(.headline); Text(context.state.detail).font(.caption) }
-                        Spacer()
-                        finish(context).buttonStyle(.bordered).tint(.white)
+                        HStack { Spacer(); finish(context).buttonStyle(.bordered).tint(.white) }
                     }
                 }
             } compactLeading: { icon(context.state, size: 20) }

@@ -12,6 +12,14 @@ struct TimerAttributes: ActivityAttributes {
         var phase: String? = nil
         var elapsedSeconds: Double? = nil
         var revision: Int? = nil
+        var side: String? = nil
+        var nursingSide: String? {
+            if let side, ["left", "right"].contains(side) { return side }
+            // Live Activities created before side was explicit still work.
+            if detail == "Left side running" { return "left" }
+            if detail == "Right side running" { return "right" }
+            return nil
+        }
         var currentPhase: String { phase ?? "running" }
         func elapsed(at: Date) -> Double {
             currentPhase == "running" ? max(0, at.timeIntervalSince(startedAt)) : (elapsedSeconds ?? 0)
@@ -20,13 +28,20 @@ struct TimerAttributes: ActivityAttributes {
             if let expectedRevision, expectedRevision != (revision ?? 0) { return nil }
             var next = self
             switch action {
+            case "switch":
+                guard method == "nursing", currentPhase == "running", let side = nursingSide else { return nil }
+                next.side = side == "left" ? "right" : "left"
+                next.detail = next.side == "left" ? "Left side running" : "Right side running"
             case "pause":
                 guard method != "sleep", currentPhase == "running" else { return nil }
+                next.side = nursingSide
                 next.elapsedSeconds = elapsed(at: at); next.phase = "paused"; next.detail = "Paused"
             case "resume":
                 guard currentPhase == "paused" else { return nil }
                 next.startedAt = at.addingTimeInterval(-(elapsedSeconds ?? 0))
-                next.phase = "running"; next.detail = "Timer running"
+                next.phase = "running"
+                next.detail = method == "nursing" && nursingSide != nil
+                    ? (nursingSide == "left" ? "Left side running" : "Right side running") : "Timer running"
             case "finish":
                 guard method == "sleep" || currentPhase == "paused" else { return nil }
                 next.elapsedSeconds = elapsed(at: at)
@@ -139,6 +154,18 @@ func stopLiveTimer(_ sessionID: String, store: LiveTimerStopStore = .shared) asy
     try await changeLiveTimer(sessionID, action: "finish", revision: nil, store: store)
 }
 
+@available(iOS 17.0, *)
+struct SwitchNursingSideIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource { "Switch nursing sides" }
+    static var isDiscoverable: Bool { false }
+    @Parameter(title: "Session") var sessionID: String
+    @Parameter(title: "Revision") var revision: Int
+    init() {}
+    init(sessionID: String, revision: Int) { self.sessionID = sessionID; self.revision = revision }
+    func perform() async throws -> some IntentResult {
+        try await changeLiveTimer(sessionID, action: "switch", revision: revision); return .result()
+    }
+}
 @available(iOS 17.0, *)
 struct PauseLiveTimerIntent: LiveActivityIntent {
     static var title: LocalizedStringResource { "Pause timer" }

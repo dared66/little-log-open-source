@@ -134,7 +134,7 @@ void main() {
     });
     await t.pumpWidget(LittleLogApp(controller: controller));
     await t.pump();
-    expect(find.textContaining('timer running'), findsOneWidget);
+    expect(find.textContaining('Left side running'), findsOneWidget);
 
     await t.runAsync(() => controller.nursingAction('pause'));
     await t.pump();

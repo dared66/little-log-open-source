@@ -1,5 +1,9 @@
 # Little Log
 
+This is the primary repository for app development and release source. Private
+maintainer configuration is kept separately; see the
+[publication process](docs/PUBLICATION.md).
+
 Little Log is a local-first Flutter baby tracker with optional family-owned
 CSV storage in Google Drive. It supports bottles, nursing, diapers, sleep,
 pumping, solids, growth, health, routines, milestones, daily history, timers,

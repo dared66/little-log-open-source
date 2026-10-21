@@ -63,14 +63,17 @@ and the build fails before compiling the app.
 
 ## Release source baseline
 
-Before any TestFlight archive, fetch the current repository history and run:
+Build official releases from `dared66/little-log-open-source`. The old private
+app repository is a history backup. Before any TestFlight archive, fetch the
+public repository history and run:
 
 ```sh
 git fetch origin
 python3 scripts/release_preflight.py
 ```
 
-The check refuses sources that omit commits already on `origin/main`. The signed
+The check requires the canonical public origin and audited public starting
+commit, and refuses sources that omit commits already on public `origin/main`. The signed
 iPhone build/install script also runs it automatically. Tests passing on an older
 branch do not prove that earlier fixes are present: their tests may be missing too.
 Run the full regression suite after integrating the release baseline. Simulator

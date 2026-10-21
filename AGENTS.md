@@ -3,7 +3,10 @@
 Read [the publication process](docs/PUBLICATION.md) before committing, opening a
 pull request, building a release, or moving changes between repositories.
 
-The public repository is `dared66/little-log-open-source`. It starts at the audited
+The sole active app repository for development, pull requests and release builds is
+`dared66/little-log-open-source`, with `main` as the baseline (user decision,
+October 21, 2026). The original app repository is a private historical backup; do
+not continue app development or release builds there. The public history starts at the audited
 snapshot `6e47da94afe8735a4cbe8d093696617f0be29f6a`; the original source repository
 and configuration repository remain private with their existing histories.
 Never publish those private histories: do not push their branches or tags, mirror
@@ -20,7 +23,17 @@ belong in the encrypted private configuration store. Public OAuth client IDs in
 Public CI must remain independent of private accounts and configuration. Keep
 both `publication` and `test` checks required, secret scanning and push protection
 enabled, and inspect CI for the exact resulting commit after publishing or merging.
-No automatic synchronization or release-source switch is implied by this split.
+Build official releases from a checkout of the public repository. Keep the
+canonical-origin and audited-root checks in `scripts/release_preflight.py`;
+never bypass them to build an old private checkout. Existing unfinished private
+features require reviewed source transfers before further development in public.
+
+# CI verification
+
+After every merge or direct push to main, inspect GitHub Actions for the exact
+resulting commit and wait for every required job to finish. Fix failures and
+verify the follow-up run before reporting completion. Local tests do not replace
+this check.
 
 # Backwards compatibility — absolute requirement
 

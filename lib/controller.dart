@@ -962,7 +962,8 @@ class AppController extends ChangeNotifier {
     int? expectedRevision,
   }) async {
     if (!['nursing', 'sleep', 'pumping'].contains(method) ||
-        !['pause', 'resume', 'finish', 'review'].contains(action) ||
+        !['pause', 'resume', 'finish', 'review', 'switch'].contains(action) ||
+        (action == 'switch' && method != 'nursing') ||
         at.isAfter(DateTime.now().add(const Duration(minutes: 1)))) {
       throw const FormatException('Check the timer and device clock.');
     }
@@ -980,6 +981,11 @@ class AppController extends ChangeNotifier {
         throw const FormatException('Check the device clock.');
       }
       switch (action) {
+        case 'switch':
+          if (session.paused) return false;
+          await repository.saveSession(
+            session.switchTo(session.side == 'left' ? 'right' : 'left', at),
+          );
         case 'pause':
           if (session.paused) return false;
           await repository.saveSession(session.pause(at));

@@ -110,7 +110,7 @@ import CryptoKit
             var state = TimerAttributes.ContentState(method: session["method"] as? String, title: title,
                 startedAt: Date(timeIntervalSince1970: timestamp), detail: detail,
                 phase: session["phase"] as? String, elapsedSeconds: session["elapsedSeconds"] as? Double,
-                revision: session["revision"] as? Int)
+                revision: session["revision"] as? Int, side: session["side"] as? String)
             state = try LiveTimerStopStore.shared.resolvedState(id, observed: state)
             if state.currentPhase == "finished" {
               if let existing = Activity<TimerAttributes>.activities.first(where: { $0.attributes.sessionID == id }) {
