@@ -1,125 +1,103 @@
 # Little Log
 
-This is the primary repository for app development and release source. Private
-maintainer configuration is kept separately; see the
-[publication process](docs/PUBLICATION.md).
+**Simple baby tracking. Always free. Your data belongs to you.**
 
-Little Log is a local-first Flutter baby tracker with optional family-owned
-CSV storage in Google Drive. It supports bottles, nursing, diapers, sleep,
-pumping, solids, growth, health, routines, milestones, daily history, timers,
-JSON export, Google sign-in, and caregiver sharing. See the
-[feature comparison](docs/NARA_FEATURES.md) for details.
+Little Log helps you keep track of feeds, sleep, diapers and the rest of your
+baby’s day. Quick logging, easy timers and a clear daily history make it simple
+to record what happened and pick up where another caregiver left off.
 
-On iOS 16 and later, Siri and Shortcuts can add diapers and start or finish
-sleep, nursing, and pumping. See [Siri commands](docs/SIRI.md). Android has
-matching [voice-action entry points and Gemini recheck instructions](docs/ANDROID_VOICE.md).
+## Built around you and your family
 
-The app has no Little Log server or service-account database. Completed
-history and family metadata are stored in an ordinary CSV file owned by the
-family, and Google access is limited to the `drive.file` scope. Without Google
-configuration, the app works entirely on the device.
+- **Simple and intuitive.** Log an activity, start a timer or check the day’s
+  history without digging through menus. Customize Quick Log and your preferred
+  units to fit your routine.
+- **Always free.** Every feature is free and always will be. There are no
+  subscriptions or paid upgrades. Optional tips support development and unlock
+  nothing; everyone gets the same app.
+- **Privacy-minded.** Keep your records on your device, or choose Google Drive
+  to sync and share with caregivers. You decide whether to connect an account
+  and who to share your log with.
+- **Complete ownership of your data.** Your records stay on your device and,
+  when you enable sync, in your own Google Drive. Export your history, keep your
+  own backups and take your data with you. Little Log has no separate account
+  or central database for your family’s records.
+- **Open source.** Read the code, suggest improvements or make it your own under
+  the [MIT License](LICENSE).
 
-New installs choose “Set up my baby” or “Join an existing baby log.” Baby
-setup then offers Google Drive for syncing and sharing, or storage only on
-this device without a Google account. Existing installations keep their saved
-families and open directly to the current log after an update.
+## Keep up with the everyday details
 
-> **Project status:** Little Log is pre-release software. The local experience
-> includes emulator acceptance for two-account sharing, automatic refresh,
-> concurrent edits and offline recovery. Sync still uses one growing CSV with
-> a 10 MiB cap. See [current QA and release preparation](docs/RELEASE_BUILD59.md).
-> Do not rely on it as the only copy of important care or medical information.
+Track bottles, nursing, pumping, sleep, diapers, solids, growth, health,
+routines and milestones. Use timers for nursing, sleep and pumping, then review
+your entries in the daily log.
 
-## Run locally
+Share a baby’s log with other caregivers through Google Drive. Entries save on
+your device while offline and sync when you’re connected again with the app
+open. On iPhone, Siri and Shortcuts can log diapers and start or finish timers.
 
-Install the stable Flutter SDK, then run:
+You can also bring existing history into Little Log and export it again using
+the [import and export tools](docs/HISTORY_BRIDGE.md).
+
+See the [feature guide](docs/NARA_FEATURES.md), [Siri commands](docs/SIRI.md) and
+[Android voice controls](docs/ANDROID_VOICE.md) for more details.
+
+## Choose how you keep your log
+
+Start with **Set up my baby** and choose storage on your device or Google Drive.
+You can use the app without a Google account. To share, connect Drive and invite
+a caregiver; they choose **Join an existing baby log** and sign in with the
+account you invited.
+
+Shared logs are ordinary CSV files in the family’s Google Drive. Little Log
+requests access only to files you create or explicitly open with the app.
+Your device also keeps a local copy of your log.
+
+Little Log is currently in beta. Shared logs check for updates every 30 seconds
+while the app is open and when you return to it. Each shared CSV currently has a
+10 MiB limit. See [project status](docs/STATUS.md) and
+[current QA results](docs/RELEASE_BUILD59.md) for tested behavior and limitations.
+
+## Run it yourself
+
+Little Log is built with Flutter for iOS, Android and the web. With the stable
+Flutter SDK installed:
 
 ```sh
 flutter pub get
 flutter run -d chrome --web-port 8787
 ```
 
-Google Drive support is optional. For enabled builds, copy
-`config/google.example.json` to `config/google.local.json`, fill in identifiers
-from your own Google Cloud project, and follow [Google setup](docs/GOOGLE_SETUP.md).
-For iOS, run the configuration helper once after filling in the file:
+The app works on your device without Google configuration. To enable Drive,
+copy `config/google.example.json` to `config/google.local.json`, configure your
+own Google project using the [Google setup guide](docs/GOOGLE_SETUP.md), then run:
 
 ```sh
 python3 scripts/configure_google.py
 flutter run --dart-define-from-file=config/google.local.json
 ```
 
-OAuth client IDs are public application identifiers, not confidential credentials. Even so, local configuration is
-ignored so forks cannot accidentally use another distributor's Google project.
-Never place client secrets or access/refresh tokens in the app.
+Keep local configuration out of Git. OAuth client IDs are public application
+identifiers; passwords, access tokens, refresh tokens and signing keys must
+never be included in the app. See [configuration storage](docs/CONFIGURATION.md).
 
-See [configuration storage](docs/CONFIGURATION.md) for the separation between
-public examples, private maintainer settings, encrypted keys and opt-in live tests.
-Maintainers should also read the [publication process](docs/PUBLICATION.md) for
-repository roles and safe updates from private development.
+## Contribute
 
-## Data and synchronization
+Bug reports, clearer wording and code contributions are welcome. Read
+[CONTRIBUTING.md](CONTRIBUTING.md) to get started, and use synthetic family data
+in issues and tests. Report security vulnerabilities through the private process
+in [SECURITY.md](SECURITY.md).
 
-Create a family CSV in Drive, invite a caregiver as an editor, and have them
-open “Join an existing baby log” in Little Log, sign in with the invited
-account, and select the baby from the available logs. Little Log merges stable record IDs
-and uses Drive file ETags for conditional writes. A concurrent edit causes a
-reread, merge, and bounded retry instead of an unconditional overwrite.
-Malformed files, missing versions, and conflicting records stop synchronization
-while retaining local entries.
-
-While the app is open, automatic sync checks every 30 seconds and after local
-changes. Returning to the app also checks for changes. There is no background
-push delivery. Simultaneous edits to the same entry retain both replacements
-for caregivers to reconcile; neither edit silently overwrites the other.
-
-Existing spreadsheet connections become local logs with their old file IDs
-retained for reference. Creating a CSV uploads history already present on the
-device; it does not fetch cloud-only rows from an older Sheets build. All
-caregivers must move to the CSV build together.
-
-The full format and failure semantics are documented in the
-[CSV specification](docs/CSV_FORMAT.md). Known production limitations and
-remaining acceptance work are tracked in the
-[production assessment](docs/PRODUCTION_ASSESSMENT.md).
-
-### Experimental monthly permission probe
-
-Production sync still uses one CSV per family. A developer-only monthly-file
-permission probe remains in the source and appears only when built with
-`--dart-define=MONTHLY_PERMISSION_PROBE=true`. It uses synthetic test files;
-it does not migrate families or enable monthly production sync. See the
-[permission test](docs/MONTHLY_PERMISSION_TEST.md) for its findings and limits.
-
-## Move history between Nara Baby and Little Log
-
-Read-only Nara export and two-way local file conversion are described in the
-[history bridge guide](docs/HISTORY_BRIDGE.md). The reverse output is a portable
-Nara-shaped bridge file; these tools do not write to Nara Baby.
-
-## Verification
+Run the checks before submitting a code change:
 
 ```sh
-flutter test
 flutter analyze
+flutter test
 python3 scripts/check_build54_compatibility.py
 python3 -m unittest discover -s scripts -p 'test_*.py'
-flutter build web
-flutter build apk --debug
-flutter build ios --simulator # macOS with Xcode
 ```
 
-Use `python3 scripts/ios_phone_dev.py install` to install the verified iPhone
-build. The iOS helper refuses to build without Google settings and checks the
-compiled clients and callback before installation. Android release signing is
-deliberately not stored in this repository; distributors must configure and
-protect their own signing key.
+This is the active repository for development and releases. Maintainers should
+follow the [publication process](docs/PUBLICATION.md) to keep private
+configuration and historical repositories separate from public source.
 
-## Contributing and security
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Please
-report vulnerabilities using the private process in [SECURITY.md](SECURITY.md),
-and use synthetic family data in reports and tests.
-
-Little Log is available under the [MIT License](LICENSE).
-Dependencies retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
+Little Log uses the [MIT License](LICENSE). Dependencies retain their own
+licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
