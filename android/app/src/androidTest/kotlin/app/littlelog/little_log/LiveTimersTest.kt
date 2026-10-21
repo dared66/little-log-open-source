@@ -16,6 +16,52 @@ import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
 class LiveTimersTest {
+    @Test fun nursingSwitchPreservesClockAndReplaysPendingActions() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val manager = context.getSystemService(NotificationManager::class.java)
+        val name = "qa-switch-${UUID.randomUUID()}.json"
+        val live = LiveTimers(context, name)
+        val id = UUID.randomUUID().toString()
+        fun notification() = manager.activeNotifications.first { it.tag == id }.notification
+        fun awaitDetail(detail: String) {
+            for (attempt in 0 until 200) {
+                val current = manager.activeNotifications.firstOrNull { it.tag == id }?.notification
+                if (current?.extras?.getString(Notification.EXTRA_TEXT) == detail) return
+                Thread.sleep(10)
+            }
+            fail("Notification did not publish detail: $detail")
+        }
+        fun act(action: String, revision: Int) = live.receive(Intent(context, LiveTimerReceiver::class.java)
+            .setAction(LiveTimers.ACTION).putExtra("sessionId", id).putExtra("timerAction", action).putExtra("revision", revision))
+        val start = System.currentTimeMillis() / 1000.0 - 600
+        val original = mapOf("id" to id, "familyId" to "synthetic-qa", "method" to "nursing",
+            "title" to "Synthetic QA · Nursing", "detail" to "Left side running", "side" to "left", "phase" to "running",
+            "startedAt" to start, "elapsedSeconds" to 600.0, "revision" to 0)
+        try {
+            live.update(listOf(original))
+            awaitDetail("Left side running")
+            assertEquals(listOf("Switch sides", "Pause"), notification().actions.map { it.title.toString() })
+            val clock = notification().`when`
+            assertTrue(act("switch", 0))
+            awaitDetail("Right side running")
+            assertEquals(clock, notification().`when`)
+            assertFalse(act("switch", 0))
+            LiveTimers(context, name).update(listOf(original))
+            awaitDetail("Right side running")
+            assertTrue(act("pause", 1))
+            assertFalse(act("switch", 2))
+            assertTrue(act("resume", 2))
+            awaitDetail("Right side running")
+            assertTrue(act("switch", 3))
+            awaitDetail("Left side running")
+            assertEquals(listOf("switch", "pause", "resume", "switch"), LiveTimers(context, name).pending().map { it["action"] })
+        } finally {
+            live.update(emptyList()); manager.cancel(id, 1)
+            File(context.filesDir, name).delete()
+            File(context.filesDir, "$name.bak").delete()
+        }
+    }
+
     @Test fun pausedNotificationsRemainWithResumeFinishAndSurviveManagerRestart() {
         assertTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("sdk"))
         val context = InstrumentationRegistry.getInstrumentation().targetContext

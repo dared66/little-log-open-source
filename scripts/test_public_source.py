@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 import unittest
 
-from check_public_source import check_history, check_index, problems
+from check_public_source import check_history, check_index, check_metadata, problems
 
 
 class PublicSourceTest(unittest.TestCase):
@@ -46,7 +46,7 @@ class PublicSourceTest(unittest.TestCase):
             root = Path(directory)
             def git(*args):
                 return subprocess.check_output(['git', '-c', 'user.name=Test',
-                    '-c', 'user.email=test@example.com', *args], cwd=root)
+                    '-c', 'user.email=test@users.noreply.github.com', *args], cwd=root)
             git('init', '-q')
             git('commit', '-q', '--allow-empty', '-m', 'baseline')
             base = git('rev-parse', 'HEAD').decode().strip()
@@ -59,6 +59,38 @@ class PublicSourceTest(unittest.TestCase):
             findings = check_history(root, base)
             self.assertEqual(1, len(findings))
             self.assertEqual('private configuration or key file', findings[0][1])
+
+    def test_metadata_blocks_unapproved_emails_without_printing_them(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def git(*args):
+                return subprocess.check_output(['git', '-c', 'user.name=Test',
+                    '-c', 'user.email=public@users.noreply.github.com', *args], cwd=root)
+            git('init', '-q')
+            git('commit', '-q', '--allow-empty', '-m', 'public baseline')
+            self.assertEqual([], check_metadata(root, 'HEAD'))
+            git('-c', 'user.email=private@example.invalid', 'commit', '-q',
+                '--allow-empty', '--author=Public <public@users.noreply.github.com>',
+                '-m', 'safe source, unsafe committer')
+            findings = check_metadata(root, 'HEAD')
+            self.assertEqual(1, len(findings))
+            self.assertIn('committer email', findings[0][1])
+            self.assertNotIn('private@example.invalid', str(findings))
+            git('commit', '-q', '--allow-empty',
+                '--author=Private <private@example.invalid>', '-m', 'unsafe author')
+            self.assertIn('author email', check_metadata(root, 'HEAD')[0][1])
+
+    def test_public_maintainer_identity_and_known_private_message(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def git(*args):
+                return subprocess.check_output(['git', '-c', 'user.name=Test',
+                    '-c', 'user.email=krupa@krupapc.dev', *args], cwd=root)
+            git('init', '-q')
+            git('commit', '-q', '--allow-empty', '-m', 'synthetic-private-reference')
+            self.assertEqual([], check_metadata(root, 'HEAD'))
+            self.assertEqual('known private test reference',
+                check_metadata(root, 'HEAD', [b'synthetic-private-reference'])[0][1])
 
 
 if __name__ == '__main__':

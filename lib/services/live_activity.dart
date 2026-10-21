@@ -50,6 +50,7 @@ class LiveActivity {
           'id': nursing.id,
           'familyId': nursing.familyId,
           'method': 'nursing',
+          'side': nursing.side,
           'title': '$baby · Nursing',
           'startedAt': now.millisecondsSinceEpoch / 1000 - nursingSeconds,
           'elapsedSeconds': nursingSeconds.toDouble(),

@@ -1,3 +1,44 @@
+# Public source and private history
+
+Read [the publication process](docs/PUBLICATION.md) before committing, opening a
+pull request, building a release, or moving changes between repositories.
+
+The sole active app repository for development, pull requests and release builds is
+`dared66/little-log-open-source`, with `main` as the baseline (user decision,
+October 21, 2026). The original app repository is a private historical backup; do
+not continue app development or release builds there. The public history starts at the audited
+snapshot `6e47da94afe8735a4cbe8d093696617f0be29f6a`; the original source repository
+and configuration repository remain private with their existing histories.
+Never publish those private histories: do not push their branches or tags, mirror
+repositories, merge unrelated histories, or open a public PR from a private branch.
+Transfer reviewed source changes onto a branch based on public main, audit every
+outgoing commit and its metadata, then use a public pull request and required CI.
+
+Keep real test account addresses, Drive references, family records, screenshots
+with private content, tokens and keys out of public commits, PR text, logs and
+artifacts. Local configuration stays ignored; passwords, tokens and private keys
+belong in the encrypted private configuration store. Public OAuth client IDs in
+`config/google.production.json` are intentional application identifiers.
+
+Public CI must remain independent of private accounts and configuration. Keep
+both `publication` and `test` checks required, secret scanning and push protection
+enabled, and inspect CI for the exact resulting commit after publishing or merging.
+Build official releases from a checkout of the public repository. Keep the
+canonical-origin and audited-root checks in `scripts/release_preflight.py`;
+never bypass them to build an old private checkout. Existing unfinished private
+features require reviewed source transfers before further development in public.
+
+# CI verification
+
+After every merge or direct push to main, inspect GitHub Actions for the exact
+resulting commit and wait for every required job to finish. Fix failures and
+verify the follow-up run before reporting completion. Local tests do not replace
+this check.
+
+Use `krupa@krupapc.dev` for maintainer commit metadata (explicitly approved by
+the maintainer on October 21, 2026), or a GitHub noreply identity. The publication
+guard rejects other author/committer email addresses in outgoing commits.
+
 # Backwards compatibility — absolute requirement
 
 **NEVER break backwards compatibility.** This is a standing user directive set October 15, 2026, applying to every branch and release.

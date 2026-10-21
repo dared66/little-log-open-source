@@ -4,6 +4,38 @@ import ActivityKit
 
 @MainActor
 class RunnerTests: XCTestCase {
+  func testNursingSwitchKeepsClockAndSideAcrossPauseResumeAndQueuedRetries() throws {
+    guard #available(iOS 17.0, *) else { throw XCTSkip("Requires iOS 17") }
+    let start = Date().addingTimeInterval(-600)
+    let initial = TimerAttributes.ContentState(method: "nursing", title: "Synthetic QA · Nursing",
+      startedAt: start, detail: "Left side running", phase: "running", elapsedSeconds: 0, revision: 0)
+    let switched = try XCTUnwrap(initial.applying(action: "switch", at: start.addingTimeInterval(60), expectedRevision: 0))
+    XCTAssertEqual(switched.side, "right")
+    XCTAssertEqual(switched.detail, "Right side running")
+    XCTAssertEqual(switched.startedAt, start)
+    XCTAssertEqual(switched.elapsed(at: start.addingTimeInterval(90)), 90)
+    XCTAssertNil(switched.applying(action: "switch", at: start.addingTimeInterval(90), expectedRevision: 0))
+    let paused = try XCTUnwrap(switched.applying(action: "pause", at: start.addingTimeInterval(120), expectedRevision: 1))
+    XCTAssertNil(paused.applying(action: "switch", at: start.addingTimeInterval(150), expectedRevision: 2))
+    let restored = try JSONDecoder().decode(TimerAttributes.ContentState.self, from: JSONEncoder().encode(paused))
+    let resumed = try XCTUnwrap(restored.applying(action: "resume", at: start.addingTimeInterval(180), expectedRevision: 2))
+    XCTAssertEqual(resumed.detail, "Right side running")
+    let back = try XCTUnwrap(resumed.applying(action: "switch", at: start.addingTimeInterval(240), expectedRevision: 3))
+    XCTAssertEqual(back.side, "left")
+    XCTAssertEqual(back.elapsed(at: start.addingTimeInterval(240)), 180)
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let file = directory.appendingPathComponent("switch.json")
+    let store = LiveTimerStopStore(file: file)
+    try store.append(LiveTimerStop(id: "request", familyId: "synthetic", method: "nursing",
+      stoppedAt: Int64(start.addingTimeInterval(60).timeIntervalSince1970 * 1000), sessionId: "session", action: "switch", revision: 0))
+    let queued = try LiveTimerStopStore(file: file).resolvedState("session", observed: initial)
+    XCTAssertEqual(queued.side, "right")
+    XCTAssertEqual(try store.resolvedState("session", observed: queued).revision, 1)
+    let sleep = TimerAttributes.ContentState(method: "sleep", title: "Sleep", startedAt: start, detail: "Sleeping")
+    XCTAssertNil(sleep.applying(action: "switch", at: Date(), expectedRevision: 0))
+  }
+
   func testPausedStateStaysLiveAndTransitionsRejectStaleFinish() throws {
     guard #available(iOS 17.0, *) else { throw XCTSkip("Requires iOS 17") }
     let start = Date().addingTimeInterval(-600)
