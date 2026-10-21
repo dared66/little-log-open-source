@@ -25,6 +25,7 @@ class SyncService {
         for (final f in await repository.feeds(family.id, includeDeleted: true))
           f.id: f,
       };
+      final updates = <Feeding>[];
       for (final feed in remote.feeds) {
         final existing = local[feed.id];
         if (existing != null &&
@@ -33,8 +34,16 @@ class SyncService {
             'An entry has conflicting local and cloud contents. Both copies were retained.',
           );
         }
+        // The immutable payload was checked above. Unchanged polls need no
+        // database writes; acknowledgments and tombstones still pass through
+        // Repository.merge, which prevents resurrection of local deletions.
+        if (existing == null ||
+            existing.synced != feed.synced ||
+            existing.deleted != feed.deleted) {
+          updates.add(feed);
+        }
       }
-      await repository.merge(remote.feeds);
+      if (updates.isNotEmpty) await repository.merge(updates);
       if (remote.needsCompatibilityRewrite) {
         // Repair already-shared build-56 rows even when this device has no
         // pending entries. The cloud uses its normal conditional merge/retry.
@@ -44,11 +53,12 @@ class SyncService {
         family.id,
         includeDeleted: true,
       )).where((f) => !f.synced).toList();
-      for (var start = 0; start < pending.length; start += 100) {
-        final end = (start + 100).clamp(0, pending.length);
-        final batch = pending.sublist(start, end);
-        await cloud.appendFeeds(family, batch);
-        await repository.merge(batch.map((f) => f.acknowledged()).toList());
+      if (pending.isNotEmpty) {
+        // Drive conditionally replaces one size-limited CSV, not individual
+        // rows. Splitting the outbox repeats the entire file transfer for every
+        // batch. Acknowledge only after the cloud verifies the complete upload.
+        await cloud.appendFeeds(family, pending);
+        await repository.merge(pending.map((f) => f.acknowledged()).toList());
       }
       await repository.setLastSync(family.id, DateTime.now());
       return remote.skipped;

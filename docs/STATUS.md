@@ -21,10 +21,18 @@ to open directly after an update.
 
 ## Before a production release
 
-Native Google Picker and two-account mobile sharing still need acceptance on
-physical devices. The growing single-file sync design needs bounded transfer
-size, and backup/recovery and performance need further validation. These gaps
-are described in [the production assessment](PRODUCTION_ASSESSMENT.md); the
+Two-account Android/iOS emulator acceptance now covers sign-in, joining,
+automatic foreground refresh, overlapping edits and offline recovery. Isolated
+10,000-entry native storage/navigation/save tests pass on both platforms.
+See [build 59 QA and release preparation](RELEASE_BUILD59.md) for the tested
+scope, measurements and remaining limits. Physical-device testing is not a
+requirement for this pass (maintainer decision).
+
+Production sync remains one growing CSV with a 10 MiB application cap. It polls
+every 30 seconds while foregrounded and on resume; it does not deliver changes
+in the background. Bounded archives and large-history live Drive transfer
+measurements remain future work. The original architectural review is retained
+in [the production assessment](PRODUCTION_ASSESSMENT.md); the
 [monthly permission test](MONTHLY_PERMISSION_TEST.md) covers one prerequisite
 for a future bounded-file design.
 
@@ -42,5 +50,8 @@ Reddit Beta users and Open Beta. It includes optional elapsed time
 in Quick Log, improved live timers, and Help with Siri commands, setup and
 sharing. Build 54 remains the mandatory legacy compatibility baseline. Build 58
 preserves build 57's app code with an external-eligible package. The source
-remains at build 58 until the next app change requires build 59. Distribution receipts and exact release
+is now at build 59, prepared from the public repository with nursing side
+switching and more efficient history syncing. Build 59 has not been uploaded or
+distributed. Its concise tester notes are in [BUILD59_TESTER_NOTES.txt](BUILD59_TESTER_NOTES.txt).
+Distribution receipts and exact release
 sources are recorded in [the milestones](MILESTONES.md).
