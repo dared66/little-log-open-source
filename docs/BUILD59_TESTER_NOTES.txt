@@ -1,0 +1,7 @@
+What’s new
+• Switch nursing sides directly from the running timer, including on the Lock Screen.
+• More efficient syncing when your log has lots of entries.
+
+What to try
+• With another caregiver, add or edit an entry and check that it appears while both apps are open.
+• Log an entry offline, reopen the app, then reconnect and check it reaches the shared log.

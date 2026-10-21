@@ -2,8 +2,23 @@
 
 This September 18 assessment is a historical architecture review. Some feature
 gaps recorded below were subsequently addressed; consult the current README
-and source before treating an item as still open. The growing single-file
-production sync design and native acceptance gaps remain.
+and source before treating an item as still open. Current findings and emulator
+acceptance are recorded in [build 59 QA](RELEASE_BUILD59.md). The growing
+single-file production sync design remains a limit.
+
+Update 2026-10-21: Android/iOS two-account emulator acceptance covers sign-in,
+joining, automatic foreground refresh, overlapping edits and offline recovery.
+10,000-entry native storage, navigation and saves pass on both platforms.
+Edits/deletion markers and build-54 compatibility have automated coverage;
+C7 below describes the original September source, not today's implementation.
+The outbox now uploads in one conditional CSV replacement rather than repeating
+the whole file for each 100 rows, and unchanged pulls avoid record rewrites.
+Controlled tests cover 10,000-entry syncing, forced 412 conflicts and lost
+responses. Those tests do not establish live Drive latency at that size.
+There is still one CSV, a 10 MiB application cap, 30-second foreground polling
+and no background push. Monthly production sync has not been introduced.
+The maintainer selected emulator/simulator acceptance for this pass; physical
+devices are not an outstanding gate for these checks.
 
 Update 2026-09-18: C11 monthly-file permissions passed the live two-account test; see MONTHLY_PERMISSION_TEST.md. Both accounts automatically accessed subsequent app-created monthly CSVs after one folder share, without Picker selection or broader scopes. The assessment below records the initial audit; its C11 uncertainty is now resolved for that tested configuration. Production monthly sync integration and native-device acceptance remain outstanding.
 

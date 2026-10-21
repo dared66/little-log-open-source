@@ -21,6 +21,8 @@ class Account implements GoogleSignInAccount {
 class Auth extends GoogleAuth {
   bool granted = true;
   @override
+  Future<void> initialize() async {}
+  @override
   Future<String> accessToken() async {
     if (!granted) throw StateError('Connect Google Drive to continue.');
     return 'test-token';
@@ -76,6 +78,22 @@ class Drive extends GoogleDrive {
   }
 }
 
+class PollTimer implements Timer {
+  PollTimer(this.callback);
+  final void Function(Timer) callback;
+  @override
+  bool isActive = true;
+  @override
+  int tick = 0;
+  @override
+  void cancel() => isActive = false;
+  void fire() {
+    if (!isActive) return;
+    tick++;
+    callback(this);
+  }
+}
+
 Feeding entry(String id, {bool synced = false}) => Feeding(
   id: id,
   familyId: 'family',
@@ -105,6 +123,45 @@ void main() {
     c.dispose();
     await repo.db.close();
   });
+  test(
+    'foreground polls pull changes; background waits until resume',
+    () async {
+      await c.publishFamily();
+      late PollTimer timer;
+      late Duration interval;
+      await runZoned(
+        c.initialize,
+        zoneSpecification: ZoneSpecification(
+          createPeriodicTimer: (self, parent, zone, duration, callback) {
+            interval = duration;
+            return timer = PollTimer(callback);
+          },
+        ),
+      );
+      expect(interval, const Duration(seconds: 30));
+      drive.rows['from-caregiver'] = entry('from-caregiver');
+      timer.fire();
+      await c
+          .sync(); // Join the pass started by the registered polling callback.
+      expect(c.feeds.map((f) => f.id), contains('from-caregiver'));
+      c.setForeground(false);
+      drive.rows['while-backgrounded'] = entry('while-backgrounded');
+      final backgroundReads = drive.reads;
+      timer.fire();
+      expect(drive.reads, backgroundReads);
+      expect(c.feeds.map((f) => f.id), isNot(contains('while-backgrounded')));
+      final resumed = Completer<void>();
+      c.addListener(() {
+        if (!resumed.isCompleted &&
+            c.feeds.any((f) => f.id == 'while-backgrounded')) {
+          resumed.complete();
+        }
+      });
+      c.setForeground(true);
+      await resumed.future.timeout(const Duration(seconds: 5));
+      expect(c.feeds.map((f) => f.id), contains('while-backgrounded'));
+    },
+  );
   test(
     'connecting Drive publishes the private family log and flushes existing records',
     () async {

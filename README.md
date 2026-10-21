@@ -25,8 +25,9 @@ this device without a Google account. Existing installations keep their saved
 families and open directly to the current log after an update.
 
 > **Project status:** Little Log is pre-release software. The local experience
-> is well tested, but two-account mobile sharing and email delivery,
-> and the current growing-file sync design still have documented release gaps.
+> includes emulator acceptance for two-account sharing, automatic refresh,
+> concurrent edits and offline recovery. Sync still uses one growing CSV with
+> a 10 MiB cap. See [current QA and release preparation](docs/RELEASE_BUILD59.md).
 > Do not rely on it as the only copy of important care or medical information.
 
 ## Run locally
@@ -66,6 +67,11 @@ and uses Drive file ETags for conditional writes. A concurrent edit causes a
 reread, merge, and bounded retry instead of an unconditional overwrite.
 Malformed files, missing versions, and conflicting records stop synchronization
 while retaining local entries.
+
+While the app is open, automatic sync checks every 30 seconds and after local
+changes. Returning to the app also checks for changes. There is no background
+push delivery. Simultaneous edits to the same entry retain both replacements
+for caregivers to reconcile; neither edit silently overwrites the other.
 
 Existing spreadsheet connections become local logs with their old file IDs
 retained for reference. Creating a CSV uploads history already present on the
