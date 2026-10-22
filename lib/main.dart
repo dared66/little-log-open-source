@@ -17,6 +17,7 @@ import 'widgets/elapsed_activity_glyph.dart' show elapsedIconActivities;
 import 'widgets/assistant_help_page.dart';
 import 'widgets/summary_settings_page.dart';
 import 'widgets/log_day_picker.dart';
+import 'widgets/empty_log_day.dart';
 import 'quick_log.dart';
 import 'widgets/activity_flow.dart';
 import 'design.dart';
@@ -774,28 +775,17 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: LogSpacing.label),
                 ],
                 if (sorted.isEmpty)
-                  Container(
-                    padding: cardPadding,
-                    decoration: BoxDecoration(
-                      color: logPalette(context).surface,
-                      borderRadius: cardRadius,
+                  EmptyLogDay(
+                    day: selectedDay,
+                    canNavigate: !c.feeds.any(
+                      (record) =>
+                          DateUtils.isSameDay(record.at.toLocal(), selectedDay),
                     ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.auto_awesome_outlined,
-                          color: logPalette(context).secondary,
-                        ),
-                        SizedBox(height: LogSpacing.content),
-                        Text(
-                          'No entries on this day',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                    onChanged: (value) => setState(() {
+                      selectedDay = value;
+                      viewAll = false;
+                      activityFilter = 'all';
+                    }),
                   )
                 else
                   Container(

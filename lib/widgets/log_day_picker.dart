@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../design.dart';
 
+final firstLogDay = DateTime(2000);
+
 Future<DateTime?> showLogDayPicker({
   required BuildContext context,
   required DateTime initialDay,
@@ -22,7 +24,7 @@ class _LogDayPicker extends StatefulWidget {
 class _LogDayPickerState extends State<_LogDayPicker> {
   late DateTime day = DateUtils.dateOnly(widget.initialDay);
   final today = DateUtils.dateOnly(DateTime.now());
-  final firstDay = DateTime(2000);
+  final firstDay = firstLogDay;
   late DateTime month = DateTime(day.year, day.month);
 
   void choose(DateTime value, {bool moveCalendar = false}) => setState(() {

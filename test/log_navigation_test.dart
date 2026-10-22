@@ -243,12 +243,12 @@ void main() {
       await t.pumpAndSettle();
       expect(find.text('At a glance'), findsOneWidget);
       await t.scrollUntilVisible(
-        find.text('No entries on this day'),
+        find.text('No entries'),
         180,
         scrollable: find.byType(Scrollable).first,
       );
       await t.pumpAndSettle();
-      expect(find.text('No entries on this day'), findsOneWidget);
+      expect(find.text('No entries'), findsOneWidget);
       expect(find.text('Diaper · Wet & dirty'), findsNothing);
       await t.scrollUntilVisible(
         find.text('Back to today'),
