@@ -648,6 +648,63 @@ class _OnboardingPageState extends State<OnboardingPage> {
         ),
       ];
     }
+    if (stage == OnboardingStage.join) {
+      return [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: logPalette(context).surface,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.account_circle_outlined,
+                    color: logPalette(context).secondary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      c.auth.user!.email,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (widget.invitation == null || invitedAccountMatches)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: busy
+                        ? null
+                        : () => act(() async {
+                            await c.auth.signOut();
+                            loadedEmail = null;
+                            logs = null;
+                          }),
+                    child: const Text('Use a different Google account'),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        if (!c.auth.driveConnected) ...[
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: busy || c.auth.checkingDrive
+                ? null
+                : () => act(c.auth.authorize),
+            child: Text(
+              c.auth.checkingDrive ? 'Connecting…' : 'Connect Google Drive',
+            ),
+          ),
+        ],
+      ];
+    }
     return [
       ListTile(
         contentPadding: EdgeInsets.zero,
@@ -814,29 +871,104 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   List<Widget> joinView() {
     final c = widget.controller;
-    return [
-      Icon(
-        Icons.people_outline,
-        size: 46,
-        color: logPalette(context).actionInk,
-      ),
-      const SizedBox(height: LogSpacing.section),
-      Text(
-        'Join your baby’s shared log',
-        style: TextStyle(
-          fontSize: 29,
-          fontWeight: FontWeight.w700,
-          color: logPalette(context).actionInk,
+    if (selectedLog != null) {
+      return [
+        const Text(
+          'Ready to join',
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
         ),
-      ),
-      const SizedBox(height: 10),
+        const SizedBox(height: 12),
+        Text(
+          'Confirm the log shared with you.',
+          style: TextStyle(color: logPalette(context).secondary),
+        ),
+        const SizedBox(height: 24),
+
+        Card(
+          key: confirmationKey,
+          margin: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  selectedLog!.babyName,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: LogSpacing.label),
+                Text(
+                  selectedLog!.ownerEmail == null
+                      ? 'Owner unavailable'
+                      : 'Owner: ${selectedLog!.ownerEmail}',
+                ),
+                if (c.families.any(
+                  (f) =>
+                      f.babyName.toLowerCase() ==
+                          selectedLog!.babyName.toLowerCase() &&
+                      f.id != selectedLog!.id,
+                ))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'You already have a separate log named ${selectedLog!.babyName}. Joining this log keeps both histories separate. It does not combine or delete entries.',
+                    ),
+                  ),
+                const SizedBox(height: LogSpacing.label),
+                const Text('You’ll see existing entries and can add your own.'),
+                const SizedBox(height: LogSpacing.content),
+                FilledButton(
+                  onPressed: busy ? null : joinSelected,
+                  child: Text(
+                    busy ? 'Loading shared history…' : 'Join baby log',
+                  ),
+                ),
+                TextButton(
+                  onPressed: busy
+                      ? null
+                      : () => setState(() {
+                          selectedLog = null;
+                          error = null;
+                        }),
+                  child: const Text('Choose a different baby'),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        if (error != null)
+          Padding(
+            key: errorKey,
+            padding: const EdgeInsets.only(top: 16),
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          ),
+      ];
+    }
+    return [
       Text(
         widget.invitation == null
-            ? 'Join a baby log shared by a parent or caregiver. Sign in with the Google account they invited.'
-            : 'Invitation for ${widget.invitation!.babyName} · ${widget.invitation!.invitedEmail}',
+            ? 'Join a shared log'
+            : 'Join ${widget.invitation!.babyName}’s log',
+        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 12),
+      Text(
+        widget.invitation == null
+            ? 'Use the Google account your caregiver invited.'
+            : 'Invited as ${widget.invitation!.invitedEmail}',
         style: TextStyle(color: logPalette(context).secondary, height: 1.5),
       ),
-      const SizedBox(height: LogSpacing.section),
+      const SizedBox(height: 24),
       ...accountControls(),
       if (error != null)
         Padding(
@@ -853,43 +985,38 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (c.auth.driveConnected) ...[
         const SizedBox(height: LogSpacing.section),
         if (widget.invitation != null) ...[
-          const Text(
-            'Open this invitation',
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: LogSpacing.label),
           Text(
             invitedAccountMatches
-                ? 'Google will ask you to allow Little Log to use this one shared file. Check the baby and owner before joining.'
-                : 'You are signed in to a different Google account. Switch to ${widget.invitation!.invitedEmail} above to continue.',
+                ? 'Choose the shared log in Google Drive to continue.'
+                : 'Switch to ${widget.invitation!.invitedEmail} to accept this invitation.',
           ),
           const SizedBox(height: LogSpacing.content),
-          FilledButton.icon(
-            onPressed: busy || loadingLogs || !invitedAccountMatches
+          FilledButton(
+            onPressed: busy || loadingLogs
                 ? null
+                : !invitedAccountMatches
+                ? () => act(() async {
+                    await c.auth.signOut();
+                    loadedEmail = null;
+                    logs = null;
+                  })
                 : openLinkedInvitation,
-            icon: const Icon(Icons.open_in_new),
-            label: Text(
-              c.families.any(
-                    (family) =>
-                        family.driveFileId == widget.invitation!.fileId &&
-                        family.accountId == c.auth.user?.id,
-                  )
-                  ? 'Open this baby log'
-                  : 'Continue with this invitation',
+            child: Text(
+              !invitedAccountMatches
+                  ? 'Switch account'
+                  : c.families.any(
+                      (family) =>
+                          family.driveFileId == widget.invitation!.fileId &&
+                          family.accountId == c.auth.user?.id,
+                    )
+                  ? 'Open log'
+                  : 'Continue',
             ),
           ),
           const SizedBox(height: LogSpacing.content),
         ],
         if (widget.invitation == null) ...[
-          const Text(
-            'Join a newly shared log',
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: LogSpacing.label),
-          const Text(
-            'Ask the sender for the Little Log joining instructions. Paste the Google Drive link from that message. Google will show that exact file for you to allow Little Log to use it.',
-          ),
+          const Text('Paste the Drive link from your invitation.'),
           const SizedBox(height: LogSpacing.content),
           TextField(
             controller: invitationLink,
@@ -920,102 +1047,32 @@ class _OnboardingPageState extends State<OnboardingPage> {
             child: const Text('Open this shared log in Google Drive'),
           ),
           const SizedBox(height: LogSpacing.content),
-          const Text(
-            'No joining message yet? You can still browse Shared with me in Google Drive.',
-          ),
+          const Text('Or find the log in Google Drive.'),
           OutlinedButton.icon(
             onPressed: busy || loadingLogs ? null : () => chooseSharedLog(),
             icon: const Icon(Icons.folder_open),
             label: const Text('Browse shared logs'),
           ),
           const SizedBox(height: LogSpacing.label),
-          const Text(
-            'Check the baby and owner before joining. Your existing logs stay separate.',
-          ),
         ],
         if (widget.invitation == null) ...[
           const SizedBox(height: LogSpacing.section),
           const Divider(),
           const SizedBox(height: LogSpacing.content),
           const Text(
-            'Logs already connected to Little Log',
+            'Your logs',
             style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: LogSpacing.label),
-          const Text(
-            'A newly shared log may be missing here even when you have Editor access. Use its invitation link above to connect it once.',
-          ),
+          const Text('Previously connected logs'),
           if (loadingLogs) const LinearProgressIndicator(),
           if (logs?.isEmpty == true)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                'No baby logs available yet. If someone shared a new log with you, add it from Google Drive above.',
-              ),
+              child: Text('No baby logs available yet.'),
             ),
         ],
-        if (selectedLog != null) ...[
-          Card(
-            key: confirmationKey,
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    selectedLog!.babyName,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: LogSpacing.label),
-                  Text(selectedLog!.ownerLabel),
-                  SelectableText(
-                    'Log reference: ${selectedLog!.logReference}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: logPalette(context).secondary,
-                    ),
-                  ),
-                  if (c.families.any(
-                    (f) =>
-                        f.babyName.toLowerCase() ==
-                            selectedLog!.babyName.toLowerCase() &&
-                        f.id != selectedLog!.id,
-                  ))
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        'You already have a separate log named ${selectedLog!.babyName}. Joining this log keeps both histories separate. It does not combine or delete entries.',
-                      ),
-                    ),
-                  const SizedBox(height: LogSpacing.label),
-                  const Text(
-                    'Join this baby’s existing history. Your other babies and entries stay on this device.',
-                  ),
-                  const SizedBox(height: LogSpacing.content),
-                  FilledButton(
-                    onPressed: busy ? null : joinSelected,
-                    child: Text(
-                      busy ? 'Loading shared history…' : 'Join baby log',
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: busy
-                        ? null
-                        : () => setState(() {
-                            selectedLog = null;
-                            error = null;
-                          }),
-                    child: const Text('Choose a different baby'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ] else if (widget.invitation == null) ...[
+        if (widget.invitation == null) ...[
           for (final log in logs ?? const <Map<String, String>>[])
             Card(
               key: ValueKey('available-log-${log['id']}'),

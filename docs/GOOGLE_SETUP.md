@@ -251,3 +251,22 @@ invitations for QA. A branded HTML email/Join button requires a verified sender
 and email service. A clickable HTTPS invitation and installation fallback need
 an owned hosted domain and platform association files. Neither is configured by
 this branch.
+
+
+### Sharing screen redesign
+
+Settings opens a dedicated invitation page. It uses the standard page frame,
+input styling and spacing. Successful permission creation and a requested Drive
+notification show a completion card and Done; optional direct sharing is a
+secondary action. Email/copy alternatives live in an overflow menu.
+
+Joining shows one stage at a time: invited account, Drive selection, then baby
+and owner confirmation. A mismatched account gets an actionable Switch account
+button. Confirmation removes the previous selection controls and technical file
+reference, while preserving exact file and account checks and duplicate-name
+protection. No shared data format or permission scope changes.
+
+`tool/sharing_workflow_review_test.dart` renders the actual screens with synthetic
+accounts at standard and 200% text sizes. Run with `CAPTURE_INVITATIONS=true`;
+images are written to `/tmp/little-log-invitation-review/`. These captures do not
+establish real Google email delivery or native Picker behavior.

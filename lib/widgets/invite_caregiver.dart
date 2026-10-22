@@ -14,11 +14,13 @@ class InviteCaregiverForm extends StatefulWidget {
     required this.family,
     this.onSent,
     this.onBusy,
+    this.onDone,
   });
   final AppController controller;
   final Family family;
   final VoidCallback? onSent;
   final ValueChanged<bool>? onBusy;
+  final VoidCallback? onDone;
   @override
   State<InviteCaregiverForm> createState() => _InviteCaregiverFormState();
 }
@@ -87,7 +89,7 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
     if (!opened && mounted) {
       setState(
         () => error =
-            'No email app opened. Copy the message below and send it by text or email.',
+            'Email could not open. Use the menu to copy the invitation.',
       );
     }
   }
@@ -106,116 +108,157 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
       if (mounted) {
         setState(
           () => error =
-              'The share sheet could not open. Copy the message below and send it yourself.',
+              'The share sheet could not open. Use the menu to copy the invitation.',
         );
       }
     }
   }
 
+  Future<void> copyInvitation() async {
+    await Clipboard.setData(
+      ClipboardData(
+        text: widget.controller.drive.invitationInstructions(
+          widget.family,
+          sentTo!,
+        ),
+      ),
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invitation copied')));
+    }
+  }
+
   @override
-  Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      if (sentTo != null) ...[
-        const Text(
-          'Access granted',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: LogSpacing.label),
-        Text(
-          'Access is ready for $sentTo. Google Drive was asked to email them.',
-        ),
-        const SizedBox(height: LogSpacing.content),
-        const Text('Optional'),
-        const SizedBox(height: LogSpacing.label),
-        FilledButton.icon(
-          icon: const Icon(Icons.ios_share),
-          label: const Text('Share invitation'),
-          onPressed: shareInvitation,
-        ),
-        if (error != null)
-          Semantics(
-            liveRegion: true,
-            child: Text(
-              error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+  Widget build(BuildContext context) {
+    final palette = logPalette(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (sentTo != null) ...[
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: palette.surface,
+              borderRadius: BorderRadius.circular(20),
             ),
-          ),
-        ExpansionTile(
-          tilePadding: EdgeInsets.zero,
-          title: const Text('More ways to send'),
-          children: [
-            OutlinedButton.icon(
-              icon: const Icon(Icons.email_outlined),
-              label: const Text('Compose joining email'),
-              onPressed: composeJoiningEmail,
-            ),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.copy),
-              label: const Text('Copy message to send'),
-              onPressed: () async {
-                await Clipboard.setData(
-                  ClipboardData(
-                    text: widget.controller.drive.invitationInstructions(
-                      widget.family,
-                      sentTo!,
-                    ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  color: palette.actionInk,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Invitation sent',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(sentTo!, style: TextStyle(color: palette.secondary)),
+                      const SizedBox(height: 12),
+                      const Text('They can now view and edit this log.'),
+                    ],
                   ),
-                );
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Joining instructions copied'),
-                    ),
-                  );
-                }
-              },
+                ),
+              ],
             ),
-          ],
-        ),
-        TextButton(
-          onPressed: () => setState(() {
-            sentTo = null;
-            email.clear();
-          }),
-          child: const Text('Invite another caregiver'),
-        ),
-      ] else ...[
-        Text(
-          'Invite someone to ${widget.family.babyName}’s log. They can view the full history and add or change entries.',
-        ),
-        const SizedBox(height: LogSpacing.content),
-        const Text(
-          'Google Drive will email them instructions for joining Little Log.',
-        ),
-        const SizedBox(height: LogSpacing.field),
-        const Text('Caregiver’s Google email'),
-        const SizedBox(height: LogSpacing.label),
-        Form(
-          key: form,
-          child: TextFormField(
-            controller: email,
-            enabled: !busy,
-            keyboardType: TextInputType.emailAddress,
-            autocorrect: false,
-            textCapitalization: TextCapitalization.none,
-            decoration: const InputDecoration(
-              hintText: 'name@gmail.com',
-              border: OutlineInputBorder(),
-              enabledBorder: OutlineInputBorder(),
-            ),
-            validator: (value) =>
-                RegExp(
-                  r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-                ).hasMatch(value?.trim() ?? '')
-                ? null
-                : 'Enter a valid email address.',
-            onFieldSubmitted: (_) => send(),
           ),
-        ),
-        const SizedBox(height: LogSpacing.content),
+          const SizedBox(height: 24),
+          if (widget.onDone != null) ...[
+            FilledButton(onPressed: widget.onDone, child: const Text('Done')),
+            const SizedBox(height: 12),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.ios_share, size: 20),
+                  label: const Text('Share invitation'),
+                  onPressed: shareInvitation,
+                ),
+              ),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                tooltip: 'More ways to send',
+                icon: const Icon(Icons.more_horiz),
+                onSelected: (value) {
+                  if (value == 'copy') {
+                    copyInvitation();
+                  } else {
+                    composeJoiningEmail();
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'email', child: Text('Send by email')),
+                  PopupMenuItem(value: 'copy', child: Text('Copy invitation')),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Optional — share a copy directly.',
+            style: TextStyle(fontSize: 13, color: palette.secondary),
+          ),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: () => setState(() {
+              sentTo = null;
+              error = null;
+              email.clear();
+            }),
+            child: const Text('Invite someone else'),
+          ),
+        ] else ...[
+          Text(
+            'Share ${widget.family.babyName}’s day with another caregiver.',
+            style: TextStyle(color: palette.secondary, height: 1.5),
+          ),
+          const SizedBox(height: 24),
+          const FieldLabel('Google email'),
+          Form(
+            key: form,
+            child: TextFormField(
+              controller: email,
+              enabled: !busy,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              autocorrect: false,
+              textCapitalization: TextCapitalization.none,
+              decoration: const InputDecoration(hintText: 'name@gmail.com'),
+              validator: (value) =>
+                  RegExp(
+                    r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                  ).hasMatch(value?.trim() ?? '')
+                  ? null
+                  : 'Enter a valid email address.',
+              onFieldSubmitted: (_) => send(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'They’ll be able to view, add and edit entries.',
+            style: TextStyle(fontSize: 13, color: palette.secondary),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: busy ? null : send,
+            child: Text(busy ? 'Sending invitation…' : 'Send invitation'),
+          ),
+        ],
         if (error != null) ...[
+          const SizedBox(height: 12),
           Semantics(
             liveRegion: true,
             child: Text(
@@ -223,16 +266,35 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
-          const SizedBox(height: LogSpacing.label),
         ],
-        FilledButton.icon(
-          onPressed: busy ? null : send,
-          icon: const Icon(Icons.person_add_outlined),
-          label: Text(busy ? 'Sending invitation…' : 'Send invitation'),
-        ),
-        const SizedBox(height: LogSpacing.label),
-        const Text('You can change or remove their access in Google Drive.'),
       ],
-    ],
+    );
+  }
+}
+
+class InviteCaregiverPage extends StatelessWidget {
+  const InviteCaregiverPage({
+    super.key,
+    required this.controller,
+    required this.family,
+    this.onSent,
+  });
+  final AppController controller;
+  final Family family;
+  final VoidCallback? onSent;
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: logPageAppBar(context, 'Invite a caregiver'),
+    body: LogPageFrame(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: InviteCaregiverForm(
+          controller: controller,
+          family: family,
+          onSent: onSent,
+          onDone: () => Navigator.of(context).pop(),
+        ),
+      ),
+    ),
   );
 }

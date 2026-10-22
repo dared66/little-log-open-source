@@ -1421,12 +1421,20 @@ class _FamilyPanelState extends State<FamilyPanel> {
                 'Open Share in Google Drive to change or remove access.',
               ),
               const SizedBox(height: LogSpacing.section),
-              const SectionHeading(title: 'Invite a caregiver'),
-              InviteCaregiverForm(
-                key: ValueKey(c.family!.id),
-                controller: c,
-                family: c.family!,
-                onSent: loadCollaborators,
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.person_add_outlined),
+                title: const Text('Invite a caregiver'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => InviteCaregiverPage(
+                      controller: c,
+                      family: c.family!,
+                      onSent: loadCollaborators,
+                    ),
+                  ),
+                ),
               ),
             ],
             ...[
