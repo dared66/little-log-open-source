@@ -467,7 +467,7 @@ void runInvitationHarness({bool native = false}) {
     expect(message, contains('Join baby log'));
     expect(message, isNot(contains('littlelog://')));
     expect(message.length, lessThan(1000));
-    expect(find.text('Send joining link'), findsOneWidget);
+    expect(find.text('Share invitation'), findsOneWidget);
     expect(find.text('Optional'), findsOneWidget);
     expect(find.text('More ways to send'), findsOneWidget);
     expect(
@@ -493,7 +493,7 @@ void runInvitationHarness({bool native = false}) {
       () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(sharing, null),
     );
-    await tap(t, 'Send joining link');
+    await tap(t, 'Share invitation');
     final appLink = sharedMessage!
         .split('\n')
         .firstWhere((line) => line.startsWith('littlelog://'));

@@ -131,7 +131,7 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
         const SizedBox(height: LogSpacing.label),
         FilledButton.icon(
           icon: const Icon(Icons.ios_share),
-          label: const Text('Send joining link'),
+          label: const Text('Share invitation'),
           onPressed: shareInvitation,
         ),
         if (error != null)
