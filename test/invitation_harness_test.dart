@@ -379,6 +379,48 @@ void runInvitationHarness({bool native = false}) {
     await t.runAsync(db.close);
   });
 
+  testWidgets(
+    'unavailable shared log explains account and authorization recovery',
+    (t) async {
+      final server = InvitationHarness()
+        ..editors.add('caregiver@example.com')
+        ..appAuthorized.add('caregiver@example.com');
+      final auth = HarnessAuth('caregiver@example.com');
+      final db = (await t.runAsync(
+        () => databaseFactoryMemory.openDatabase(newId.v4()),
+      ))!;
+      final c = AppController(Repository(db), auth, server.client(auth))
+        ..loading = false;
+      await t.pumpWidget(
+        MaterialApp(
+          home: OnboardingPage(
+            controller: c,
+            initialStage: OnboardingStage.join,
+          ),
+        ),
+      );
+      await settle(t);
+      expect(find.text('Joining with this Google account'), findsOneWidget);
+      for (final status in [403, 404]) {
+        server.file.error = status;
+        await tap(t, 'Baby');
+        expect(
+          find.textContaining(
+            'This log could not be opened with caregiver@example.com',
+          ),
+          findsOneWidget,
+        );
+        expect(c.family, isNull);
+      }
+      server.file.error = null;
+      await tap(t, 'Baby');
+      expect(find.text('Join baby log'), findsOneWidget);
+      await t.pumpWidget(const SizedBox());
+      c.dispose();
+      await t.runAsync(db.close);
+    },
+  );
+
   testWidgets('sender email → receiver selection → confirmation → shared history', (
     t,
   ) async {
@@ -424,12 +466,12 @@ void runInvitationHarness({bool native = false}) {
     expect(message, contains('Sign in with caregiver@example.com'));
     expect(message, contains('Join baby log'));
     expect(message, isNot(contains('littlelog://')));
-    expect(message, contains('Shared log’s Google Drive link'));
-    expect(find.text('Share joining instructions'), findsOneWidget);
-    expect(find.text('Share instructions'), findsNothing);
+    expect(message.length, lessThan(1000));
+    expect(find.text('Share invitation'), findsOneWidget);
+    expect(find.text('More ways to send'), findsOneWidget);
     expect(
       find.text(
-        'Google Drive was asked to email the invitation to caregiver@example.com. They can now view and add entries to this log.',
+        'Access is ready for caregiver@example.com. Google Drive was asked to email them. You can also send the invitation below.',
       ),
       findsOneWidget,
     );
@@ -437,8 +479,36 @@ void runInvitationHarness({bool native = false}) {
       server.invitations.single.url.queryParameters['sendNotificationEmail'],
       'true',
     );
-    await tap(t, 'Share joining instructions');
-    expect(find.text('Share instructions'), findsOneWidget);
+    const sharing = MethodChannel('app.littlelog/invitation');
+    String? sharedMessage;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(sharing, (call) async {
+          if (call.method == 'listen') return null;
+          expect(call.method, 'share');
+          sharedMessage = call.arguments['message'] as String;
+          throw PlatformException(code: 'share_unavailable');
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(sharing, null),
+    );
+    await tap(t, 'Share invitation');
+    final appLink = sharedMessage!
+        .split('\n')
+        .firstWhere((line) => line.startsWith('littlelog://'));
+    final parsed = InvitationLink.parse(appLink)!;
+    expect(parsed.fileId, family.driveFileId);
+    expect(parsed.invitedEmail, 'caregiver@example.com');
+    expect(
+      sharedMessage,
+      contains('https://drive.google.com/file/d/${family.driveFileId}/view'),
+    );
+    expect(
+      find.textContaining('The share sheet could not open'),
+      findsOneWidget,
+    );
+    await tap(t, 'More ways to send');
+    expect(find.text('Copy message to send'), findsOneWidget);
     expect(find.text('Access granted'), findsOneWidget);
 
     final auth = HarnessAuth('caregiver@example.com');

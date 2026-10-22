@@ -4,6 +4,7 @@ import '../models.dart';
 import 'family_cloud.dart';
 import 'family_csv.dart';
 import 'google_auth.dart';
+import 'invitation_link.dart';
 
 class CloudException implements Exception {
   CloudException(this.message, [this.status]);
@@ -470,15 +471,20 @@ class GoogleDrive implements FamilyCloud {
     return people;
   }
 
+  /// Keep Google's notification short; some mail clients hide custom app links.
+  String invitationEmailMessage(Family family, String email) =>
+      '${auth.user?.email ?? 'A caregiver'} invited you to ${family.babyName}’s baby log in Little Log.\n\n'
+      'Sign in with ${email.trim()} in Little Log. Choose “Join an existing baby log” in setup or Settings, tap “Browse shared logs”, and select this log in Google Drive.\n'
+      'Check the baby and owner, then tap “Join baby log”.\n\n'
+      'If you need the app or cannot find the log, ask the sender to share the Little Log invitation with you.';
+
   String invitationInstructions(Family family, String email) =>
-      '${auth.user?.email ?? 'A caregiver'} invited you to ${family.babyName}’s baby log in Little Log. You can view the history and add entries together.\n\n'
-      'To join, open Little Log and tap “Join an existing baby log”. If you already use Little Log, find “Join an existing baby log” in Settings.\n'
-      'Sign in with $email and connect Google Drive if asked.\n'
-      'Paste this Google Drive file link into the “Shared log’s Google Drive link” box in Little Log:\n'
+      '${invitationEmailMessage(family, email)}\n\n'
+      'Open in Little Log (app required):\n'
+      '${InvitationLink.forFamily(family, email)}\n\n'
+      'If the app link does not open, paste this file link into “Shared log’s Google Drive link” in Little Log:\n'
       'https://drive.google.com/file/d/${family.driveFileId}/view\n'
-      'Tap “Open this shared log in Google Drive” and select that file when Google asks.\n'
-      'Check that Little Log shows ${family.babyName} and owner ${family.ownerEmail ?? auth.user?.email ?? 'the sender'}, then tap “Join baby log”. Your other logs stay separate.\n\n'
-      'Google’s automatic Drive email may show only the file name. Use these steps to join.';
+      'Tap “Open this shared log in Google Drive” and select the file. Confirm ${family.babyName} and owner ${family.ownerEmail ?? auth.user?.email ?? 'the sender'} before joining.';
 
   Future<void> invite(Family family, String email) async {
     email = email.trim();
@@ -493,7 +499,7 @@ class GoogleDrive implements FamilyCloud {
       '/drive/v3/files/${family.driveFileId}/permissions',
       query: {
         'sendNotificationEmail': 'true',
-        'emailMessage': invitationInstructions(family, email),
+        'emailMessage': invitationEmailMessage(family, email),
       },
       json: {'type': 'user', 'role': 'writer', 'emailAddress': email},
     );

@@ -185,11 +185,9 @@ production token lifecycle testing.
 Little Log grants editor access through Drive `permissions.create` with
 `sendNotificationEmail=true` and a plain-text `emailMessage`. Google Drive sends
 its own sharing notification. A successful request confirms permission creation,
-not inbox delivery. There is no Little Log email service or app-opening invite URL.
+not inbox delivery. There is no Little Log email service. The separately shared joining message includes a `littlelog://join` app link and a Google Drive file-link fallback. Native app links require Little Log to be installed; some email and messaging clients do not make custom schemes clickable. There is no hosted HTTPS invitation page or deferred installation handoff.
 The app lists accessible Little Log CSVs and checks content-editing permission
-before joining. Both people need an installed copy of Little Log. The message
-includes the existing iPhone Family beta TestFlight link; Android currently
-requires a test build from the sender. Copyable instructions provide a fallback
+before joining. Both people need an installed copy of Little Log. Installation is arranged separately by the sender; this change does not establish a public app-store installation link. Copyable instructions provide a fallback
 when Google’s notification is missing or incomplete.
 
 Run the isolated fake-service harness with:
@@ -219,12 +217,37 @@ and family IDs are unchanged. Joining a same-name log explicitly preserves
 both histories separately. Never merge or delete a log based on its name.
 
 The sender requests a Drive email with `emailMessage`. A successful permission
-request is not evidence of email delivery or rendered content. The app offers
-copyable joining instructions and the existing iPhone Family beta install
-link as an independent handoff. Android installation currently requires the
+request is not evidence of email delivery or rendered content. The app offers a visible Share invitation action plus copyable joining instructions as an independent handoff. Android installation currently requires the
 sender's test build; there is no verified public Play installation link.
 
 The invitation harness models sharing permission and per-account app access
 separately. Native harness success does not prove Google’s live authorization
 or notification behavior. Inspect a real received email and restart both
 real-account apps as part of release acceptance.
+
+
+## Sharing workflow branch (October 22, 2026)
+
+- Google's notification uses a short message identifying the sender, baby and
+  invited account, with setup/Settings joining steps. Permission creation does
+  not establish inbox delivery.
+- Share invitation is immediately available after permission creation. The
+  native share sheet sends the existing app link, bound to the file and invited
+  email, plus manual Drive-link instructions. Share failures stay visible with
+  compose/copy fallbacks. Existing native account checks and baby/owner
+  confirmation still apply; a link grants no permission itself.
+- The joining screen labels the active account. A failed file preview explains
+  account, Editor access and per-file authorization checks without claiming
+  which one caused Google's 403/404 response.
+- The caregiver list links directly to the log in Drive, where users open Share
+  to manage permissions. New and existing filenames keep `Little Log · … .csv`;
+  discovery and old clients continue using the same names and file IDs.
+
+Remaining acceptance work: receive a real Google notification in a second
+account, inspect its visible filename/custom message, then exercise warm/cold
+app links, account switching, file authorization, joining, restart, and revoked
+access on Android and iOS. Use isolated synthetic logs; don't send real family
+invitations for QA. A branded HTML email/Join button requires a verified sender
+and email service. A clickable HTTPS invitation and installation fallback need
+an owned hosted domain and platform association files. Neither is configured by
+this branch.

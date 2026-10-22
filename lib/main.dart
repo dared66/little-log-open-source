@@ -1398,6 +1398,28 @@ class _FamilyPanelState extends State<FamilyPanel> {
                       ].join(' · '),
                     ),
                   ),
+              TextButton.icon(
+                onPressed: busy
+                    ? null
+                    : () => c.run(() async {
+                        final opened = await launchUrl(
+                          Uri.parse(
+                            'https://drive.google.com/file/d/${c.family!.driveFileId}/view',
+                          ),
+                          mode: LaunchMode.externalApplication,
+                        );
+                        if (!opened) {
+                          throw StateError(
+                            'Google Drive could not open. Try again.',
+                          );
+                        }
+                      }),
+                icon: const Icon(Icons.open_in_new),
+                label: const Text('Manage access in Google Drive'),
+              ),
+              const Text(
+                'Open Share in Google Drive to change or remove access.',
+              ),
               const SizedBox(height: LogSpacing.section),
               const SectionHeading(title: 'Invite a caregiver'),
               InviteCaregiverForm(

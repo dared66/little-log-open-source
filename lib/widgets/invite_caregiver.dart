@@ -124,28 +124,26 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
         ),
         const SizedBox(height: LogSpacing.label),
         Text(
-          'Google Drive was asked to email the invitation to $sentTo. They can now view and add entries to this log.',
+          'Access is ready for $sentTo. Google Drive was asked to email them. You can also send the invitation below.',
         ),
         const SizedBox(height: LogSpacing.content),
+        FilledButton.icon(
+          icon: const Icon(Icons.ios_share),
+          label: const Text('Share invitation'),
+          onPressed: shareInvitation,
+        ),
+        if (error != null)
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
         ExpansionTile(
           tilePadding: EdgeInsets.zero,
-          title: const Text('Share joining instructions'),
-          subtitle: const Text('Optional, if they cannot find Google’s email'),
+          title: const Text('More ways to send'),
           children: [
-            const Text(
-              'The message includes the exact Google Drive file link and the steps to join in Little Log.',
-            ),
-            SelectableText(
-              widget.controller.drive.invitationInstructions(
-                widget.family,
-                sentTo!,
-              ),
-            ),
-            FilledButton.icon(
-              icon: const Icon(Icons.ios_share),
-              label: const Text('Share instructions'),
-              onPressed: shareInvitation,
-            ),
             OutlinedButton.icon(
               icon: const Icon(Icons.email_outlined),
               label: const Text('Compose joining email'),

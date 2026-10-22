@@ -6,6 +6,7 @@ import '../controller.dart';
 import '../design.dart';
 import '../models.dart';
 import '../services/drive_invitation.dart';
+import '../services/google_drive.dart';
 import '../services/invitation_link.dart';
 import '../services/picker.dart';
 import 'google_button.dart';
@@ -248,6 +249,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
         setState(() => selectedLog = baby);
         reveal(confirmationKey);
       }
+    } on CloudException catch (e) {
+      if (e.status == 403 || e.status == 404) {
+        throw StateError(
+          'This log could not be opened with ${account.email}. Check that this is the invited account and ask the sender to confirm your Editor access. If access is still shared, select the file again in Google Drive to allow Little Log to use it.',
+        );
+      }
+      rethrow;
     } finally {
       if (mounted) setState(() => selectingId = null);
     }
@@ -645,7 +653,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
         contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.account_circle_outlined),
         title: Text(c.auth.user!.email),
-        subtitle: const Text('Google account'),
+        subtitle: Text(
+          stage == OnboardingStage.join
+              ? 'Joining with this Google account'
+              : 'Google account',
+        ),
       ),
       TextButton(
         onPressed: busy
