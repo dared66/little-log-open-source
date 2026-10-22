@@ -217,7 +217,7 @@ and family IDs are unchanged. Joining a same-name log explicitly preserves
 both histories separately. Never merge or delete a log based on its name.
 
 The sender requests a Drive email with `emailMessage`. A successful permission
-request is not evidence of email delivery or rendered content. The app offers a visible Share invitation action plus copyable joining instructions as an independent handoff. Android installation currently requires the
+request is not evidence of email delivery or rendered content. The app offers a visible Send joining link action plus copyable joining instructions as an independent handoff. Android installation currently requires the
 sender's test build; there is no verified public Play installation link.
 
 The invitation harness models sharing permission and per-account app access
@@ -231,7 +231,7 @@ real-account apps as part of release acceptance.
 - Google's notification uses a short message identifying the sender, baby and
   invited account, with setup/Settings joining steps. Permission creation does
   not establish inbox delivery.
-- Share invitation is immediately available after permission creation. The
+- Send joining link is marked Optional and immediately available after permission creation. The
   native share sheet sends the existing app link, bound to the file and invited
   email, plus manual Drive-link instructions. Share failures stay visible with
   compose/copy fallbacks. Existing native account checks and baby/owner

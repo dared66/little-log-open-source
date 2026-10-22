@@ -124,12 +124,14 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
         ),
         const SizedBox(height: LogSpacing.label),
         Text(
-          'Access is ready for $sentTo. Google Drive was asked to email them. You can also send the invitation below.',
+          'Access is ready for $sentTo. Google Drive was asked to email them.',
         ),
         const SizedBox(height: LogSpacing.content),
+        const Text('Optional'),
+        const SizedBox(height: LogSpacing.label),
         FilledButton.icon(
           icon: const Icon(Icons.ios_share),
-          label: const Text('Share invitation'),
+          label: const Text('Send joining link'),
           onPressed: shareInvitation,
         ),
         if (error != null)
