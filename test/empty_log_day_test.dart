@@ -60,17 +60,23 @@ void main() {
       await t.pumpAndSettle();
       expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
       expect(find.text('No entries'), findsOneWidget);
+      final contentCenter =
+          (t.getTopLeft(find.byIcon(Icons.auto_awesome_outlined)).dy +
+              t.getBottomLeft(find.text('No entries')).dy) /
+          2;
       final previous = find.byKey(const ValueKey('empty-day-previous'));
       final next = find.byKey(const ValueKey('empty-day-next'));
       if (day == today) {
         expect(next, findsNothing);
       } else {
+        expect(t.getCenter(next).dy, closeTo(contentCenter, .1));
         await t.tap(next);
         expect(chosen, DateTime(day.year, day.month, day.day + 1));
       }
       if (day == DateTime(2000)) {
         expect(previous, findsNothing);
       } else {
+        expect(t.getCenter(previous).dy, closeTo(contentCenter, .1));
         expect(t.getSize(previous).height, greaterThanOrEqualTo(44));
         await t.tap(previous);
         expect(chosen, DateTime(day.year, day.month, day.day - 1));

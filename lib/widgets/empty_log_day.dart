@@ -44,32 +44,29 @@ class EmptyLogDay extends StatelessWidget {
       textAlign: TextAlign.center,
       style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
     );
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.auto_awesome_outlined, color: logPalette(context).secondary),
+        const SizedBox(height: LogSpacing.content),
+        message,
+      ],
+    );
     return Container(
       padding: const EdgeInsets.all(LogSpacing.content),
       decoration: BoxDecoration(
         color: logPalette(context).surface,
         borderRadius: BorderRadius.circular(18),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.auto_awesome_outlined,
-            color: logPalette(context).secondary,
-          ),
-          const SizedBox(height: LogSpacing.content),
-          if (canNavigate)
-            Row(
+      child: canNavigate
+          ? Row(
               children: [
                 arrow(false),
-                Expanded(child: message),
+                Expanded(child: content),
                 arrow(true),
               ],
             )
-          else
-            message,
-        ],
-      ),
+          : content,
     );
   }
 }
