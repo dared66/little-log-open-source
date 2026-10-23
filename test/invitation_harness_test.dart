@@ -14,8 +14,16 @@ import 'package:little_log/widgets/invite_caregiver.dart';
 import 'package:little_log/widgets/onboarding.dart';
 import 'package:little_log/services/invitation_link.dart';
 import 'package:sembast/sembast_memory.dart';
-import 'google_drive_test.dart' show family, feed;
+import 'google_drive_test.dart' show feed;
 import 'support/invitation_harness.dart';
+
+const family = Family(
+  id: 'family',
+  name: 'Demo',
+  babyName: 'Baby',
+  driveFileId: 'csv123456789',
+  accountId: 'sender@example.com',
+);
 
 Future<void> settle(WidgetTester t) async {
   await t.runAsync(

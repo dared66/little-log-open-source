@@ -101,6 +101,7 @@ class InvitationHarness {
         return file.json({}, 404);
       }
       await gate?.future;
+      file.owned = email == 'sender@example.com';
       return file.handle(request);
     }),
   );

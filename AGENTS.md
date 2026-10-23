@@ -69,7 +69,7 @@ After app changes, refresh and launch the latest build on both the Android emula
 
 Use emulators and simulators for routine builds, installation, launches, and QA. Install on a physical phone only when the user explicitly requests it. The user explicitly authorized installing build 51 on their iPhone on October 9, 2026. Routine QA remains emulator-only.
 
-After a build has been uploaded to TestFlight, use the next build number for subsequent changes and installations. Do not reuse an uploaded build number. Build 58 was uploaded and distributed to Owner testing, Family beta, Reddit Beta users and Open Beta on October 15, 2026, from `932af77e873d41395583538e7e4ccb593dd05384`. It preserves build 57's app code; a new build number was required because Apple prohibits external distribution of the internal-only build 57. Current development and release preparation use version 1.0.0+59. Build 59 has not yet been uploaded; after its first upload use build 60 for further app changes. Do not advance the number merely for release bookkeeping. Build 58 excludes all work from the separate telemetry/anonymous diagnostics branch. This standing user instruction was set October 9, 2026 and supersedes the earlier published-baseline rule.
+After a build has been uploaded to TestFlight, use the next build number for subsequent changes and installations. Do not reuse an uploaded build number. Build 58 was uploaded and distributed to Owner testing, Family beta, Reddit Beta users and Open Beta on October 15, 2026, from `932af77e873d41395583538e7e4ccb593dd05384`. It preserves build 57's app code; a new build number was required because Apple prohibits external distribution of the internal-only build 57. Build 59 was uploaded to Owner testing on October 23, 2026. It has not been distributed externally. Current development uses version 1.0.0+60. Do not advance the number merely for release bookkeeping. Build 58 excludes all work from the separate telemetry/anonymous diagnostics branch. This standing user instruction was set October 9, 2026 and supersedes the earlier published-baseline rule.
 
 # UI writing
 
@@ -84,6 +84,11 @@ Do not explain invitation capabilities beneath the email field (for example,
 email above the account card or narrate paste, browse, or manage-access buttons.
 Audit the full affected flow before presenting it, rather than waiting for the
 user to identify each redundant sentence.
+
+Only the Drive log’s owner may invite caregivers or manage access. Editor access
+and the account used to connect a shared log do not establish ownership. Verify
+ownership with Drive before granting access, and keep editor resharing disabled
+on owner-controlled files. Cover owner and recipient accounts in sharing tests.
 
 Invitation links already identify their exact log. Attempt direct access first;
 never require recipients to browse/select a known file when the app can read it.

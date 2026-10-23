@@ -133,7 +133,7 @@ class GoogleDrive implements FamilyCloud {
       await _request(
         'GET',
         '/drive/v3/files/${family.driveFileId}',
-        query: {'fields': 'id,parents,ownedByMe,trashed'},
+        query: {'fields': 'id,parents,ownedByMe,trashed,writersCanShare'},
       ),
     );
     if (meta['trashed'] == true) {
@@ -146,16 +146,17 @@ class GoogleDrive implements FamilyCloud {
     if (meta['ownedByMe'] == true) {
       final folder = await littleLogFolder(family.accountId!);
       final parents = (meta['parents'] as List? ?? []).cast<String>();
-      if (!parents.contains(folder)) {
+      if (!parents.contains(folder) || meta['writersCanShare'] != false) {
         await _request(
           'PATCH',
           '/drive/v3/files/${family.driveFileId}',
           query: {
-            'addParents': folder,
-            if (parents.isNotEmpty) 'removeParents': parents.join(','),
+            if (!parents.contains(folder)) 'addParents': folder,
+            if (!parents.contains(folder) && parents.isNotEmpty)
+              'removeParents': parents.join(','),
             'fields': 'id,parents',
           },
-          json: {},
+          json: {'writersCanShare': false},
         );
         _cache.remove(key);
       }
@@ -173,8 +174,12 @@ class GoogleDrive implements FamilyCloud {
     String? media,
     Map<String, String>? headers,
     String? contentType,
+    String? expectedAccountId,
   }) async {
     final token = await auth.accessToken();
+    if (expectedAccountId != null && auth.user?.id != expectedAccountId) {
+      throw StateError('Google account changed. Try again.');
+    }
     final request = http.Request(
       method,
       Uri.https('www.googleapis.com', path, query),
@@ -348,6 +353,7 @@ class GoogleDrive implements FamilyCloud {
           'mimeType': 'text/csv',
           'parents': [folder],
           'appProperties': {'littleLogFamilyId': local.id},
+          'writersCanShare': false,
         })}\r\n'
         '--$boundary\r\nContent-Type: text/csv; charset=utf-8\r\n\r\n$csv\r\n--$boundary--\r\n';
     final result = _json(
@@ -507,9 +513,36 @@ class GoogleDrive implements FamilyCloud {
     if (family.isLocal) {
       throw StateError('Save this baby’s log to Drive first.');
     }
+    final accountId = auth.user?.id;
+    if (accountId == null || accountId != family.accountId) {
+      throw StateError('Sign in with this log’s Google account to continue.');
+    }
+    // Editing a CSV does not grant permission to invite. Never trust the
+    // cached owner email or the account used to connect a shared log.
+    final metadata = _json(
+      await _request(
+        'GET',
+        '/drive/v3/files/${family.driveFileId}',
+        query: {'fields': 'ownedByMe,trashed,writersCanShare'},
+        expectedAccountId: accountId,
+      ),
+    );
+    if (metadata['ownedByMe'] != true || metadata['trashed'] == true) {
+      throw StateError('Only the log’s owner can invite caregivers.');
+    }
+    // Enforce the same rule in Drive, including for older app versions.
+    if (metadata['writersCanShare'] != false) {
+      await _request(
+        'PATCH',
+        '/drive/v3/files/${family.driveFileId}',
+        json: {'writersCanShare': false},
+        expectedAccountId: accountId,
+      );
+    }
     await _request(
       'POST',
       '/drive/v3/files/${family.driveFileId}/permissions',
+      expectedAccountId: accountId,
       // Drive's notification opens its CSV viewer, not Little Log.
       // The caller opens the native share sheet after access is granted.
       query: {'sendNotificationEmail': 'false'},
