@@ -109,6 +109,46 @@ LogPalette logPalette(BuildContext context) => LogPalette(
   background: Theme.of(context).scaffoldBackgroundColor,
 );
 
+/// Onboarding and invitation forms share the same control geometry and contrast.
+ThemeData setupTheme(BuildContext context) {
+  final theme = Theme.of(context);
+  final palette = logPalette(context);
+  final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+  final border = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: BorderSide(color: palette.secondary),
+  );
+  return theme.copyWith(
+    inputDecorationTheme: theme.inputDecorationTheme.copyWith(
+      fillColor: palette.surface,
+      contentPadding: const EdgeInsets.all(16),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border.copyWith(
+        borderSide: BorderSide(color: palette.actionInk, width: 2),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: theme.filledButtonTheme.style?.copyWith(
+        shape: WidgetStatePropertyAll(shape),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: theme.outlinedButtonTheme.style?.copyWith(
+        shape: WidgetStatePropertyAll(shape),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+        side: WidgetStatePropertyAll(BorderSide(color: palette.secondary)),
+      ),
+    ),
+    cardTheme: theme.cardTheme.copyWith(shape: shape),
+  );
+}
+
 /// Standalone pages share the log's 680-point frame, including its gutters.
 class LogPageFrame extends StatelessWidget {
   const LogPageFrame({super.key, required this.child});

@@ -209,7 +209,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     if (id == null) {
       setState(
         () => error =
-            'Paste the Google Drive file link for the shared log. It starts with https://drive.google.com/file/d/. Ask the sender to copy the joining instructions if you only received a Drive notification.',
+            'Enter the shared log’s Google Drive link, or ask the sender to share the invitation again.',
       );
       reveal(errorKey);
       return;
@@ -322,42 +322,49 @@ class _OnboardingPageState extends State<OnboardingPage> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop && !busy) back();
       },
-      child: Scaffold(
-        appBar: logPageAppBar(
-          context,
-          stage == OnboardingStage.create || stage == OnboardingStage.local
-              ? 'New baby log'
-              : 'Little Log',
-          showBackButton: showBack,
-          onBack: busy ? () {} : back,
-        ),
-        body: LogPageFrame(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (stage == OnboardingStage.tour) ...welcome(),
-                if (stage == OnboardingStage.setup ||
-                    stage == OnboardingStage.create)
-                  ...create(),
-                if (stage == OnboardingStage.local) ...local(),
-                if (stage == OnboardingStage.join) ...joinView(),
-                if (error != null && stage != OnboardingStage.join)
-                  Padding(
-                    key: errorKey,
-                    padding: const EdgeInsets.only(top: 16),
-                    child: Semantics(
-                      liveRegion: true,
-                      child: Text(
-                        error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+      child: Theme(
+        data: setupTheme(context),
+        child: Scaffold(
+          appBar: logPageAppBar(
+            context,
+            stage == OnboardingStage.create || stage == OnboardingStage.local
+                ? 'New baby log'
+                : stage == OnboardingStage.join
+                ? widget.invitation == null
+                      ? 'Join a shared log'
+                      : 'Join ${widget.invitation!.babyName}’s log'
+                : 'Little Log',
+            showBackButton: showBack,
+            onBack: busy ? () {} : back,
+          ),
+          body: LogPageFrame(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (stage == OnboardingStage.tour) ...welcome(),
+                  if (stage == OnboardingStage.setup ||
+                      stage == OnboardingStage.create)
+                    ...create(),
+                  if (stage == OnboardingStage.local) ...local(),
+                  if (stage == OnboardingStage.join) ...joinView(),
+                  if (error != null && stage != OnboardingStage.join)
+                    Padding(
+                      key: errorKey,
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -409,8 +416,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
           absorbing: busy,
           child: googleButton(
             () => act(c.auth.signIn),
-            primary: stage != OnboardingStage.join,
-            style: stage != OnboardingStage.join ? creationButtonStyle : null,
+            primary: true,
+            style: creationButtonStyle,
           ),
         ),
       ];
@@ -421,7 +428,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: logPalette(context).surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -656,59 +663,53 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final c = widget.controller;
     if (selectedLog != null) {
       return [
-        Card(
+        Column(
           key: confirmationKey,
-          margin: EdgeInsets.zero,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  selectedLog!.babyName,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (widget.invitation == null) ...[
+              Text(
+                selectedLog!.babyName,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(height: LogSpacing.label),
-                Text(
-                  selectedLog!.ownerEmail == null
-                      ? 'Owner unavailable'
-                      : 'Owner: ${selectedLog!.ownerEmail}',
-                ),
-                if (c.families.any(
-                  (f) =>
-                      f.babyName.toLowerCase() ==
-                          selectedLog!.babyName.toLowerCase() &&
-                      f.id != selectedLog!.id,
-                ))
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Text(
-                      'You already have a separate log named ${selectedLog!.babyName}. Joining this log keeps both histories separate. It does not combine or delete entries.',
-                    ),
-                  ),
-                const SizedBox(height: LogSpacing.field),
-                FilledButton(
-                  onPressed: busy ? null : joinSelected,
-                  child: Text(
-                    busy ? 'Loading shared history…' : 'Join baby log',
-                  ),
-                ),
-                if (widget.invitation == null)
-                  TextButton(
-                    onPressed: busy
-                        ? null
-                        : () => setState(() {
-                            selectedLog = null;
-                            error = null;
-                          }),
-                    child: const Text('Back to shared logs'),
-                  ),
-              ],
+              ),
+              const SizedBox(height: LogSpacing.label),
+            ],
+            Text(
+              selectedLog!.ownerEmail == null
+                  ? 'Owner unavailable'
+                  : 'Owner: ${selectedLog!.ownerEmail}',
             ),
-          ),
+            if (c.families.any(
+              (f) =>
+                  f.babyName.toLowerCase() ==
+                      selectedLog!.babyName.toLowerCase() &&
+                  f.id != selectedLog!.id,
+            ))
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'You already have a separate log named ${selectedLog!.babyName}. Joining this log keeps both histories separate. It does not combine or delete entries.',
+                ),
+              ),
+            const SizedBox(height: LogSpacing.field),
+            FilledButton(
+              onPressed: busy ? null : joinSelected,
+              child: Text(busy ? 'Loading shared history…' : 'Join baby log'),
+            ),
+            if (widget.invitation == null)
+              TextButton(
+                onPressed: busy
+                    ? null
+                    : () => setState(() {
+                        selectedLog = null;
+                        error = null;
+                      }),
+                child: const Text('Back to shared logs'),
+              ),
+          ],
         ),
 
         if (error != null)
@@ -726,13 +727,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
       ];
     }
     return [
-      Text(
-        widget.invitation == null
-            ? 'Join a shared log'
-            : 'Join ${widget.invitation!.babyName}’s log',
-        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
-      ),
-      const SizedBox(height: 24),
       ...accountControls(),
       if (error != null)
         Padding(
@@ -786,24 +780,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
             autocorrect: false,
             keyboardType: TextInputType.url,
             textCapitalization: TextCapitalization.none,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Shared log’s Google Drive link',
-              hintText: 'https://drive.google.com/file/d/…/view',
-              border: OutlineInputBorder(),
+              suffixIcon: IconButton(
+                tooltip: 'Paste link from clipboard',
+                onPressed: busy || loadingLogs
+                    ? null
+                    : () async {
+                        final data = await Clipboard.getData(
+                          Clipboard.kTextPlain,
+                        );
+                        if (data?.text != null) {
+                          invitationLink.text = data!.text!;
+                        }
+                      },
+                icon: const Icon(Icons.content_paste, size: 20),
+              ),
             ),
           ),
-          const SizedBox(height: LogSpacing.label),
-          TextButton.icon(
-            onPressed: busy || loadingLogs
-                ? null
-                : () async {
-                    final data = await Clipboard.getData(Clipboard.kTextPlain);
-                    if (data?.text != null) invitationLink.text = data!.text!;
-                  },
-            icon: const Icon(Icons.content_paste),
-            label: const Text('Paste link from clipboard'),
-          ),
-          const SizedBox(height: LogSpacing.label),
+          const SizedBox(height: LogSpacing.content),
           FilledButton(
             onPressed: busy || loadingLogs ? null : openInvitationLink,
             child: const Text('Open log'),
@@ -836,7 +831,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           for (final log in logs ?? const <Map<String, String>>[])
             Card(
               key: ValueKey('available-log-${log['id']}'),
-              margin: EdgeInsets.zero,
+              margin: const EdgeInsets.only(bottom: 12),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
                 onTap: busy ? null : () => preview(log['id']!),
@@ -882,7 +877,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         if (widget.invitation == null)
           OutlinedButton(
             onPressed: loadingLogs || busy ? null : findLogs,
-            child: Text(error == null ? 'Refresh available logs' : 'Try again'),
+            child: Text(error == null ? 'Refresh logs' : 'Try again'),
           ),
       ],
     ];

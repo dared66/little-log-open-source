@@ -83,9 +83,15 @@ void main() {
         ),
       );
       await tap(t, 'Open invitation');
+      await tap(t, 'Send invitation');
+      await shot('validation');
       await t.enterText(find.byType(TextFormField), 'caregiver@example.com');
       FocusManager.instance.primaryFocus?.unfocus();
       await shot('1-invite');
+      server.inviteError = 503;
+      await tap(t, 'Send invitation');
+      await shot('send-error');
+      server.inviteError = null;
       await tap(t, 'Send invitation');
       await shot('2-sent');
       await tap(t, 'Done');
@@ -105,6 +111,9 @@ void main() {
       );
       await settle(t);
       await shot('3-account');
+      await auth.signOut();
+      await settle(t);
+      await shot('signed-out');
       auth.use('caregiver@example.com');
       await settle(t);
       await shot('4-continue');
@@ -127,6 +136,19 @@ void main() {
       expect(find.text('Continue'), findsNothing);
       await tap(t, 'Join baby log');
       expect(c.family?.id, family.id);
+      await t.pumpWidget(
+        wrap(
+          OnboardingPage(
+            key: const ValueKey('manual-join'),
+            controller: c,
+            initialStage: OnboardingStage.join,
+          ),
+        ),
+      );
+      await settle(t);
+      await shot('manual-join');
+      await t.ensureVisible(find.text('Baby'));
+      await shot('available-logs');
       await t.pumpWidget(const SizedBox());
       c.dispose();
       await t.runAsync(db.close);

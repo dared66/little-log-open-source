@@ -39,6 +39,7 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
 
   Future<void> send() async {
     if (busy || !form.currentState!.validate()) return;
+    FocusManager.instance.primaryFocus?.unfocus();
     final address = email.text.trim();
     setState(() {
       busy = true;
@@ -133,116 +134,120 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
   @override
   Widget build(BuildContext context) {
     final palette = logPalette(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (sentTo != null) ...[
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: palette.surface,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Invitation sent',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
+    return Theme(
+      data: setupTheme(context),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (sentTo != null) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: palette.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Invitation sent',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                    PopupMenuButton<String>(
-                      tooltip: 'More ways to send',
-                      icon: const Icon(Icons.more_horiz),
-                      onSelected: (value) {
-                        if (value == 'copy') {
-                          copyInvitation();
-                        } else {
-                          composeJoiningEmail();
-                        }
-                      },
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(
-                          value: 'email',
-                          child: Text('Send by email'),
-                        ),
-                        PopupMenuItem(
-                          value: 'copy',
-                          child: Text('Copy invitation'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(sentTo!, style: TextStyle(color: palette.secondary)),
-              ],
+                      PopupMenuButton<String>(
+                        padding: EdgeInsets.zero,
+                        tooltip: 'More ways to send',
+                        icon: const Icon(Icons.more_horiz),
+                        onSelected: (value) {
+                          if (value == 'copy') {
+                            copyInvitation();
+                          } else {
+                            composeJoiningEmail();
+                          }
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(
+                            value: 'email',
+                            child: Text('Send by email'),
+                          ),
+                          PopupMenuItem(
+                            value: 'copy',
+                            child: Text('Copy invitation'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(sentTo!, style: TextStyle(color: palette.secondary)),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          if (widget.onDone != null) ...[
-            FilledButton(onPressed: widget.onDone, child: const Text('Done')),
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
+            if (widget.onDone != null) ...[
+              FilledButton(onPressed: widget.onDone, child: const Text('Done')),
+              const SizedBox(height: 12),
+            ],
+            OutlinedButton.icon(
+              icon: const Icon(Icons.ios_share, size: 20),
+              label: const Text('Share invitation'),
+              onPressed: shareInvitation,
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => setState(() {
+                sentTo = null;
+                error = null;
+                email.clear();
+              }),
+              child: const Text('Invite someone else'),
+            ),
+          ] else ...[
+            const FieldLabel('Google email'),
+            Form(
+              key: form,
+              child: TextFormField(
+                controller: email,
+                enabled: !busy,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                autocorrect: false,
+                textCapitalization: TextCapitalization.none,
+                decoration: const InputDecoration(hintText: 'name@gmail.com'),
+                validator: (value) =>
+                    RegExp(
+                      r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                    ).hasMatch(value?.trim() ?? '')
+                    ? null
+                    : 'Enter a valid email address.',
+                onFieldSubmitted: (_) => send(),
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: busy ? null : send,
+              child: Text(busy ? 'Sending invitation…' : 'Send invitation'),
+            ),
           ],
-          OutlinedButton.icon(
-            icon: const Icon(Icons.ios_share, size: 20),
-            label: const Text('Share invitation'),
-            onPressed: shareInvitation,
-          ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: () => setState(() {
-              sentTo = null;
-              error = null;
-              email.clear();
-            }),
-            child: const Text('Invite someone else'),
-          ),
-        ] else ...[
-          const FieldLabel('Google email'),
-          Form(
-            key: form,
-            child: TextFormField(
-              controller: email,
-              enabled: !busy,
-              keyboardType: TextInputType.emailAddress,
-              autofillHints: const [AutofillHints.email],
-              autocorrect: false,
-              textCapitalization: TextCapitalization.none,
-              decoration: const InputDecoration(hintText: 'name@gmail.com'),
-              validator: (value) =>
-                  RegExp(
-                    r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-                  ).hasMatch(value?.trim() ?? '')
-                  ? null
-                  : 'Enter a valid email address.',
-              onFieldSubmitted: (_) => send(),
+          if (error != null) ...[
+            const SizedBox(height: 12),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: busy ? null : send,
-            child: Text(busy ? 'Sending invitation…' : 'Send invitation'),
-          ),
+          ],
         ],
-        if (error != null) ...[
-          const SizedBox(height: 12),
-          Semantics(
-            liveRegion: true,
-            child: Text(
-              error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        ],
-      ],
+      ),
     );
   }
 }
