@@ -238,7 +238,7 @@ void main() {
     await t.tap(local);
     await t.pumpAndSettle();
     expect(
-      find.text('No backup or sharing. Deleting the app can delete this log.'),
+      find.text('Stored only on this device. Deleting the app can delete this log.'),
       findsOneWidget,
     );
     await t.tap(find.byTooltip('Back'));

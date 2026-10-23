@@ -610,7 +610,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'No backup or sharing. Deleting the app can delete this log.',
+                'Stored only on this device. Deleting the app can delete this log.',
                 style: TextStyle(
                   fontSize: 13,
                   height: 1.4,
