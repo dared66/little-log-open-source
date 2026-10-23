@@ -543,17 +543,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                selected ? Icons.radio_button_checked : Icons.radio_button_off,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Flexible(child: Text(label, textAlign: TextAlign.center)),
-            ],
-          ),
+          child: Text(label, textAlign: TextAlign.center),
         ),
       ),
     );

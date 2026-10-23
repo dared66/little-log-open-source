@@ -115,6 +115,8 @@ void main() {
         await capture('validation');
         expect(c.family, isNull);
         await t.enterText(find.byType(TextFormField), 'Robin');
+        FocusManager.instance.primaryFocus?.unfocus();
+        await t.pumpAndSettle();
         final action = find.text('Create baby log');
         await t.ensureVisible(action);
         await t.pumpAndSettle();
