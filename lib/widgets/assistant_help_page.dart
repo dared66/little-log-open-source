@@ -433,19 +433,19 @@ const setupHelpTopics = [
     steps: [
       'Select the baby you want to share and open Settings. Save the log to Google Drive first if it is device-only.',
       'Scroll to Invite a caregiver. Enter their Google email and tap Send invitation.',
-      'If they need joining instructions, expand Share joining instructions and use Share instructions or Copy message to send.',
+      'After sending, use Share invitation to share a copy. The menu also offers Copy invitation.',
     ],
     note:
-        'Caregivers can view the full history and add or change entries. Sharing one baby’s log does not share your other logs.',
+        'Sharing one baby’s log does not share your other logs.',
   ),
   SetupHelpTopic(
     id: 'join',
     title: 'Join an invitation',
     steps: [
-      'Tap Join an existing baby log on the welcome screen or in Settings.',
+      'Open the Little Log invitation link.',
       'Sign in with the Google account that was invited. Connect Google Drive if asked.',
-      'Paste the Drive file link from the joining instructions into Shared log’s Google Drive link.',
-      'Tap Open this shared log in Google Drive and select that file when Google asks.',
+      'If the link does not open, choose Join an existing baby log and paste the Drive link.',
+      'Tap Open log. Approve the invited file if Google asks.',
       'Check the baby and owner, then tap Join baby log.',
     ],
     note:
@@ -456,11 +456,11 @@ const setupHelpTopics = [
     title: 'Can’t find a shared log',
     steps: [
       'Check that the Google account shown in Little Log matches the email the caregiver invited.',
-      'Ask the sender to use Share joining instructions. Google’s email may show only the Drive file name.',
+      'Ask the sender for a copy using Share invitation.',
       'Use the file link to join, or tap Browse shared logs and look in Shared with me.',
     ],
     note:
-        'A newly shared file may be missing from Logs already connected to Little Log until you select it in Google Drive once.',
+        'First-time access may require selecting the invited file in Google’s authorization screen.',
   ),
   SetupHelpTopic(
     id: 'sync',

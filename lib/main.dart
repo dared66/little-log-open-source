@@ -411,17 +411,7 @@ class _HomePageState extends State<HomePage> {
           c.joiningFromOnboarding) {
         return OnboardingPage(controller: c);
       }
-      if (c.onboardingInvitePending) {
-        c.onboardingInvitePending = false;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            showDialog<void>(
-              context: context,
-              builder: (_) => _FirstInvite(controller: c),
-            );
-          }
-        });
-      }
+      c.onboardingInvitePending = false;
       return Scaffold(
         appBar: AppBar(
           toolbarHeight: 24 + MediaQuery.textScalerOf(context).scale(26) * 1.2,
@@ -842,39 +832,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class _FirstInvite extends StatefulWidget {
-  const _FirstInvite({required this.controller});
-  final AppController controller;
-  @override
-  State<_FirstInvite> createState() => _FirstInviteState();
-}
-
-class _FirstInviteState extends State<_FirstInvite> {
-  bool busy = false;
-  @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !busy,
-    child: AlertDialog(
-      scrollable: true,
-      title: const Text('Invite a caregiver'),
-      content: SizedBox(
-        width: 380,
-        child: InviteCaregiverForm(
-          controller: widget.controller,
-          family: widget.controller.family!,
-          onBusy: (value) => setState(() => busy = value),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: busy ? null : () => Navigator.pop(context),
-          child: const Text('Done'),
-        ),
-      ],
-    ),
-  );
-}
-
 class _SyncStatus extends StatelessWidget {
   const _SyncStatus({required this.controller, this.openFamily});
   final AppController controller;
@@ -1264,16 +1221,6 @@ class _FamilyPanelState extends State<FamilyPanel> {
                     ),
                   ),
                   const SizedBox(height: LogSpacing.label),
-                  Text(
-                    c.family?.isLocal == false
-                        ? 'Completed entries sync to Google Drive.'
-                        : 'Entries are stored on this device until Google Drive is connected.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: logPalette(context).secondary,
-                      height: 1.5,
-                    ),
-                  ),
                   const SizedBox(height: LogSpacing.field),
                   if (!AppConfig.configured)
                     const _Notice(
@@ -1467,14 +1414,6 @@ class _FamilyPanelState extends State<FamilyPanel> {
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 children: [
-                  Text(
-                    'Drive location: Little Log. Exports include all local entries and active timers.',
-                    style: TextStyle(
-                      color: logPalette(context).secondary,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: LogSpacing.content),
                   if (c.family!.driveFileId != null)
                     TextButton.icon(
                       onPressed: () => launchUrl(

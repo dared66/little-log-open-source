@@ -127,8 +127,13 @@ class LogPageFrame extends StatelessWidget {
 
 /// Keep long page names readable with accessibility text, and keep the back
 /// control in the same centered frame as the page on wider displays.
-AppBar logPageAppBar(BuildContext context, String title) {
-  final showBack = Navigator.of(context).canPop();
+AppBar logPageAppBar(
+  BuildContext context,
+  String title, {
+  VoidCallback? onBack,
+  bool? showBackButton,
+}) {
+  final showBack = showBackButton ?? Navigator.of(context).canPop();
   final media = MediaQuery.of(context);
   final style =
       (Theme.of(context).appBarTheme.titleTextStyle ??
@@ -165,7 +170,10 @@ AppBar logPageAppBar(BuildContext context, String title) {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
-              if (showBack) ...[const BackButton(), const SizedBox(width: 8)],
+              if (showBack) ...[
+                BackButton(onPressed: onBack),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: Text(
                   title,

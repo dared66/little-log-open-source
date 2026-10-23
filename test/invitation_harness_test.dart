@@ -254,7 +254,7 @@ void runInvitationHarness({bool native = false}) {
       await settle(t);
       expect(find.text('Shared with you'), findsOneWidget);
       expect(find.text('Owner: sender@example.com'), findsOneWidget);
-      expect(find.text('Shared by: sender@example.com'), findsOneWidget);
+      expect(find.text('Shared by: sender@example.com'), findsNothing);
       expect(find.textContaining('Last updated:'), findsOneWidget);
       await captureInvitation(t, 'available-large');
       await tap(t, 'Baby');

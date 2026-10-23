@@ -357,11 +357,6 @@ class _CareEntryFormState extends State<_CareEntryForm> {
             widget.original?.leftSeconds != null &&
             widget.original?.rightSeconds != null &&
             widget.onResume != null) ...[
-          const Text(
-            'Continue this session',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: LogSpacing.label),
           Wrap(
             spacing: 8,
             runSpacing: 8,

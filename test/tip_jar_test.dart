@@ -201,7 +201,7 @@ void main() {
       store.available = true;
       store.catalog = [];
       await jar.load();
-      expect(jar.message, contains('aren’t available yet'));
+      expect(jar.message, contains('currently unavailable'));
     },
   );
 
@@ -230,7 +230,7 @@ void main() {
     store.emit(PurchaseStatus.purchased, complete: true);
     await settle();
     expect(store.finishes, 1);
-    expect(jar.message, contains('Thank you'));
+    expect(jar.message, 'Tip completed.');
     expect(jar.busy, isFalse);
     await jar.buy(jar.products.single);
     expect(store.buys, 2);
@@ -382,7 +382,7 @@ void main() {
       store.catalog = [];
       await jar.load();
       await t.pumpAndSettle();
-      expect(find.textContaining('aren’t available yet'), findsOneWidget);
+      expect(find.textContaining('currently unavailable'), findsOneWidget);
       expect(find.text('Leave a €1,09 tip'), findsNothing);
       expect(find.text('Retry'), findsOneWidget);
       expect(t.takeException(), isNull);

@@ -354,9 +354,8 @@ void runJourney({
         'Welcome > Join an existing baby log',
       );
       await tapFinder(find.byTooltip('Back'));
-      await tap('Skip introduction');
-      await tap('Set up my baby');
-      await tap('Save only on this device');
+      await tap('New baby log');
+      await tap('This device');
       await tap('Create baby log');
       await snap('Welcome / missing name', 'Welcome > Create baby log');
       await t.enterText(find.byType(TextFormField), 'Robin');
