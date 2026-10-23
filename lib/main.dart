@@ -1311,14 +1311,6 @@ class _FamilyPanelState extends State<FamilyPanel> {
                   icon: const Icon(Icons.refresh),
                 ),
               ),
-              Text(
-                'Log reference: ${c.family!.logReference}',
-                style: TextStyle(
-                  color: logPalette(context).secondary,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: LogSpacing.label),
               if (loadingCollaborators)
                 const LinearProgressIndicator()
               else if (collaboratorError != null)
@@ -1414,6 +1406,11 @@ class _FamilyPanelState extends State<FamilyPanel> {
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 children: [
+                  SelectableText(
+                    'Log reference: ${c.family!.logReference}',
+                    style: TextStyle(color: logPalette(context).secondary),
+                  ),
+                  const SizedBox(height: LogSpacing.field),
                   if (c.family!.driveFileId != null)
                     TextButton.icon(
                       onPressed: () => launchUrl(
