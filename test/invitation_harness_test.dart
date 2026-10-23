@@ -781,7 +781,7 @@ void runInvitationHarness({bool native = false}) {
       await settle(t);
       expect(find.text('caregiver@example.com'), findsOneWidget);
       await tap(t, 'Baby');
-      await tap(t, 'Choose a different baby');
+      await tap(t, 'Back to shared logs');
       expect(c.family, isNull);
       expect(find.text('Join baby log'), findsNothing);
       await t.pumpWidget(const SizedBox());

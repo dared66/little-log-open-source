@@ -144,32 +144,45 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
               color: palette.surface,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  color: palette.actionInk,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
                         'Invitation sent',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(sentTo!, style: TextStyle(color: palette.secondary)),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
+                    ),
+                    PopupMenuButton<String>(
+                      tooltip: 'More ways to send',
+                      icon: const Icon(Icons.more_horiz),
+                      onSelected: (value) {
+                        if (value == 'copy') {
+                          copyInvitation();
+                        } else {
+                          composeJoiningEmail();
+                        }
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: 'email',
+                          child: Text('Send by email'),
+                        ),
+                        PopupMenuItem(
+                          value: 'copy',
+                          child: Text('Copy invitation'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 8),
+                Text(sentTo!, style: TextStyle(color: palette.secondary)),
               ],
             ),
           ),
@@ -178,32 +191,10 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
             FilledButton(onPressed: widget.onDone, child: const Text('Done')),
             const SizedBox(height: 12),
           ],
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.ios_share, size: 20),
-                  label: const Text('Share invitation'),
-                  onPressed: shareInvitation,
-                ),
-              ),
-              const SizedBox(width: 8),
-              PopupMenuButton<String>(
-                tooltip: 'More ways to send',
-                icon: const Icon(Icons.more_horiz),
-                onSelected: (value) {
-                  if (value == 'copy') {
-                    copyInvitation();
-                  } else {
-                    composeJoiningEmail();
-                  }
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'email', child: Text('Send by email')),
-                  PopupMenuItem(value: 'copy', child: Text('Copy invitation')),
-                ],
-              ),
-            ],
+          OutlinedButton.icon(
+            icon: const Icon(Icons.ios_share, size: 20),
+            label: const Text('Share invitation'),
+            onPressed: shareInvitation,
           ),
           const SizedBox(height: 16),
           TextButton(
@@ -234,11 +225,6 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
                   : 'Enter a valid email address.',
               onFieldSubmitted: (_) => send(),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'They’ll be able to view, add and edit entries.',
-            style: TextStyle(fontSize: 13, color: palette.secondary),
           ),
           const SizedBox(height: 24),
           FilledButton(

@@ -901,12 +901,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final c = widget.controller;
     if (selectedLog != null) {
       return [
-        const Text(
-          'Ready to join',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 24),
-
         Card(
           key: confirmationKey,
           margin: EdgeInsets.zero,
@@ -947,15 +941,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     busy ? 'Loading shared history…' : 'Join baby log',
                   ),
                 ),
-                TextButton(
-                  onPressed: busy
-                      ? null
-                      : () => setState(() {
-                          selectedLog = null;
-                          error = null;
-                        }),
-                  child: const Text('Choose a different baby'),
-                ),
+                if (widget.invitation == null)
+                  TextButton(
+                    onPressed: busy
+                        ? null
+                        : () => setState(() {
+                            selectedLog = null;
+                            error = null;
+                          }),
+                    child: const Text('Back to shared logs'),
+                  ),
               ],
             ),
           ),
