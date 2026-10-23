@@ -83,8 +83,8 @@ class AppController extends ChangeNotifier {
   String? unavailableDriveFileId;
   DateTime? lastSync;
   Timer? _timer;
-  int _failures = 0;
-  DateTime? _retryAt;
+  final _syncFailures = <String, int>{};
+  final _syncRetryAt = <String, DateTime>{};
   bool _foreground = true;
 
   bool get canSync =>
@@ -133,8 +133,7 @@ class AppController extends ChangeNotifier {
           notifyListeners();
           unawaited(processLiveTimerStops());
         }
-        if (_foreground &&
-            (_retryAt == null || DateTime.now().isAfter(_retryAt!))) {
+        if (_foreground) {
           unawaited(sync());
         }
       });
@@ -959,7 +958,10 @@ class AppController extends ChangeNotifier {
       );
       if (changed) {
         await refresh();
-        if (action == 'finish' && method != 'pumping') unawaited(sync());
+        if (action == 'finish' && method != 'pumping') {
+          _pendingTimerSync.add(familyId);
+          unawaited(sync());
+        }
       }
       return changed;
     } finally {
@@ -1304,18 +1306,19 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void>? _syncTask;
+  final _pendingTimerSync = <String>{};
 
   Future<void> sync({bool manual = false, String? expectedFamilyId}) async {
     // A pull-to-refresh must wait for an in-flight upload, then flush anything
     // logged during that upload. Automatic ticks simply join the active pass.
     while (_syncTask != null) {
       await _syncTask;
-      if (!manual) return;
+      if (!manual && _pendingTimerSync.isEmpty) return;
     }
     if (expectedFamilyId != null && family?.id != expectedFamilyId) {
       throw StateError('The selected log changed. Choose it and try again.');
     }
-    final task = _syncOnce(manual: manual);
+    final task = _syncBatch(manual: manual);
     _syncTask = task;
     try {
       await task;
@@ -1324,15 +1327,44 @@ class AppController extends ChangeNotifier {
     }
   }
 
-  Future<void> _syncOnce({required bool manual}) async {
+  Future<void> _syncBatch({required bool manual}) async {
+    final selected = family;
+    // Persisted unsynced records are the outbox, including after a restart.
+    // Only already-connected logs belonging to this account are eligible.
+    final accountId = auth.user?.id;
+    for (final candidate in await repository.families()) {
+      if (candidate.id == selected?.id ||
+          candidate.isLocal ||
+          candidate.accountId != accountId) {
+        continue;
+      }
+      final rows = await repository.feeds(candidate.id, includeDeleted: true);
+      if (rows.any((row) => !row.synced)) _pendingTimerSync.add(candidate.id);
+    }
+    if (selected != null) {
+      _pendingTimerSync.remove(selected.id);
+      await _syncOnce(selected, manual: manual);
+    }
+    while (_pendingTimerSync.isNotEmpty) {
+      final requested = Set<String>.of(_pendingTimerSync);
+      _pendingTimerSync.removeAll(requested);
+      for (final candidate in await repository.families()) {
+        if (!requested.contains(candidate.id) || candidate.isLocal) continue;
+        await _syncOnce(candidate, manual: false);
+      }
+    }
+  }
+
+  Future<void> _syncOnce(Family target, {required bool manual}) async {
     if (switchingBaby) return;
     if (!_foreground && !manual) return;
-    if (!manual && _retryAt != null && DateTime.now().isBefore(_retryAt!)) {
+    final retryAt = _syncRetryAt[target.id];
+    if (!manual && retryAt != null && DateTime.now().isBefore(retryAt)) {
       return;
     }
-    var selected = family;
+    var selected = target;
     final account = auth.user;
-    if (selected == null || account == null) {
+    if (account == null) {
       if (manual) {
         message = 'Connect Google Drive in Settings to save your log to Drive.';
         notifyListeners();
@@ -1389,17 +1421,22 @@ class AppController extends ChangeNotifier {
           );
         }
       }
-      _failures = 0;
-      _retryAt = null;
-      unavailableDriveFileId = null;
+      _syncFailures.remove(selected.id);
+      _syncRetryAt.remove(selected.id);
+      if (family?.id == selected.id) unavailableDriveFileId = null;
     } catch (e, stack) {
       if (kDebugMode) debugPrint('Sync failed (${e.runtimeType}): $stack');
       message = friendlyError(e);
-      unavailableDriveFileId = e is CloudException && e.status == 404
-          ? selected?.driveFileId
-          : null;
-      _failures = (_failures + 1).clamp(1, 5);
-      _retryAt = DateTime.now().add(Duration(seconds: 15 * (1 << _failures)));
+      if (family?.id == selected.id) {
+        unavailableDriveFileId = e is CloudException && e.status == 404
+            ? selected.driveFileId
+            : null;
+      }
+      final failures = ((_syncFailures[selected.id] ?? 0) + 1).clamp(1, 5);
+      _syncFailures[selected.id] = failures;
+      _syncRetryAt[selected.id] = DateTime.now().add(
+        Duration(seconds: 15 * (1 << failures)),
+      );
     } finally {
       syncing = false;
       await refresh();
