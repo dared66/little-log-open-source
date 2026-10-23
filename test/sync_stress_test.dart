@@ -7,7 +7,8 @@ import 'package:little_log/services/family_csv.dart';
 import 'package:little_log/services/google_drive.dart';
 import 'package:little_log/services/sync_service.dart';
 import 'package:little_log/storage/repository.dart';
-import 'google_drive_test.dart' show FakeDrive, TestAuth, family, feed;
+import 'google_drive_test.dart'
+    show FakeDrive, TestAuth, TestAccount, family, feed;
 import 'support/shared_log_builds_52_55/services/family_csv.dart' as released;
 
 class ObservedRepository extends Repository {
@@ -29,8 +30,8 @@ void main() {
     return repo;
   }
 
-  GoogleDrive client(FakeDrive server) {
-    final auth = TestAuth();
+  GoogleDrive client(FakeDrive server, {String accountId = 'a'}) {
+    final auth = TestAuth()..user = TestAccount(accountId);
     final drive = GoogleDrive(auth, client: MockClient(server.handle));
     addTearDown(drive.dispose);
     addTearDown(auth.dispose);
@@ -75,7 +76,7 @@ void main() {
         final server = FakeDrive()
           ..contents = FamilyCsv(family, [feed('original')]).encode();
         final syncA = SyncService(a, client(server));
-        final syncB = SyncService(b, client(server));
+        final syncB = SyncService(b, client(server, accountId: 'b'));
         final familyB = Family.fromJson({...family.toJson(), 'accountId': 'b'});
         await syncA.sync(family, accountId: 'a');
         await syncB.sync(familyB, accountId: 'b');

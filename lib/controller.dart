@@ -83,8 +83,8 @@ class AppController extends ChangeNotifier {
   String? unavailableDriveFileId;
   DateTime? lastSync;
   Timer? _timer;
-  int _failures = 0;
-  DateTime? _retryAt;
+  final _syncFailures = <String, int>{};
+  final _syncRetryAt = <String, DateTime>{};
   bool _foreground = true;
 
   bool get canSync =>
@@ -133,8 +133,7 @@ class AppController extends ChangeNotifier {
           notifyListeners();
           unawaited(processLiveTimerStops());
         }
-        if (_foreground &&
-            (_retryAt == null || DateTime.now().isAfter(_retryAt!))) {
+        if (_foreground) {
           unawaited(sync());
         }
       });
@@ -282,53 +281,57 @@ class AppController extends ChangeNotifier {
     }
   }
 
+  int _refreshRevision = 0;
+
   Future<void> refresh() async {
-    families = await repository.families();
+    final revision = ++_refreshRevision;
     final selected = family;
-    if (selected != null) {
-      final allRecords = await repository.feeds(
-        selected.id,
-        includeDeleted: true,
-      );
-      final profiles =
-          allRecords.where((f) => !f.deleted && f.method == 'profile').toList()
-            ..sort((a, b) {
-              final time = b.at.compareTo(a.at);
-              return time != 0 ? time : b.id.compareTo(a.id);
-            });
-      profileRecord = profiles.firstOrNull;
-      feeds = allRecords
-          .where((f) => !f.deleted && f.method != 'profile')
-          .toList();
-      _pendingDeletions = allRecords
-          .where((f) => f.deleted && !f.synced)
-          .length;
-      nursing = await repository.nursingSession(selected.id);
-      timers = await repository.activityTimers(selected.id);
-      lastSync = await repository.lastSync(selected.id);
-    } else {
-      feeds = [];
-      profileRecord = null;
-      nursing = null;
-      timers = [];
-      lastSync = null;
-      _pendingDeletions = 0;
-    }
-    notifyListeners();
+    final nextFamilies = await repository.families();
+    final allRecords = selected == null
+        ? <Feeding>[]
+        : await repository.feeds(selected.id, includeDeleted: true);
+    final nextNursing = selected == null
+        ? null
+        : await repository.nursingSession(selected.id);
+    final nextTimers = selected == null
+        ? <ActivityTimer>[]
+        : await repository.activityTimers(selected.id);
+    final nextSync = selected == null
+        ? null
+        : await repository.lastSync(selected.id);
     final live = <Map<String, Object?>>[];
-    for (final baby in families) {
+    for (final baby in nextFamilies) {
       live.addAll(
         LiveActivity.snapshots(
           baby.babyName,
           baby.id == selected?.id
-              ? nursing
+              ? nextNursing
               : await repository.nursingSession(baby.id),
           baby.id == selected?.id
-              ? timers
+              ? nextTimers
               : await repository.activityTimers(baby.id),
         ),
       );
     }
+    // Publish a complete snapshot only if it still belongs to this selection
+    // and no newer refresh has superseded it.
+    if (revision != _refreshRevision || family?.id != selected?.id) return;
+    final profiles =
+        allRecords.where((f) => !f.deleted && f.method == 'profile').toList()
+          ..sort((a, b) {
+            final time = b.at.compareTo(a.at);
+            return time != 0 ? time : b.id.compareTo(a.id);
+          });
+    families = nextFamilies;
+    profileRecord = profiles.firstOrNull;
+    feeds = allRecords
+        .where((f) => !f.deleted && f.method != 'profile')
+        .toList();
+    _pendingDeletions = allRecords.where((f) => f.deleted && !f.synced).length;
+    nursing = nextNursing;
+    timers = nextTimers;
+    lastSync = nextSync;
+    notifyListeners();
     await LiveActivity.updateAll(live);
   }
 
@@ -465,12 +468,9 @@ class AppController extends ChangeNotifier {
     final selectedId = family?.id;
     if (selectedId == null) throw StateError('Choose a log to back up.');
     if (auth.user == null) await auth.signIn();
-    final accountId = auth.user?.id;
-    if (accountId == null) throw StateError('Google sign-in did not complete.');
+    final session = auth.captureAccount();
     if (!auth.driveConnected) await auth.authorize();
-    if (auth.user?.id != accountId) {
-      throw StateError('The Google account changed. Try backing up again.');
-    }
+    auth.checkAccount(session);
     await sync(manual: true, expectedFamilyId: selectedId);
   }
 
@@ -482,27 +482,26 @@ class AppController extends ChangeNotifier {
     if (switchingBaby || recording) {
       throw StateError('Finish the current action, then try again.');
     }
+    final session = auth.captureAccount(expectedAccountId: account.id);
     switchingBaby = true;
     notifyListeners();
     try {
       await _syncTask;
+      auth.checkAccount(session);
       final selected = await drive.openFamily(driveFileId, account.id);
       if (expectedFamilyId != null && selected.id != expectedFamilyId) {
         throw StateError(
           'This shared log changed. Refresh the list and choose it again.',
         );
       }
+      auth.checkAccount(session);
       final history = await drive.readFeeds(selected);
       if (history.skipped > 0) {
         throw const FormatException(
           'Some shared entries could not be read. Ask the sender to check the log, then try again.',
         );
       }
-      if (auth.user?.id != account.id) {
-        throw StateError(
-          'The Google account changed. Choose the baby again with the invited account.',
-        );
-      }
+      auth.checkAccount(session);
       await repository.joinFamily(selected, history.feeds);
       family = selected;
       onboardingSyncedSetup = false;
@@ -959,7 +958,10 @@ class AppController extends ChangeNotifier {
       );
       if (changed) {
         await refresh();
-        if (action == 'finish' && method != 'pumping') unawaited(sync());
+        if (action == 'finish' && method != 'pumping') {
+          _pendingTimerSync.add(familyId);
+          unawaited(sync());
+        }
       }
       return changed;
     } finally {
@@ -1304,19 +1306,37 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void>? _syncTask;
+  final _pendingTimerSync = <String>{};
+  bool _syncNeedsRefresh = false;
 
   Future<void> sync({bool manual = false, String? expectedFamilyId}) async {
     // A pull-to-refresh must wait for an in-flight upload, then flush anything
     // logged during that upload. Automatic ticks simply join the active pass.
     while (_syncTask != null) {
       await _syncTask;
-      if (!manual) return;
+      if (!manual && _pendingTimerSync.isEmpty) return;
     }
     if (expectedFamilyId != null && family?.id != expectedFamilyId) {
       throw StateError('The selected log changed. Choose it and try again.');
     }
-    final task = _syncOnce(manual: manual);
+    if (switchingBaby || (!_foreground && !manual)) return;
+    if (auth.user == null && !manual) return;
+    _syncNeedsRefresh = false;
+    final task = Future<void>.microtask(() async {
+      try {
+        await _syncBatch(manual: manual);
+      } finally {
+        syncing = false;
+        if (_syncNeedsRefresh) {
+          await refresh();
+        } else {
+          notifyListeners();
+        }
+      }
+    });
     _syncTask = task;
+    syncing = true;
+    notifyListeners();
     try {
       await task;
     } finally {
@@ -1324,15 +1344,44 @@ class AppController extends ChangeNotifier {
     }
   }
 
-  Future<void> _syncOnce({required bool manual}) async {
+  Future<void> _syncBatch({required bool manual}) async {
+    final selected = family;
+    // Persisted unsynced records are the outbox, including after a restart.
+    // Only already-connected logs belonging to this account are eligible.
+    final accountId = auth.user?.id;
+    for (final candidate in await repository.families()) {
+      if (candidate.id == selected?.id ||
+          candidate.isLocal ||
+          candidate.accountId != accountId) {
+        continue;
+      }
+      final rows = await repository.feeds(candidate.id, includeDeleted: true);
+      if (rows.any((row) => !row.synced)) _pendingTimerSync.add(candidate.id);
+    }
+    if (selected != null) {
+      _pendingTimerSync.remove(selected.id);
+      await _syncOnce(selected, manual: manual);
+    }
+    while (_pendingTimerSync.isNotEmpty) {
+      final requested = Set<String>.of(_pendingTimerSync);
+      _pendingTimerSync.removeAll(requested);
+      for (final candidate in await repository.families()) {
+        if (!requested.contains(candidate.id) || candidate.isLocal) continue;
+        await _syncOnce(candidate, manual: false);
+      }
+    }
+  }
+
+  Future<void> _syncOnce(Family target, {required bool manual}) async {
     if (switchingBaby) return;
     if (!_foreground && !manual) return;
-    if (!manual && _retryAt != null && DateTime.now().isBefore(_retryAt!)) {
+    final retryAt = _syncRetryAt[target.id];
+    if (!manual && retryAt != null && DateTime.now().isBefore(retryAt)) {
       return;
     }
-    var selected = family;
+    var selected = target;
     final account = auth.user;
-    if (selected == null || account == null) {
+    if (account == null) {
       if (manual) {
         message = 'Connect Google Drive in Settings to save your log to Drive.';
         notifyListeners();
@@ -1349,18 +1398,23 @@ class AppController extends ChangeNotifier {
       }
       return;
     }
-    syncing = true;
+    _syncNeedsRefresh = true;
     message = null;
     notifyListeners();
     try {
+      final session = auth.captureAccount(expectedAccountId: account.id);
       // Silent scope check: pull-to-refresh never opens a surprise sign-in UI.
       await auth.accessToken();
+      auth.checkAccount(session);
       if (selected.isLocal) {
         selected = await drive.createFamily(selected, account.id);
+        auth.checkAccount(session);
         await repository.prepareCsvFamily(selected);
         family = selected;
       }
+      auth.checkAccount(session);
       await drive.prepareSync(selected, force: manual);
+      auth.checkAccount(session);
       final identified = drive.cachedFamily(selected);
       if (identified != null) await repository.updateFamilyIdentity(identified);
       if (identified != null && family?.id == selected.id) {
@@ -1372,7 +1426,11 @@ class AppController extends ChangeNotifier {
         });
       }
       for (var pass = 0; pass < 10; pass++) {
-        final skipped = await syncService.sync(selected, accountId: account.id);
+        final skipped = await syncService.sync(
+          selected,
+          accountId: account.id,
+          checkAccount: () => auth.checkAccount(session),
+        );
         if (skipped > 0) {
           throw const FormatException(
             'Some Drive entries could not be read. Your local entries are retained.',
@@ -1389,20 +1447,22 @@ class AppController extends ChangeNotifier {
           );
         }
       }
-      _failures = 0;
-      _retryAt = null;
-      unavailableDriveFileId = null;
+      _syncFailures.remove(selected.id);
+      _syncRetryAt.remove(selected.id);
+      if (family?.id == selected.id) unavailableDriveFileId = null;
     } catch (e, stack) {
       if (kDebugMode) debugPrint('Sync failed (${e.runtimeType}): $stack');
       message = friendlyError(e);
-      unavailableDriveFileId = e is CloudException && e.status == 404
-          ? selected?.driveFileId
-          : null;
-      _failures = (_failures + 1).clamp(1, 5);
-      _retryAt = DateTime.now().add(Duration(seconds: 15 * (1 << _failures)));
-    } finally {
-      syncing = false;
-      await refresh();
+      if (family?.id == selected.id) {
+        unavailableDriveFileId = e is CloudException && e.status == 404
+            ? selected.driveFileId
+            : null;
+      }
+      final failures = ((_syncFailures[selected.id] ?? 0) + 1).clamp(1, 5);
+      _syncFailures[selected.id] = failures;
+      _syncRetryAt[selected.id] = DateTime.now().add(
+        Duration(seconds: 15 * (1 << failures)),
+      );
     }
   }
 

@@ -217,6 +217,14 @@ class Repository {
       );
       await _sessions.record(id).delete(txn);
       await _resumedNursing.record(id).delete(txn);
+      await _imports.record(id).delete(txn);
+      await _importReports.delete(
+        txn,
+        finder: Finder(filter: Filter.equals('familyId', id)),
+      );
+      if (await _settings.record('pendingSyncedSetup').get(txn) == id) {
+        await _settings.record('pendingSyncedSetup').delete(txn);
+      }
       await _settings.record('sync/$id').delete(txn);
       await _settings.record('babyBackground/$id').delete(txn);
       await _families.record(id).delete(txn);

@@ -87,7 +87,7 @@ class _LittleLogAppState extends State<LittleLogApp>
   final _homeKey = GlobalKey<_HomePageState>();
   final _invitationBridge = InvitationLinkBridge();
   final _assistantActions = AssistantActions();
-  String? _activeInvitationFile;
+  final _activeInvitationFiles = <String>{};
   bool _openingPumpingReview = false;
 
   @override
@@ -101,30 +101,36 @@ class _LittleLogAppState extends State<LittleLogApp>
 
   void _reviewStoppedPumping() {
     final c = widget.controller;
-    if (c.loading || c.pendingPumpingReview == null || _openingPumpingReview) {
+    if (c.loading ||
+        c.babyPickerBusy ||
+        c.pendingPumpingReview == null ||
+        _openingPumpingReview) {
       return;
     }
     _openingPumpingReview = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         final request = c.pendingPumpingReview;
-        c.pendingPumpingReview = null;
-        if (!mounted || request == null) return;
+        if (!mounted || request == null || c.babyPickerBusy) return;
         final baby = c.families
             .where((baby) => baby.id == request.familyId)
             .firstOrNull;
-        if (baby == null) return;
-        if (c.family?.id != baby.id) await c.select(baby);
-        final context = _navigatorKey.currentState?.overlay?.context;
-        if (!mounted ||
-            context == null ||
-            !context.mounted ||
-            !c.timers.any(
-              (timer) =>
-                  timer.id == request.sessionId && timer.stoppedAt != null,
-            )) {
+        if (baby == null) {
+          c.pendingPumpingReview = null;
           return;
         }
+        if (c.family?.id != baby.id) await c.select(baby);
+        if (c.family?.id != baby.id) return;
+        final context = _navigatorKey.currentState?.overlay?.context;
+        if (!mounted || context == null || !context.mounted) return;
+        if (c.pendingPumpingReview != request) return;
+        if (!c.timers.any(
+          (timer) => timer.id == request.sessionId && timer.stoppedAt != null,
+        )) {
+          c.pendingPumpingReview = null;
+          return;
+        }
+        c.pendingPumpingReview = null;
         await openActivity(context, c, 'pumping');
       } finally {
         _openingPumpingReview = false;
@@ -198,12 +204,14 @@ class _LittleLogAppState extends State<LittleLogApp>
   }
 
   void _openInvitation(InvitationLink invitation) {
-    if (!mounted || _activeInvitationFile == invitation.fileId) return;
+    if (!mounted || !_activeInvitationFiles.add(invitation.fileId)) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final navigator = _navigatorKey.currentState;
-      if (navigator == null) return;
-      _activeInvitationFile = invitation.fileId;
+      if (navigator == null) {
+        _activeInvitationFiles.remove(invitation.fileId);
+        return;
+      }
       navigator
           .push(
             MaterialPageRoute<bool>(
@@ -219,7 +227,7 @@ class _LittleLogAppState extends State<LittleLogApp>
             navigator.popUntil((route) => route.isFirst);
             _homeKey.currentState?.selectTab(0);
           })
-          .whenComplete(() => _activeInvitationFile = null);
+          .whenComplete(() => _activeInvitationFiles.remove(invitation.fileId));
     });
     WidgetsBinding.instance.ensureVisualUpdate();
   }
@@ -1008,6 +1016,8 @@ class FamilyPanel extends StatefulWidget {
 class _FamilyPanelState extends State<FamilyPanel> {
   List<Map<String, String>>? collaborators;
   String? collaboratorFileId;
+  String? collaboratorAccountId;
+  int collaboratorRequest = 0;
   String? collaboratorError;
   bool loadingCollaborators = false;
   String? backupAttemptId;
@@ -1036,35 +1046,32 @@ class _FamilyPanelState extends State<FamilyPanel> {
   };
 
   Future<void> loadCollaborators() async {
-    final family = widget.controller.family;
-    if (family == null || family.driveFileId == null) return;
+    final c = widget.controller;
+    final family = c.family;
+    final accountId = c.auth.user?.id;
+    if (family == null || !c.canSync) return;
+    final request = ++collaboratorRequest;
+    bool isCurrent() =>
+        mounted &&
+        request == collaboratorRequest &&
+        c.family?.driveFileId == family.driveFileId &&
+        c.auth.user?.id == accountId;
     setState(() {
       loadingCollaborators = true;
+      collaborators = null;
       collaboratorError = null;
     });
     try {
-      final result = await widget.controller.drive.listCollaborators(family);
-      if (!mounted ||
-          widget.controller.family?.driveFileId != family.driveFileId) {
-        return;
-      }
-      await widget.controller.refreshSharingIdentity(result);
-      if (!mounted ||
-          widget.controller.family?.driveFileId != family.driveFileId) {
-        return;
-      }
+      final result = await c.drive.listCollaborators(family);
+      if (!isCurrent()) return;
+      await c.refreshSharingIdentity(result);
+      if (!isCurrent()) return;
       setState(() => collaborators = result);
     } catch (error) {
-      if (!mounted ||
-          widget.controller.family?.driveFileId != family.driveFileId) {
-        return;
-      }
+      if (!isCurrent()) return;
       setState(() => collaboratorError = AppController.friendlyError(error));
     } finally {
-      if (mounted &&
-          widget.controller.family?.driveFileId == family.driveFileId) {
-        setState(() => loadingCollaborators = false);
-      }
+      if (isCurrent()) setState(() => loadingCollaborators = false);
     }
   }
 
@@ -1115,12 +1122,29 @@ class _FamilyPanelState extends State<FamilyPanel> {
       final needsBackup =
           c.family?.isLocal == true || backupAttempt || incompleteBackup;
       final fileId = c.family?.driveFileId;
-      if (fileId != null && c.canSync && collaboratorFileId != fileId) {
+      if (collaboratorFileId != fileId || collaboratorAccountId != user?.id) {
         collaboratorFileId = fileId;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) loadCollaborators();
-        });
+        collaboratorAccountId = user?.id;
+        collaboratorRequest++;
+        collaborators = null;
+        collaboratorError = null;
+        loadingCollaborators = false;
+        if (fileId != null && c.canSync) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) loadCollaborators();
+          });
+        }
       }
+      final canManageSharing =
+          c.canSync &&
+          !loadingCollaborators &&
+          collaboratorError == null &&
+          (collaborators?.any(
+                (person) =>
+                    person['role'] == 'owner' &&
+                    person['email']?.toLowerCase() == user?.email.toLowerCase(),
+              ) ??
+              false);
       return SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
           20,
@@ -1372,41 +1396,43 @@ class _FamilyPanelState extends State<FamilyPanel> {
                       ].join(' · '),
                     ),
                   ),
-              TextButton.icon(
-                onPressed: busy
-                    ? null
-                    : () => c.run(() async {
-                        final opened = await launchUrl(
-                          Uri.parse(
-                            'https://drive.google.com/file/d/${c.family!.driveFileId}/view',
-                          ),
-                          mode: LaunchMode.externalApplication,
-                        );
-                        if (!opened) {
-                          throw StateError(
-                            'Google Drive could not open. Try again.',
+              if (canManageSharing) ...[
+                TextButton.icon(
+                  onPressed: busy
+                      ? null
+                      : () => c.run(() async {
+                          final opened = await launchUrl(
+                            Uri.parse(
+                              'https://drive.google.com/file/d/${c.family!.driveFileId}/view',
+                            ),
+                            mode: LaunchMode.externalApplication,
                           );
-                        }
-                      }),
-                icon: const Icon(Icons.open_in_new),
-                label: const Text('Manage access in Google Drive'),
-              ),
-              const SizedBox(height: LogSpacing.section),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.person_add_outlined),
-                title: const Text('Invite a caregiver'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => InviteCaregiverPage(
-                      controller: c,
-                      family: c.family!,
-                      onSent: loadCollaborators,
+                          if (!opened) {
+                            throw StateError(
+                              'Google Drive could not open. Try again.',
+                            );
+                          }
+                        }),
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Manage access in Google Drive'),
+                ),
+                const SizedBox(height: LogSpacing.section),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.person_add_outlined),
+                  title: const Text('Invite a caregiver'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => InviteCaregiverPage(
+                        controller: c,
+                        family: c.family!,
+                        onSent: loadCollaborators,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ],
             ...[
               const SizedBox(height: LogSpacing.section),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:little_log/models.dart';
@@ -8,7 +9,20 @@ import 'package:little_log/services/family_csv.dart';
 import 'package:little_log/services/google_auth.dart';
 import 'package:little_log/services/google_drive.dart';
 
+class TestAccount implements GoogleSignInAccount {
+  TestAccount(this.id);
+  @override
+  final String id;
+  @override
+  String get email => '$id@example.com';
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class TestAuth extends GoogleAuth {
+  TestAuth() {
+    user = TestAccount('a');
+  }
   bool invalidated = false;
   @override
   Future<String> accessToken() async => 'synthetic-test-token';
@@ -48,6 +62,8 @@ class FakeDrive {
   bool ignorePreconditions = false;
   bool folderExists = false, recoverable = false, loseCreateResponse = false;
   bool owned = true, trashed = false, canModifyContent = true;
+  bool writersCanShare = true;
+  int sharingPolicyChanges = 0;
   String? ownerEmail;
   bool? shared;
   int folderCreates = 0, fileCreates = 0, moves = 0;
@@ -95,9 +111,15 @@ class FakeDrive {
     }
     if (request.method == 'PATCH') {
       expect(request.url.path, '/drive/v3/files/${family.driveFileId}');
-      expect(request.url.queryParameters['removeParents'], parents.join(','));
-      parents = [request.url.queryParameters['addParents']!];
-      moves++;
+      if (jsonDecode(request.body)['writersCanShare'] == false) {
+        writersCanShare = false;
+        sharingPolicyChanges++;
+      }
+      if (request.url.queryParameters.containsKey('addParents')) {
+        expect(request.url.queryParameters['removeParents'], parents.join(','));
+        parents = [request.url.queryParameters['addParents']!];
+        moves++;
+      }
       return json({'id': family.driveFileId, 'parents': parents});
     }
     if (request.method == 'POST' &&
@@ -108,6 +130,8 @@ class FakeDrive {
         request.body.split('\r\n').firstWhere((line) => line.startsWith('{')),
       );
       expect(meta['parents'], ['littleLogFolder']);
+      expect(meta['writersCanShare'], false);
+      writersCanShare = false;
       expect(meta['appProperties']['littleLogFamilyId'], family.id);
       parents = ['littleLogFolder'];
       fileCreates++;
@@ -131,6 +155,7 @@ class FakeDrive {
         'id': family.driveFileId,
         'parents': parents,
         'ownedByMe': owned,
+        'writersCanShare': writersCanShare,
         if (ownerEmail != null)
           'owners': [
             {'emailAddress': ownerEmail},
@@ -186,7 +211,7 @@ void main() {
         ),
       );
       await expectLater(
-        cloud.openFamily('csv123456789', 'account'),
+        cloud.openFamily('csv123456789', 'a'),
         throwsA(
           isA<CloudException>()
               .having((e) => e.reason, 'reason', 'appNotAuthorizedToFile')
@@ -285,6 +310,7 @@ void main() {
     server.owned = false;
     await cloud.prepareSync(family, force: true);
     expect(server.moves, 0);
+    expect(server.sharingPolicyChanges, 0);
     expect(server.folderCreates, 0);
   });
   test('creation stops if Drive ignores conditional writes', () async {
@@ -331,6 +357,7 @@ void main() {
   });
   test('cache never crosses accounts', () async {
     await cloud.readFeeds(family);
+    cloud.auth.user = TestAccount('b');
     await cloud.readFeeds(
       const Family(
         id: 'family',
@@ -441,6 +468,13 @@ void main() {
           expect(jsonDecode(r.body)['emailAddress'], 'synthetic@example.com');
           return http.Response('{}', 200);
         }
+        if (r.url.path == '/drive/v3/files/csv123456789') {
+          expect(r.method, 'GET');
+          return http.Response(
+            '{"ownedByMe":true,"writersCanShare":false}',
+            200,
+          );
+        }
         expect(r.url.queryParameters['q'], contains('text/csv'));
         pages++;
         return pages == 1
@@ -474,6 +508,102 @@ void main() {
     await adapter.invite(family, 'synthetic@example.com');
     adapter.dispose();
   });
+
+  for (final ownership in [false, null]) {
+    test(
+      'invite rejects $ownership ownership even with cached owner identity',
+      () async {
+        final methods = <String>[];
+        final drive = GoogleDrive(
+          TestAuth(),
+          client: MockClient((r) async {
+            methods.add(r.method);
+            return http.Response(
+              jsonEncode({
+                'ownedByMe': ?ownership,
+                'capabilities': {'canShare': true},
+              }),
+              200,
+            );
+          }),
+        );
+        await expectLater(
+          drive.invite(
+            family.withDriveIdentity(email: 'a@example.com'),
+            'new@example.com',
+          ),
+          throwsA(
+            isA<StateError>().having(
+              (e) => e.message,
+              'message',
+              'Only the log’s owner can invite caregivers.',
+            ),
+          ),
+        );
+        expect(methods, ['GET']);
+        drive.dispose();
+      },
+    );
+  }
+
+  test(
+    'owner invitation disables editor resharing before granting access',
+    () async {
+      final methods = <String>[];
+      final drive = GoogleDrive(
+        TestAuth(),
+        client: MockClient((r) async {
+          methods.add(r.method);
+          if (r.method == 'GET') {
+            return http.Response('{"ownedByMe":true}', 200);
+          }
+          if (r.method == 'PATCH') {
+            expect(jsonDecode(r.body), {'writersCanShare': false});
+          }
+          if (r.method == 'POST') expect(jsonDecode(r.body)['role'], 'writer');
+          return http.Response('{}', 200);
+        }),
+      );
+      await drive.invite(family, 'new@example.com');
+      expect(methods, ['GET', 'PATCH', 'POST']);
+      drive.dispose();
+    },
+  );
+
+  test('account switch after ownership lookup cannot grant access', () async {
+    final auth = TestAuth();
+    final methods = <String>[];
+    final drive = GoogleDrive(
+      auth,
+      client: MockClient((r) async {
+        methods.add(r.method);
+        auth.user = TestAccount('other');
+        return http.Response('{"ownedByMe":true,"writersCanShare":false}', 200);
+      }),
+    );
+    await expectLater(
+      drive.invite(family, 'new@example.com'),
+      throwsStateError,
+    );
+    expect(methods, ['GET']);
+    drive.dispose();
+  });
+
+  test(
+    'owner sync restricts an existing log without moving it or changing history',
+    () async {
+      server.parents = ['littleLogFolder'];
+      server.folderExists = true;
+      final history = server.contents;
+      await cloud.prepareSync(family, force: true);
+      expect(server.sharingPolicyChanges, 1);
+      expect(server.writersCanShare, false);
+      expect(server.moves, 0);
+      expect(server.contents, history);
+      await cloud.prepareSync(family, force: true);
+      expect(server.sharingPolicyChanges, 1);
+    },
+  );
 
   test('same-name logs retain separate file IDs and owners', () async {
     final adapter = GoogleDrive(

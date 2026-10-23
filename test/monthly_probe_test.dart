@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'google_drive_test.dart' show TestAccount;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -12,6 +13,9 @@ import 'package:little_log/widgets/monthly_probe_panel.dart';
 import 'package:sembast/sembast_memory.dart';
 
 class ProbeAuth extends GoogleAuth {
+  ProbeAuth() {
+    user = TestAccount('probe');
+  }
   @override
   Future<String> accessToken() async => 'synthetic-token';
 }
