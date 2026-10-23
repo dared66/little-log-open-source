@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:little_log/config.dart';
 import 'package:little_log/controller.dart';
 import 'package:little_log/design.dart';
 import 'package:little_log/main.dart';
@@ -94,6 +95,36 @@ Future<void> verifyBackup(AppController c) async {
 void main() => runBackupFlow();
 
 void runBackupFlow({bool native = false}) {
+  testWidgets(
+    'unconfigured build keeps local history and hides backup',
+    (t) async {
+      final c = (await t.runAsync(fixture))!;
+      await t.pumpWidget(
+        MaterialApp(
+          theme: littleLogTheme(),
+          home: Scaffold(body: FamilyPanel(controller: c)),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(
+        find.text(
+          'Google Drive is unavailable in this build. Entries are stored locally.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Back up to Google Drive'), findsNothing);
+      expect((c.drive as BackupDrive).creations, 0);
+      await t.runAsync(() async {
+        expect((await c.repository.feeds('family')).length, 2);
+        expect((await c.repository.feeds('other')).single.id, 'other-entry');
+      });
+      await t.pumpWidget(const SizedBox());
+      c.dispose();
+      await t.runAsync(c.repository.db.close);
+    },
+    skip: AppConfig.configured,
+  );
+
   for (final state in [
     'signed out',
     'returning account',
@@ -292,6 +323,7 @@ void runBackupFlow({bool native = false}) {
         c.dispose();
         await t.runAsync(c.repository.db.close);
       },
+      skip: !AppConfig.configured,
     );
   }
 }

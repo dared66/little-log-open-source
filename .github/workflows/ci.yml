@@ -57,7 +57,7 @@ jobs:
         run: python3 scripts/check_build54_compatibility.py
       - run: flutter analyze
       - run: flutter test
-      - name: Test production OAuth migration with actual public client definitions
-        run: flutter test test/google_project_migration_test.dart test/google_auth_lifecycle_test.dart --dart-define-from-file=config/google.production.json
+      - name: Test production OAuth migration and backup with public client definitions
+        run: flutter test test/google_project_migration_test.dart test/google_auth_lifecycle_test.dart test/backup_flow_test.dart --dart-define-from-file=config/google.production.json
       - run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - run: flutter build apk --debug --no-pub

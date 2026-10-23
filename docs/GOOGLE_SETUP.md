@@ -211,7 +211,8 @@ includes its complete history.
 Run isolated simulated-service coverage with:
 
 ```sh
-flutter test test/invitation_harness_test.dart test/backup_flow_test.dart
+flutter test test/invitation_harness_test.dart test/backup_flow_test.dart \
+  --dart-define-from-file=config/google.production.json
 flutter test integration_test/invitation_harness_test.dart -d <disposable-simulator-id> \
   --no-uninstall --dart-define-from-file=config/google.local.json
 ```
