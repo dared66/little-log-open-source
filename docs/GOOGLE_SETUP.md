@@ -158,16 +158,14 @@ Use synthetic entries and two test accounts:
    Drive, and publishes the family CSV.
 2. Verify the file contains the test entry once and can be opened independently
    as CSV.
-3. A invites account B as an editor. Verify Google Drive’s email includes the
-   sender, baby, Little Log name, invited account, and joining instructions.
-4. B opens Little Log, taps “Join an existing baby log”, and signs in with the invited
-   account. If A’s log is already listed, B chooses it directly. Otherwise B
-   taps “Add a shared log from Google Drive”, chooses A’s file, and grants
-   Little Log access. Google’s picker may include unrelated CSVs; the app
-   checks the selected file before joining. Sharing with a Google account
-   alone does not establish app authorization for a new file. Confirm the owner
-   and file reference before “Join baby log”. B sees A’s entry and adds a
-   different entry.
+3. A enters B’s Google email and taps “Share invitation”. Verify editor access
+   is granted and the native share sheet opens. Send through an installed app
+   and inspect the received HTTPS invitation. Drive notification email is disabled.
+4. B opens the invitation and signs in with the invited account. The app first
+   reads the exact invited file. If app authorization is missing, Google asks
+   for access to that single file. Confirm the owner and tap “Join baby log”.
+   B sees A’s entry and adds a different entry. Existing unrelated local logs
+   must remain local and their history must remain unchanged.
 5. A refreshes and sees B's entry. Reload both apps and verify exact-once
    persistence.
 6. Add records while offline, reconnect, and verify pending status clears on
@@ -183,23 +181,58 @@ production token lifecycle testing.
 ## Invitation delivery contract
 
 Little Log grants editor access through Drive `permissions.create` with
-`sendNotificationEmail=true` and a plain-text `emailMessage`. Google Drive sends
-its own sharing notification. A successful request confirms permission creation,
-not inbox delivery. There is no Little Log email service. Both the Google notification and separately shared joining message include a `littlelog://join` app link and a Google Drive file-link fallback. Native app links require Little Log to be installed; some email and messaging clients do not make custom schemes clickable. There is no hosted HTTPS invitation page or deferred installation handoff.
-The app lists accessible Little Log CSVs and checks content-editing permission
-before joining. Both people need an installed copy of Little Log. Installation is arranged separately by the sender; this change does not establish a public app-store installation link. Copyable instructions provide a fallback
-when Google’s notification is missing or incomplete.
+`sendNotificationEmail=false`, then opens the native share sheet in the same
+app action. Google’s notification template opens the CSV in Drive and cannot
+provide the intended app handoff, so it is not used. There is no transactional
+email service. “Invitation ready” confirms preparation; it does not claim that
+an email or message was delivered. Copy and email-composition fallbacks remain
+available if sharing fails or the user cancels the sheet.
 
-Run the isolated fake-service harness with:
+Invitations use `https://krupapc.dev/apps/little-log/join/#…`. The fragment
+contains the exact file, recipient and baby name; it is not included in the
+website’s HTTP request. The hosted page’s “Open in Little Log” action uses the
+existing `littlelog://join` scheme. Google still enforces file access; the link
+itself grants no permission. The page offers a Drive-link fallback. Both people
+need Little Log installed. Installation is arranged separately; there is no
+verified public Play installation link or deferred-installation handoff.
+
+Ownership and sharing status come from Drive metadata, not the signed-in account
+or baby name. Joining a same-name log preserves both histories separately. Never
+merge or delete a log based on its name. New and existing filenames keep
+`Little Log · … .csv`; file IDs and the shared data format are unchanged.
+
+Settings opens a dedicated invitation page with the common page frame and form
+controls. Joining shows the invited account and then the baby/owner confirmation.
+A mismatched account must switch before proceeding. Successful joining returns
+to the log tab. Signing in to join does not back up unrelated local logs.
+Backing up an existing local log is an explicit action on the selected log and
+includes its complete history.
+
+Run isolated simulated-service coverage with:
 
 ```sh
-flutter test test/invitation_harness_test.dart
-flutter test integration_test/invitation_harness_test.dart -d <simulator-id> \
-  --dart-define-from-file=config/google.local.json
+flutter test test/invitation_harness_test.dart test/backup_flow_test.dart
+flutter test integration_test/invitation_harness_test.dart -d <disposable-simulator-id> \
+  --no-uninstall --dart-define-from-file=config/google.local.json
 ```
 
-The harness sends no real email and cannot validate Google delivery, native OAuth,
-or live `drive.file` sharing. The two-account acceptance test above is still needed.
+These tests do not prove live authorization or message delivery. The opt-in
+`tool/live_release_review.dart` entry point uses real Google services with
+synthetic history in a separate device database. Keep its snapshots private.
+The two-account emulator/simulator acceptance pass verified backup, both join
+directions, complete history after restart, unchanged unrelated local logs and
+an invitation delivered through Android sharing into Gmail. iOS native sharing
+opened, but its simulator had no Mail/Messages targets configured. Physical-device
+and production-package acceptance remain separate release checks.
+
+First-time Android file authorization passed with Play services 26.11.36. The
+older 25.26.35 test environment ignored the picker request; the app presents
+update guidance rather than claiming a successful join. Retest the update and
+retry path on a supported device.
+
+`tool/sharing_workflow_review_test.dart` renders app screens with sample accounts
+at standard and 200% text sizes. Run with `CAPTURE_INVITATIONS=true`. These sample
+images are not evidence of live email, OAuth or Drive behavior.
 
 ## References
 
@@ -208,69 +241,6 @@ or live `drive.file` sharing. The two-account acceptance test above is still nee
 - [Google Picker for mobile](https://developers.google.com/workspace/drive/picker/guides/desktop-mobile-picker)
 - [Google Picker for web](https://developers.google.com/drive/picker/guides/overview)
 - [Flutter Google Sign-In package](https://pub.dev/packages/google_sign_in)
-
-## Log identity and notification limits
-
-Ownership and sharing status come from Drive metadata, not the signed-in
-account or the baby name. They are cached locally for display; CSV contents
-and family IDs are unchanged. Joining a same-name log explicitly preserves
-both histories separately. Never merge or delete a log based on its name.
-
-The sender requests a Drive email with `emailMessage`. A successful permission
-request is not evidence of email delivery or rendered content. The app offers a visible Share invitation action plus copyable joining instructions as an independent handoff. Android installation currently requires the
-sender's test build; there is no verified public Play installation link.
-
-The invitation harness models sharing permission and per-account app access
-separately. Native harness success does not prove Google’s live authorization
-or notification behavior. Inspect a real received email and restart both
-real-account apps as part of release acceptance.
-
-
-## Sharing workflow branch (October 22, 2026)
-
-- Google's notification uses a short message identifying the sender, baby and
-  invited account, with setup/Settings joining steps. Permission creation does
-  not establish inbox delivery.
-- Share invitation is immediately available after permission creation. The
-  native share sheet sends the existing app link, bound to the file and invited
-  email, plus manual Drive-link instructions. Share failures stay visible with
-  compose/copy fallbacks. Existing native account checks and baby/owner
-  confirmation still apply; a link grants no permission itself.
-- The joining screen labels the active account. A failed file preview explains
-  account, Editor access and per-file authorization checks without claiming
-  which one caused Google's 403/404 response.
-- The caregiver list links directly to the log in Drive, where users open Share
-  to manage permissions. New and existing filenames keep `Little Log · … .csv`;
-  discovery and old clients continue using the same names and file IDs.
-
-Remaining acceptance work: receive a real Google notification in a second
-account, inspect its visible filename/custom message, then exercise warm/cold
-app links, account switching, file authorization, joining, restart, and revoked
-access on Android and iOS. Use isolated synthetic logs; don't send real family
-invitations for QA. A branded HTML email/Join button requires a verified sender
-and email service. A clickable HTTPS invitation and installation fallback need
-an owned hosted domain and platform association files. Neither is configured by
-this branch.
-
-
-### Sharing screen redesign
-
-Settings opens a dedicated invitation page. It uses the standard page frame,
-input styling and spacing. Successful permission creation and a requested Drive
-notification show a completion card and Done; optional direct sharing is a
-secondary action. Email/copy alternatives live in an overflow menu.
-
-Joining shows one stage at a time: invited account, Drive selection, then baby
-and owner confirmation. A mismatched account gets an actionable Switch account
-button. Confirmation removes the previous selection controls and technical file
-reference, while preserving exact file and account checks and duplicate-name
-protection. No shared data format or permission scope changes.
-
-`tool/sharing_workflow_review_test.dart` renders the actual screens with synthetic
-accounts at standard and 200% text sizes. Run with `CAPTURE_INVITATIONS=true`;
-images are written to `/tmp/little-log-invitation-review/`. These captures do not
-establish real Google email delivery or native Picker behavior.
-
 
 ### Exact invitation access
 
@@ -283,15 +253,11 @@ they do not launch Picker. Cancellation leaves the current log unchanged.
 The invited account and selected file must still match. This does not assert
 that every newly invited account can skip Google's per-file authorization.
 
-### Live sharing follow-up, October 22
+### Hosted invitation handoff
 
-Notification and share-sheet copy now use the same exact-log app link and Drive
-link fallback, without directing recipients to browse their files. Successful
-app invitations return to the log tab and remove older join routes; cancellation
-preserves the previous screen.
-
-Google's native OAuth Picker still requires explicit file selection and Insert
-for first-time file authorization. `file_ids` filters to the invited file; it
-does not preselect or authorize it. Keep direct access first and the filtered
-Picker only when app authorization is absent. Do not claim this last Google
-step has been removed. See Google's [native Picker contract](https://developers.google.com/workspace/drive/picker/guides/desktop-mobile-picker).
+Successful invitations return to the log tab and remove older join routes;
+cancellation preserves the previous screen. Google’s native OAuth Picker still
+requires explicit file selection and Insert for first-time authorization.
+`file_ids` filters to the invited file; it does not preselect or authorize it.
+Keep direct access first and the filtered picker only when required. Do not
+claim Google’s last authorization step has been removed.
