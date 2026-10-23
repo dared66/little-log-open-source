@@ -77,6 +77,11 @@ filler, or repeat a heading in helper text. Customers should feel respected,
 not coached through obvious actions. Default to the label alone. Add secondary
 copy only for a necessary permission, a consequential choice, or actionable
 error recovery. Review each screen for text that can simply be deleted.
+Do not explain invitation capabilities beneath the email field (for example,
+“They’ll be able to view, add and edit entries”). Do not duplicate the invited
+email above the account card or narrate paste, browse, or manage-access buttons.
+Audit the full affected flow before presenting it, rather than waiting for the
+user to identify each redundant sentence.
 
 Invitation links already identify their exact log. Attempt direct access first;
 never require recipients to browse/select a known file when the app can read it.

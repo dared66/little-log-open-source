@@ -694,7 +694,7 @@ void runInvitationHarness({bool native = false}) {
         find.byType(TextField),
         'https://drive.google.com/file/d/csv123456789/view',
       );
-      await tap(t, 'Open this shared log in Google Drive');
+      await tap(t, 'Open log');
       expect(c.family, isNull);
       expect(find.text('Join baby log'), findsOneWidget);
       server.gate = Completer<void>();

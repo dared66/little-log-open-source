@@ -1365,7 +1365,7 @@ class _FamilyPanelState extends State<FamilyPanel> {
                 ),
               ),
               Text(
-                'Log reference: ${c.family!.logReference}\nThese permissions apply only to this log.',
+                'Log reference: ${c.family!.logReference}',
                 style: TextStyle(
                   color: logPalette(context).secondary,
                   height: 1.5,
@@ -1423,9 +1423,6 @@ class _FamilyPanelState extends State<FamilyPanel> {
                       }),
                 icon: const Icon(Icons.open_in_new),
                 label: const Text('Manage access in Google Drive'),
-              ),
-              const Text(
-                'Open Share in Google Drive to change or remove access.',
               ),
               const SizedBox(height: LogSpacing.section),
               ListTile(

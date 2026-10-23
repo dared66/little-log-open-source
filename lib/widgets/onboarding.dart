@@ -977,13 +977,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
             : 'Join ${widget.invitation!.babyName}’s log',
         style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
       ),
-      const SizedBox(height: 12),
-      Text(
-        widget.invitation == null
-            ? 'Use the Google account your caregiver invited.'
-            : 'Invited as ${widget.invitation!.invitedEmail}',
-        style: TextStyle(color: logPalette(context).secondary, height: 1.5),
-      ),
       const SizedBox(height: 24),
       ...accountControls(),
       if (error != null)
@@ -1032,8 +1025,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: LogSpacing.content),
         ],
         if (widget.invitation == null) ...[
-          const Text('Paste the Drive link from your invitation.'),
-          const SizedBox(height: LogSpacing.content),
           TextField(
             controller: invitationLink,
             enabled: !busy && !loadingLogs,
@@ -1060,10 +1051,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: LogSpacing.label),
           FilledButton(
             onPressed: busy || loadingLogs ? null : openInvitationLink,
-            child: const Text('Open this shared log in Google Drive'),
+            child: const Text('Open log'),
           ),
           const SizedBox(height: LogSpacing.content),
-          const Text('Or find the log in Google Drive.'),
           OutlinedButton.icon(
             onPressed: busy || loadingLogs ? null : () => chooseSharedLog(),
             icon: const Icon(Icons.folder_open),
@@ -1080,7 +1070,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
             style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: LogSpacing.label),
-          const Text('Previously connected logs'),
           if (loadingLogs) const LinearProgressIndicator(),
           if (logs?.isEmpty == true)
             const Padding(
