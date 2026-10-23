@@ -24,6 +24,7 @@ import 'design.dart';
 import 'activity_details.dart';
 import 'widgets/activity_panel.dart';
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -1009,7 +1010,23 @@ class _FamilyPanelState extends State<FamilyPanel> {
   String? collaboratorFileId;
   String? collaboratorError;
   bool loadingCollaborators = false;
-  String? success;
+  String? backupAttemptId;
+  bool backingUp = false;
+
+  Future<void> backUp() async {
+    final c = widget.controller;
+    if (c.babyPickerBusy) return;
+    setState(() {
+      backupAttemptId = c.family?.id;
+      backingUp = true;
+    });
+    await c.run(c.backUpFamily);
+    if (!mounted) return;
+    setState(() {
+      backingUp = false;
+      if (c.message == null) backupAttemptId = null;
+    });
+  }
 
   String collaboratorRole(String role) => switch (role) {
     'owner' => 'Owner',
@@ -1089,6 +1106,14 @@ class _FamilyPanelState extends State<FamilyPanel> {
       final c = widget.controller;
       final busy = c.working || c.syncing;
       final user = c.auth.user;
+      final backupAttempt =
+          backupAttemptId != null && backupAttemptId == c.family?.id;
+      final incompleteBackup =
+          c.family?.isLocal == false &&
+          c.lastSync == null &&
+          c.pendingCount > 0;
+      final needsBackup =
+          c.family?.isLocal == true || backupAttempt || incompleteBackup;
       final fileId = c.family?.driveFileId;
       if (fileId != null && c.canSync && collaboratorFileId != fileId) {
         collaboratorFileId = fileId;
@@ -1195,113 +1220,116 @@ class _FamilyPanelState extends State<FamilyPanel> {
               ),
             if (widget.embedded) const AssistantHelpTile(),
             const SizedBox(height: LogSpacing.section),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: logPalette(context).surface,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Icon(
-                    c.family?.isLocal == false
-                        ? Icons.cloud_done_outlined
-                        : Icons.phone_iphone,
-                    color: logPalette(context).actionInk,
-                    size: 28,
-                  ),
-                  const SizedBox(height: LogSpacing.content),
-                  Text(
-                    c.family?.storageLabel ?? 'Device storage',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
+            Theme(
+              data: setupTheme(context),
+              child: Container(
+                key: const ValueKey('log-storage-card'),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: logPalette(context).surface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Icon(
+                      c.family?.isLocal == false
+                          ? needsBackup
+                                ? Icons.cloud_upload_outlined
+                                : Icons.cloud_done_outlined
+                          : Icons.phone_iphone,
+                      color: logPalette(context).actionInk,
+                      size: 28,
                     ),
-                  ),
-                  const SizedBox(height: LogSpacing.label),
-                  const SizedBox(height: LogSpacing.field),
-                  if (!AppConfig.configured)
-                    const _Notice(
-                      'Google Drive is unavailable in this build. Entries are stored locally.',
-                    )
-                  else if (!c.auth.ready)
-                    _Notice(c.auth.error ?? 'Preparing sign-in…')
-                  else if (user == null)
-                    Align(
-                      alignment: Alignment.center,
-                      child: googleButton(() => c.run(c.auth.signIn)),
-                    )
-                  else ...[
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(user.displayName ?? 'Google account'),
-                      subtitle: Text(user.email),
-                    ),
-                    if (!c.auth.driveConnected)
-                      FilledButton(
-                        onPressed: busy || c.auth.checkingDrive
-                            ? null
-                            : () => c.run(() async {
-                                await c.auth.authorize();
-                                if (mounted) {
-                                  setState(() => success = null);
-                                }
-                                await c.sync(manual: true);
-                                if (mounted &&
-                                    c.message == null &&
-                                    c.lastSync != null) {
-                                  setState(
-                                    () => success =
-                                        'All entries saved to Google Drive.',
-                                  );
-                                }
-                              }),
-                        child: Text(
-                          c.auth.connectingDrive
-                              ? 'Connecting…'
-                              : c.auth.checkingDrive
-                              ? 'Checking Google Drive…'
-                              : 'Connect Google Drive',
-                        ),
-                      )
-                    else
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.check_circle_outline, size: 18),
-                          SizedBox(width: 6),
-                          Flexible(child: Text('Google Drive connected')),
-                        ],
-                      ),
-                    if (c.family?.isLocal == true && c.auth.driveConnected) ...[
-                      const SizedBox(height: LogSpacing.field),
-                      FilledButton(
-                        onPressed: busy ? null : () => c.run(c.publishFamily),
-                        child: const Text('Save log to Google Drive'),
-                      ),
-                      const SizedBox(height: LogSpacing.label),
-                      Text(
-                        'Saved in the Little Log folder. Private until shared.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: logPalette(context).secondary,
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: LogSpacing.content),
-                    OutlinedButton.icon(
-                      onPressed: busy ? null : () => c.run(c.auth.signOut),
-                      icon: const Icon(Icons.logout, size: 20),
-                      label: const Text('Sign out of Google'),
+                    Text(
+                      backingUp && backupAttempt
+                          ? 'Google Drive'
+                          : incompleteBackup
+                          ? 'Backup incomplete'
+                          : c.family?.storageLabel ?? 'Device storage',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
+                    const SizedBox(height: LogSpacing.field),
+                    if (!AppConfig.configured)
+                      const _Notice(
+                        'Google Drive is unavailable in this build. Entries are stored locally.',
+                      )
+                    else if (!c.auth.ready)
+                      _Notice(c.auth.error ?? 'Preparing sign-in…')
+                    else ...[
+                      if (user != null) ...[
+                        Text(user.email, textAlign: TextAlign.center),
+                        const SizedBox(height: LogSpacing.field),
+                      ],
+                      if (needsBackup) ...[
+                        if (kIsWeb && user == null)
+                          Center(
+                            child: googleButton(() => c.run(c.auth.signIn)),
+                          )
+                        else
+                          FilledButton(
+                            onPressed: busy || c.auth.checkingDrive
+                                ? null
+                                : backUp,
+                            child: Text(
+                              backingUp
+                                  ? 'Backing up…'
+                                  : backupAttempt || incompleteBackup
+                                  ? 'Retry backup'
+                                  : 'Back up to Google Drive',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                      ] else if (user == null)
+                        Center(child: googleButton(() => c.run(c.auth.signIn)))
+                      else if (!c.auth.driveConnected)
+                        FilledButton(
+                          onPressed: busy || c.auth.checkingDrive
+                              ? null
+                              : () => c.run(() async {
+                                  await c.auth.authorize();
+                                  await c.sync(manual: true);
+                                }),
+                          child: Text(
+                            c.auth.connectingDrive
+                                ? 'Connecting…'
+                                : c.auth.checkingDrive
+                                ? 'Checking Google Drive…'
+                                : 'Connect Google Drive',
+                          ),
+                        )
+                      else
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle_outline, size: 18),
+                            SizedBox(width: 6),
+                            Flexible(child: Text('Google Drive connected')),
+                          ],
+                        ),
+                      if (backupAttempt && c.message != null) ...[
+                        const SizedBox(height: LogSpacing.content),
+                        _Notice(c.message!),
+                      ],
+                      if (user != null) ...[
+                        const SizedBox(height: LogSpacing.content),
+                        OutlinedButton.icon(
+                          onPressed: busy ? null : () => c.run(c.auth.signOut),
+                          icon: const Icon(Icons.logout, size: 20),
+                          label: const Text('Sign out of Google'),
+                        ),
+                      ],
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-            if (c.family != null && !c.family!.isLocal && c.canSync) ...[
+            if (c.family != null && !needsBackup && c.canSync) ...[
               const SizedBox(height: LogSpacing.section),
               SectionHeading(
                 title: 'People with access to ${c.family!.babyName}',
@@ -1445,18 +1473,7 @@ class _FamilyPanelState extends State<FamilyPanel> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: LinearProgressIndicator(),
               ),
-            if (success != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    success!,
-                    style: TextStyle(color: logPalette(context).actionInk),
-                  ),
-                ),
-              ),
-            if (c.message != null)
+            if (c.message != null && !backupAttempt)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: _Notice(c.message!),
