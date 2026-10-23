@@ -307,6 +307,77 @@ void runInvitationHarness({bool native = false}) {
     },
   );
 
+  for (final scenario in [
+    'direct',
+    'authorize',
+    'cancel',
+    'rate limit',
+    'server error',
+    'view only',
+    'trash',
+  ]) {
+    testWidgets('exact invitation: $scenario', (t) async {
+      final server = InvitationHarness()..editors.add('caregiver@example.com');
+      final needsAccess = scenario == 'authorize' || scenario == 'cancel';
+      if (!needsAccess) server.appAuthorized.add('caregiver@example.com');
+      if (scenario == 'rate limit') server.file.error = 403;
+      if (scenario == 'server error') server.file.error = 503;
+      if (scenario == 'view only') server.file.canModifyContent = false;
+      if (scenario == 'trash') server.file.trashed = true;
+      final auth = HarnessAuth('caregiver@example.com');
+      final db = (await t.runAsync(
+        () => databaseFactoryMemory.openDatabase(newId.v4()),
+      ))!;
+      final c = AppController(Repository(db), auth, server.client(auth))
+        ..loading = false;
+      const invitation = InvitationLink(
+        fileId: 'csv123456789',
+        invitedEmail: 'caregiver@example.com',
+        babyName: 'Baby',
+      );
+      var pickerCalls = 0;
+      const picker = MethodChannel('app.littlelog/picker');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(picker, (call) async {
+            pickerCalls++;
+            expect(call.arguments['fileId'], invitation.fileId);
+            expect(call.arguments['email'], invitation.invitedEmail);
+            if (scenario == 'cancel') return null;
+            server.appAuthorized.add(invitation.invitedEmail);
+            return {
+              'fileId': invitation.fileId,
+              'accessToken': invitation.invitedEmail,
+            };
+          });
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(picker, null),
+      );
+      await t.pumpWidget(
+        MaterialApp(
+          home: OnboardingPage(
+            controller: c,
+            initialStage: OnboardingStage.join,
+            invitation: invitation,
+          ),
+        ),
+      );
+      await settle(t);
+      await tap(t, 'Continue');
+      expect(pickerCalls, needsAccess ? 1 : 0);
+      expect(
+        find.text('Join baby log'),
+        scenario == 'direct' || scenario == 'authorize'
+            ? findsOneWidget
+            : findsNothing,
+      );
+      expect(c.family, isNull);
+      await t.pumpWidget(const SizedBox());
+      c.dispose();
+      await t.runAsync(db.close);
+    });
+  }
+
   testWidgets('app invitation selects only its file with the invited account', (
     t,
   ) async {

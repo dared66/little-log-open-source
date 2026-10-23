@@ -71,6 +71,17 @@ After a build has been uploaded to TestFlight, use the next build number for sub
 
 # UI writing
 
+Standing user directive, October 22, 2026: minimize quips, secondary labels,
+subtitles and explanatory copy. Do not narrate obvious controls, add cheerful
+filler, or repeat a heading in helper text. Customers should feel respected,
+not coached through obvious actions. Default to the label alone. Add secondary
+copy only for a necessary permission, a consequential choice, or actionable
+error recovery. Review each screen for text that can simply be deleted.
+
+Invitation links already identify their exact log. Attempt direct access first;
+never require recipients to browse/select a known file when the app can read it.
+Retain Google's narrowly scoped authorization only as a fallback when needed.
+
 Write iPhone TestFlight notes for the people using the app: short, plain-language descriptions of relevant new features and what to try. Keep internal compatibility repairs, unreleased-build history, engineering/test details, telemetry bookkeeping and Android information out of iPhone tester notes. For build 57, the user requested only three points: optional elapsed time under Quick Log → Customize, improved live timers to try in the app and on the Lock Screen, and the new Help screen with Siri commands and other help. This standing preference was clarified October 15, 2026.
 
 Keep labels, controls, and helper text concise and respectful. Do not add infantilizing explanations, obvious definitions, redundant details, or commentary that merely restates what a label or unit already communicates. Add helper text only when it helps the user make a meaningful decision or prevents a likely mistake. For example, a Length unit selector needs no explanation that it also applies to head circumference. This standing user instruction was set October 8, 2026.

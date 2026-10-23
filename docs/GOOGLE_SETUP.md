@@ -270,3 +270,15 @@ protection. No shared data format or permission scope changes.
 accounts at standard and 200% text sizes. Run with `CAPTURE_INVITATIONS=true`;
 images are written to `/tmp/little-log-invitation-review/`. These captures do not
 establish real Google email delivery or native Picker behavior.
+
+
+### Exact invitation access
+
+Invitation and pasted Drive links first read and validate the specified file.
+Already authorized files go straight to baby/owner confirmation, without Picker.
+Only a not-found response (which can hide missing app authorization) or Google's
+`appNotAuthorizedToFile` error triggers authorization for that exact file. Rate
+limits, server failures, view-only access and known trashed files remain errors;
+they do not launch Picker. Cancellation leaves the current log unchanged.
+The invited account and selected file must still match. This does not assert
+that every newly invited account can skip Google's per-file authorization.

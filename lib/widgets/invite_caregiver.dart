@@ -167,7 +167,6 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
                       const SizedBox(height: 8),
                       Text(sentTo!, style: TextStyle(color: palette.secondary)),
                       const SizedBox(height: 12),
-                      const Text('They can now view and edit this log.'),
                     ],
                   ),
                 ),
@@ -221,11 +220,6 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
             child: const Text('Invite someone else'),
           ),
         ] else ...[
-          Text(
-            'Share ${widget.family.babyName}’s day with another caregiver.',
-            style: TextStyle(color: palette.secondary, height: 1.5),
-          ),
-          const SizedBox(height: 24),
           const FieldLabel('Google email'),
           Form(
             key: form,

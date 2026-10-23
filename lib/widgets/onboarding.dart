@@ -220,7 +220,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       }
       return;
     }
-    await chooseSharedLog(expectedFileId: invited.fileId);
+    await openExactLog(invited.fileId);
   }
 
   Future<void> openInvitationLink() async {
@@ -233,7 +233,35 @@ class _OnboardingPageState extends State<OnboardingPage> {
       reveal(errorKey);
       return;
     }
-    await chooseSharedLog(expectedFileId: id);
+    await openExactLog(id);
+  }
+
+  Future<void> openExactLog(String fileId) async {
+    final account = widget.controller.auth.user;
+    if (account == null || busy) return;
+    var needsAuthorization = false;
+    await act(() async {
+      Family log;
+      try {
+        log = await widget.controller.drive.openFamily(fileId, account.id);
+      } on CloudException catch (e) {
+        if ((e.status == 404 && e.reason != 'trashed') ||
+            (e.status == 403 && e.reason == 'appNotAuthorizedToFile')) {
+          needsAuthorization = true;
+          return;
+        }
+        rethrow;
+      }
+      if (mounted && widget.controller.auth.user?.id == account.id) {
+        setState(() => selectedLog = log);
+        reveal(confirmationKey);
+      }
+    });
+    if (mounted &&
+        needsAuthorization &&
+        widget.controller.auth.user?.id == account.id) {
+      await chooseSharedLog(expectedFileId: fileId);
+    }
   }
 
   Future<void> preview(String fileId) => act(() async {
@@ -877,11 +905,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
           'Ready to join',
           style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 12),
-        Text(
-          'Confirm the log shared with you.',
-          style: TextStyle(color: logPalette(context).secondary),
-        ),
         const SizedBox(height: 24),
 
         Card(
@@ -917,9 +940,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       'You already have a separate log named ${selectedLog!.babyName}. Joining this log keeps both histories separate. It does not combine or delete entries.',
                     ),
                   ),
-                const SizedBox(height: LogSpacing.label),
-                const Text('You’ll see existing entries and can add your own.'),
-                const SizedBox(height: LogSpacing.content),
+                const SizedBox(height: LogSpacing.field),
                 FilledButton(
                   onPressed: busy ? null : joinSelected,
                   child: Text(
@@ -985,12 +1006,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (c.auth.driveConnected) ...[
         const SizedBox(height: LogSpacing.section),
         if (widget.invitation != null) ...[
-          Text(
-            invitedAccountMatches
-                ? 'Choose the shared log in Google Drive to continue.'
-                : 'Switch to ${widget.invitation!.invitedEmail} to accept this invitation.',
-          ),
-          const SizedBox(height: LogSpacing.content),
+          if (!invitedAccountMatches) ...[
+            Text(
+              'Switch to ${widget.invitation!.invitedEmail} to accept this invitation.',
+            ),
+            const SizedBox(height: LogSpacing.content),
+          ],
           FilledButton(
             onPressed: busy || loadingLogs
                 ? null

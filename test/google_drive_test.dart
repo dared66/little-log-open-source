@@ -167,6 +167,36 @@ class FakeDrive {
 }
 
 void main() {
+  test(
+    'file authorization reason is preserved separately from other 403 errors',
+    () async {
+      final cloud = GoogleDrive(
+        TestAuth(),
+        client: MockClient(
+          (request) async => http.Response(
+            jsonEncode({
+              'error': {
+                'errors': [
+                  {'reason': 'appNotAuthorizedToFile'},
+                ],
+              },
+            }),
+            403,
+          ),
+        ),
+      );
+      await expectLater(
+        cloud.openFamily('csv123456789', 'account'),
+        throwsA(
+          isA<CloudException>()
+              .having((e) => e.reason, 'reason', 'appNotAuthorizedToFile')
+              .having((e) => e.status, 'status', 403),
+        ),
+      );
+      cloud.dispose();
+    },
+  );
+
   testWidgets('expired access returns even if Google token clearing hangs', (
     t,
   ) async {

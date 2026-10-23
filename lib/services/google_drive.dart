@@ -7,9 +7,10 @@ import 'google_auth.dart';
 import 'invitation_link.dart';
 
 class CloudException implements Exception {
-  CloudException(this.message, [this.status]);
+  CloudException(this.message, [this.status, this.reason]);
   final String message;
   final int? status;
+  final String? reason;
   @override
   String toString() => message;
 }
@@ -139,6 +140,7 @@ class GoogleDrive implements FamilyCloud {
       throw CloudException(
         'This baby’s Drive log is in Trash. Restore it in Google Drive, then retry. Entries remain on this device.',
         404,
+        'trashed',
       );
     }
     if (meta['ownedByMe'] == true) {
@@ -200,18 +202,33 @@ class GoogleDrive implements FamilyCloud {
             .invalidateToken(token)
             .timeout(const Duration(seconds: 10), onTimeout: () {});
       }
-      throw CloudException(switch (response.statusCode) {
-        401 => 'Google access expired. Connect Google Drive again.',
-        403 =>
-          'Google denied this request. Check file permissions or retry if Drive is rate limiting.',
-        404 =>
-          'This baby’s Drive log is unavailable. It may be in Trash, deleted, or no longer shared with you. Entries remain on this device.',
-        412 => 'Another caregiver updated the CSV. Sync will merge and retry.',
-        429 =>
-          'Drive is busy. Your entries are saved locally and will retry later.',
-        _ =>
-          'Drive could not finish syncing (${response.statusCode}). Local entries are retained.',
-      }, response.statusCode);
+      String? reason;
+      try {
+        final body = jsonDecode(response.body);
+        final errors = body['error']?['errors'];
+        if (errors is List && errors.isNotEmpty) {
+          reason = errors.first['reason'] as String?;
+        }
+      } catch (_) {
+        // Preserve the HTTP error when Drive returns an unexpected body.
+      }
+      throw CloudException(
+        switch (response.statusCode) {
+          401 => 'Google access expired. Connect Google Drive again.',
+          403 =>
+            'Google denied this request. Check file permissions or retry if Drive is rate limiting.',
+          404 =>
+            'This baby’s Drive log is unavailable. It may be in Trash, deleted, or no longer shared with you. Entries remain on this device.',
+          412 =>
+            'Another caregiver updated the CSV. Sync will merge and retry.',
+          429 =>
+            'Drive is busy. Your entries are saved locally and will retry later.',
+          _ =>
+            'Drive could not finish syncing (${response.statusCode}). Local entries are retained.',
+        },
+        response.statusCode,
+        reason,
+      );
     }
     return response;
   }
@@ -235,6 +252,7 @@ class GoogleDrive implements FamilyCloud {
       throw CloudException(
         'This baby’s Drive log is in Trash. Restore it in Google Drive, then retry. Entries remain on this device.',
         404,
+        'trashed',
       );
     }
     if (!['text/csv', 'application/csv'].contains(meta['mimeType'])) {
