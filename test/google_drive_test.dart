@@ -211,7 +211,7 @@ void main() {
         ),
       );
       await expectLater(
-        cloud.openFamily('csv123456789', 'account'),
+        cloud.openFamily('csv123456789', 'a'),
         throwsA(
           isA<CloudException>()
               .having((e) => e.reason, 'reason', 'appNotAuthorizedToFile')
@@ -357,6 +357,7 @@ void main() {
   });
   test('cache never crosses accounts', () async {
     await cloud.readFeeds(family);
+    cloud.auth.user = TestAccount('b');
     await cloud.readFeeds(
       const Family(
         id: 'family',

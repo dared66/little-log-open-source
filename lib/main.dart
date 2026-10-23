@@ -87,7 +87,7 @@ class _LittleLogAppState extends State<LittleLogApp>
   final _homeKey = GlobalKey<_HomePageState>();
   final _invitationBridge = InvitationLinkBridge();
   final _assistantActions = AssistantActions();
-  String? _activeInvitationFile;
+  final _activeInvitationFiles = <String>{};
   bool _openingPumpingReview = false;
 
   @override
@@ -101,30 +101,36 @@ class _LittleLogAppState extends State<LittleLogApp>
 
   void _reviewStoppedPumping() {
     final c = widget.controller;
-    if (c.loading || c.pendingPumpingReview == null || _openingPumpingReview) {
+    if (c.loading ||
+        c.babyPickerBusy ||
+        c.pendingPumpingReview == null ||
+        _openingPumpingReview) {
       return;
     }
     _openingPumpingReview = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         final request = c.pendingPumpingReview;
-        c.pendingPumpingReview = null;
-        if (!mounted || request == null) return;
+        if (!mounted || request == null || c.babyPickerBusy) return;
         final baby = c.families
             .where((baby) => baby.id == request.familyId)
             .firstOrNull;
-        if (baby == null) return;
-        if (c.family?.id != baby.id) await c.select(baby);
-        final context = _navigatorKey.currentState?.overlay?.context;
-        if (!mounted ||
-            context == null ||
-            !context.mounted ||
-            !c.timers.any(
-              (timer) =>
-                  timer.id == request.sessionId && timer.stoppedAt != null,
-            )) {
+        if (baby == null) {
+          c.pendingPumpingReview = null;
           return;
         }
+        if (c.family?.id != baby.id) await c.select(baby);
+        if (c.family?.id != baby.id) return;
+        final context = _navigatorKey.currentState?.overlay?.context;
+        if (!mounted || context == null || !context.mounted) return;
+        if (c.pendingPumpingReview != request) return;
+        if (!c.timers.any(
+          (timer) => timer.id == request.sessionId && timer.stoppedAt != null,
+        )) {
+          c.pendingPumpingReview = null;
+          return;
+        }
+        c.pendingPumpingReview = null;
         await openActivity(context, c, 'pumping');
       } finally {
         _openingPumpingReview = false;
@@ -198,12 +204,14 @@ class _LittleLogAppState extends State<LittleLogApp>
   }
 
   void _openInvitation(InvitationLink invitation) {
-    if (!mounted || _activeInvitationFile == invitation.fileId) return;
+    if (!mounted || !_activeInvitationFiles.add(invitation.fileId)) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final navigator = _navigatorKey.currentState;
-      if (navigator == null) return;
-      _activeInvitationFile = invitation.fileId;
+      if (navigator == null) {
+        _activeInvitationFiles.remove(invitation.fileId);
+        return;
+      }
       navigator
           .push(
             MaterialPageRoute<bool>(
@@ -219,7 +227,7 @@ class _LittleLogAppState extends State<LittleLogApp>
             navigator.popUntil((route) => route.isFirst);
             _homeKey.currentState?.selectTab(0);
           })
-          .whenComplete(() => _activeInvitationFile = null);
+          .whenComplete(() => _activeInvitationFiles.remove(invitation.fileId));
     });
     WidgetsBinding.instance.ensureVisualUpdate();
   }

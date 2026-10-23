@@ -9,7 +9,11 @@ class SyncService {
   final FamilyCloud cloud;
   bool _running = false;
 
-  Future<int> sync(Family family, {required String accountId}) async {
+  Future<int> sync(
+    Family family, {
+    required String accountId,
+    void Function()? checkAccount,
+  }) async {
     if (family.isLocal || family.accountId != accountId) {
       throw StateError(
         'Connect the Google account linked to this baby before syncing.',
@@ -20,7 +24,9 @@ class SyncService {
     try {
       // Pull first: if an earlier append succeeded but its response was lost,
       // acknowledge those IDs locally instead of uploading them again.
+      checkAccount?.call();
       final remote = await cloud.readFeeds(family);
+      checkAccount?.call();
       final local = {
         for (final f in await repository.feeds(family.id, includeDeleted: true))
           f.id: f,
@@ -43,11 +49,14 @@ class SyncService {
           updates.add(feed);
         }
       }
+      checkAccount?.call();
       if (updates.isNotEmpty) await repository.merge(updates);
       if (remote.needsCompatibilityRewrite) {
         // Repair already-shared build-56 rows even when this device has no
         // pending entries. The cloud uses its normal conditional merge/retry.
+        checkAccount?.call();
         await cloud.appendFeeds(family, []);
+        checkAccount?.call();
       }
       final pending = (await repository.feeds(
         family.id,
@@ -57,9 +66,12 @@ class SyncService {
         // Drive conditionally replaces one size-limited CSV, not individual
         // rows. Splitting the outbox repeats the entire file transfer for every
         // batch. Acknowledge only after the cloud verifies the complete upload.
+        checkAccount?.call();
         await cloud.appendFeeds(family, pending);
+        checkAccount?.call();
         await repository.merge(pending.map((f) => f.acknowledged()).toList());
       }
+      checkAccount?.call();
       await repository.setLastSync(family.id, DateTime.now());
       return remote.skipped;
     } finally {

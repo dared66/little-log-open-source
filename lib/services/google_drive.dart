@@ -53,6 +53,7 @@ class GoogleDrive implements FamilyCloud {
 
   Future<List<Map<String, dynamic>>> _files(
     String query, {
+    required GoogleAccountSession session,
     String fields = 'id,name,parents,ownedByMe,appProperties',
   }) async {
     final files = <Map<String, dynamic>>[];
@@ -60,6 +61,7 @@ class GoogleDrive implements FamilyCloud {
     do {
       final result = _json(
         await _request(
+          session,
           'GET',
           '/drive/v3/files',
           query: {
@@ -78,10 +80,15 @@ class GoogleDrive implements FamilyCloud {
     return files;
   }
 
-  Future<String> littleLogFolder(String accountId) async {
+  Future<String> littleLogFolder(String accountId) async =>
+      _littleLogFolder(auth.captureAccount(expectedAccountId: accountId));
+
+  Future<String> _littleLogFolder(GoogleAccountSession session) async {
+    auth.checkAccount(session);
+    final accountId = '${session.accountId}/${session.revision}';
     final active = _folderRequests[accountId];
     if (active != null) return active;
-    final request = _findOrCreateFolder();
+    final request = _findOrCreateFolder(session);
     _folderRequests[accountId] = request;
     try {
       return await request;
@@ -92,8 +99,9 @@ class GoogleDrive implements FamilyCloud {
     }
   }
 
-  Future<String> _findOrCreateFolder() async {
+  Future<String> _findOrCreateFolder(GoogleAccountSession session) async {
     final folders = await _files(
+      session: session,
       "trashed = false and 'me' in owners and mimeType = 'application/vnd.google-apps.folder' and (name = 'Little Log' or appProperties has { key='littleLogRole' and value='root' })",
     );
     if (folders.isNotEmpty) {
@@ -106,6 +114,7 @@ class GoogleDrive implements FamilyCloud {
     }
     final folder = _json(
       await _request(
+        session,
         'POST',
         '/drive/v3/files',
         query: {'fields': 'id'},
@@ -121,16 +130,32 @@ class GoogleDrive implements FamilyCloud {
 
   /// Move an existing owned log in place, preserving its ID, links and sharing.
   /// Shared logs stay in their owner's folder; a caregiver cannot relocate them.
-  Future<void> prepareSync(Family family, {bool force = false}) async {
+  Future<void> prepareSync(Family family, {bool force = false}) async =>
+      _prepareSync(
+        family,
+        auth.captureAccount(expectedAccountId: family.accountId),
+        force: force,
+      );
+
+  Future<void> _prepareSync(
+    Family family,
+    GoogleAccountSession session, {
+    bool force = false,
+  }) async {
+    auth.checkAccount(session);
     final key = '${family.accountId}/${family.driveFileId}';
     if (force) {
       _cache.remove(key);
       _organized.remove(key);
     }
     if (_organized.contains(key)) return;
-    await _familySnapshot(family); // Validate before changing file metadata.
+    await _familySnapshot(
+      family,
+      session,
+    ); // Validate before changing file metadata.
     final meta = _json(
       await _request(
+        session,
         'GET',
         '/drive/v3/files/${family.driveFileId}',
         query: {'fields': 'id,parents,ownedByMe,trashed,writersCanShare'},
@@ -144,10 +169,11 @@ class GoogleDrive implements FamilyCloud {
       );
     }
     if (meta['ownedByMe'] == true) {
-      final folder = await littleLogFolder(family.accountId!);
+      final folder = await _littleLogFolder(session);
       final parents = (meta['parents'] as List? ?? []).cast<String>();
       if (!parents.contains(folder) || meta['writersCanShare'] != false) {
         await _request(
+          session,
           'PATCH',
           '/drive/v3/files/${family.driveFileId}',
           query: {
@@ -167,6 +193,7 @@ class GoogleDrive implements FamilyCloud {
   // v2 exposes a file ETag in JSON (including to web clients). v3 is used for
   // discovery, creation and sharing. No Sheets endpoint is used.
   Future<http.Response> _request(
+    GoogleAccountSession session,
     String method,
     String path, {
     Map<String, String>? query,
@@ -174,12 +201,10 @@ class GoogleDrive implements FamilyCloud {
     String? media,
     Map<String, String>? headers,
     String? contentType,
-    String? expectedAccountId,
   }) async {
+    auth.checkAccount(session);
     final token = await auth.accessToken();
-    if (expectedAccountId != null && auth.user?.id != expectedAccountId) {
-      throw StateError('Google account changed. Try again.');
-    }
+    auth.checkAccount(session);
     final request = http.Request(
       method,
       Uri.https('www.googleapis.com', path, query),
@@ -199,6 +224,9 @@ class GoogleDrive implements FamilyCloud {
         .send(request)
         .then(http.Response.fromStream)
         .timeout(const Duration(seconds: 25));
+    // A response from the old account must not update caches or acknowledge
+    // local history after an account switch, including a switch away and back.
+    auth.checkAccount(session);
     if (response.statusCode >= 400) {
       if (response.statusCode == 401) {
         // Play Services can leave token clearing unresolved. Still surface the
@@ -241,8 +269,12 @@ class GoogleDrive implements FamilyCloud {
   Map<String, dynamic> _json(http.Response response) =>
       jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
 
-  Future<Map<String, dynamic>> _metadata(String id) async => _json(
+  Future<Map<String, dynamic>> _metadata(
+    String id,
+    GoogleAccountSession session,
+  ) async => _json(
     await _request(
+      session,
       'GET',
       '/drive/v2/files/$id',
       query: {
@@ -292,10 +324,11 @@ class GoogleDrive implements FamilyCloud {
     );
   }
 
-  Future<_Snapshot> _read(String id, String accountId) async {
+  Future<_Snapshot> _read(String id, GoogleAccountSession session) async {
+    final accountId = session.accountId;
     final key = '$accountId/$id';
     for (var attempt = 0; attempt < 4; attempt++) {
-      final metadata = await _metadata(id);
+      final metadata = await _metadata(id, session);
       final before = _etag(metadata);
       final cached = _cache[key];
       if (cached?.etag == before) {
@@ -304,11 +337,12 @@ class GoogleDrive implements FamilyCloud {
         return refreshed;
       }
       final response = await _request(
+        session,
         'GET',
         '/drive/v2/files/$id',
         query: {'alt': 'media'},
       );
-      final after = _etag(await _metadata(id));
+      final after = _etag(await _metadata(id, session));
       // Bind content to its metadata ETag even if someone wrote during download.
       if (before != after) continue;
       final csv = FamilyCsv.decode(
@@ -326,22 +360,24 @@ class GoogleDrive implements FamilyCloud {
   }
 
   Future<Family> createFamily(Family local, String accountId) async {
-    final folder = await littleLogFolder(accountId);
+    final session = auth.captureAccount(expectedAccountId: accountId);
+    final folder = await _littleLogFolder(session);
     // Reuse a previous creation if its response or local persistence was lost.
     final existing = await _files(
+      session: session,
       "trashed = false and 'me' in owners and mimeType = 'text/csv' and appProperties has { key='littleLogFamilyId' and value='${_queryValue(local.id)}' }",
     );
     if (existing.isNotEmpty) {
-      final recovered = await openFamily(
+      final recovered = await _openFamily(
         existing.first['id'] as String,
-        accountId,
+        session,
       );
       if (recovered.id != local.id) {
         throw const FormatException(
           'The existing Drive log belongs to another family.',
         );
       }
-      await prepareSync(recovered);
+      await _prepareSync(recovered, session);
       return recovered;
     }
     final boundary = 'little_log_${newId.v4()}';
@@ -358,6 +394,7 @@ class GoogleDrive implements FamilyCloud {
         '--$boundary\r\nContent-Type: text/csv; charset=utf-8\r\n\r\n$csv\r\n--$boundary--\r\n';
     final result = _json(
       await _request(
+        session,
         'POST',
         '/upload/drive/v3/files',
         query: {'uploadType': 'multipart', 'fields': 'id'},
@@ -369,15 +406,16 @@ class GoogleDrive implements FamilyCloud {
     // Exercise a real stale version, not a fabricated tag that the service may
     // reject while parsing. All probe writes use identical EMPTY content.
     // Never perform this probe on an existing family file.
-    final initialTag = _etag(await _metadata(id));
+    final initialTag = _etag(await _metadata(id, session));
     await _request(
+      session,
       'PUT',
       '/upload/drive/v2/files/$id',
       query: {'uploadType': 'media'},
       media: csv,
       headers: {'If-Match': initialTag},
     );
-    final updatedTag = _etag(await _metadata(id));
+    final updatedTag = _etag(await _metadata(id, session));
     if (initialTag == updatedTag) {
       throw CloudException(
         'Drive did not advance the test file version. Safe shared writes could not be verified. The empty test file remains in Drive.',
@@ -385,6 +423,7 @@ class GoogleDrive implements FamilyCloud {
     }
     try {
       await _request(
+        session,
         'PUT',
         '/upload/drive/v2/files/$id',
         query: {'uploadType': 'media'},
@@ -397,15 +436,19 @@ class GoogleDrive implements FamilyCloud {
     } on CloudException catch (e) {
       if (e.status != 412) rethrow;
     }
-    return (await _read(id, accountId)).csv.family;
+    return (await _read(id, session)).csv.family;
   }
 
-  Future<Family> openFamily(String id, String accountId) async {
+  Future<Family> openFamily(String id, String accountId) async =>
+      _openFamily(id, auth.captureAccount(expectedAccountId: accountId));
+
+  Future<Family> _openFamily(String id, GoogleAccountSession session) async {
     if (!RegExp(r'^[A-Za-z0-9_-]{10,200}$').hasMatch(id)) {
       throw const FormatException('Choose a valid Drive CSV file.');
     }
     final access = _json(
       await _request(
+        session,
         'GET',
         '/drive/v3/files/$id',
         query: {'fields': 'capabilities(canModifyContent)'},
@@ -416,15 +459,17 @@ class GoogleDrive implements FamilyCloud {
         'You have view-only access to this log. Ask the sender to give your Google account Editor access, then try again.',
       );
     }
-    return (await _read(id, accountId)).csv.family;
+    return (await _read(id, session)).csv.family;
   }
 
   Future<List<Map<String, String>>> listFamilies() async {
+    final session = auth.captureAccount();
     final files = <Map<String, String>>[];
     String? pageToken;
     do {
       final result = _json(
         await _request(
+          session,
           'GET',
           '/drive/v3/files',
           query: {
@@ -459,8 +504,10 @@ class GoogleDrive implements FamilyCloud {
 
   Future<List<Map<String, String>>> listCollaborators(Family family) async {
     if (family.driveFileId == null) return const [];
+    final session = auth.captureAccount(expectedAccountId: family.accountId);
     final result = _json(
       await _request(
+        session,
         'GET',
         '/drive/v3/files/${family.driveFileId}/permissions',
         query: {
@@ -517,14 +564,15 @@ class GoogleDrive implements FamilyCloud {
     if (accountId == null || accountId != family.accountId) {
       throw StateError('Sign in with this log’s Google account to continue.');
     }
+    final session = auth.captureAccount(expectedAccountId: accountId);
     // Editing a CSV does not grant permission to invite. Never trust the
     // cached owner email or the account used to connect a shared log.
     final metadata = _json(
       await _request(
+        session,
         'GET',
         '/drive/v3/files/${family.driveFileId}',
         query: {'fields': 'ownedByMe,trashed,writersCanShare'},
-        expectedAccountId: accountId,
       ),
     );
     if (metadata['ownedByMe'] != true || metadata['trashed'] == true) {
@@ -533,16 +581,16 @@ class GoogleDrive implements FamilyCloud {
     // Enforce the same rule in Drive, including for older app versions.
     if (metadata['writersCanShare'] != false) {
       await _request(
+        session,
         'PATCH',
         '/drive/v3/files/${family.driveFileId}',
         json: {'writersCanShare': false},
-        expectedAccountId: accountId,
       );
     }
     await _request(
+      session,
       'POST',
       '/drive/v3/files/${family.driveFileId}/permissions',
-      expectedAccountId: accountId,
       // Drive's notification opens its CSV viewer, not Little Log.
       // The caller opens the native share sheet after access is granted.
       query: {'sendNotificationEmail': 'false'},
@@ -550,8 +598,11 @@ class GoogleDrive implements FamilyCloud {
     );
   }
 
-  Future<_Snapshot> _familySnapshot(Family family) async {
-    final snapshot = await _read(family.driveFileId!, family.accountId!);
+  Future<_Snapshot> _familySnapshot(
+    Family family,
+    GoogleAccountSession session,
+  ) async {
+    final snapshot = await _read(family.driveFileId!, session);
     if (snapshot.csv.family.id != family.id) {
       throw const FormatException(
         'The CSV belongs to a different family. Nothing was uploaded.',
@@ -562,7 +613,8 @@ class GoogleDrive implements FamilyCloud {
 
   @override
   Future<RemoteHistory> readFeeds(Family family) async {
-    final csv = (await _familySnapshot(family)).csv;
+    final session = auth.captureAccount(expectedAccountId: family.accountId);
+    final csv = (await _familySnapshot(family, session)).csv;
     return RemoteHistory(
       csv.feeds,
       needsCompatibilityRewrite: csv.needsCompatibilityRewrite,
@@ -571,9 +623,10 @@ class GoogleDrive implements FamilyCloud {
 
   @override
   Future<void> appendFeeds(Family family, List<Feeding> feeds) async {
+    final session = auth.captureAccount(expectedAccountId: family.accountId);
     final key = '${family.accountId}/${family.driveFileId}';
     for (var attempt = 0; attempt < 4; attempt++) {
-      final snapshot = await _familySnapshot(family);
+      final snapshot = await _familySnapshot(family, session);
       final merged = {for (final f in snapshot.csv.feeds) f.id: f};
       var changed = snapshot.csv.needsCompatibilityRewrite;
       for (final feed in feeds) {
@@ -596,6 +649,7 @@ class GoogleDrive implements FamilyCloud {
       final csv = FamilyCsv(snapshot.csv.family, merged.values.toList());
       try {
         await _request(
+          session,
           'PUT',
           '/upload/drive/v2/files/${family.driveFileId}',
           query: {'uploadType': 'media'},
@@ -604,7 +658,7 @@ class GoogleDrive implements FamilyCloud {
         );
         _cache.remove(key);
         // Verify committed IDs/content before acknowledging the local outbox.
-        final verified = await _familySnapshot(family);
+        final verified = await _familySnapshot(family, session);
         final byId = {for (final f in verified.csv.feeds) f.id: f};
         final expected = snapshot.csv.needsCompatibilityRewrite
             ? merged.values
@@ -637,9 +691,11 @@ class GoogleDrive implements FamilyCloud {
 
   // Development-only UI calls these methods against marked synthetic fixtures.
   Future<String> createMonthlyProbeFolder() async {
-    final folder = await littleLogFolder(auth.user?.id ?? 'current');
+    final session = auth.captureAccount();
+    final folder = await _littleLogFolder(session);
     final meta = _json(
       await _request(
+        session,
         'POST',
         '/drive/v3/files',
         json: {
@@ -654,12 +710,16 @@ class GoogleDrive implements FamilyCloud {
     return meta['id'] as String;
   }
 
-  Future<void> _checkProbeFolder(String id) async {
+  Future<void> _checkProbeFolder(
+    String id,
+    GoogleAccountSession session,
+  ) async {
     if (!RegExp(r'^[A-Za-z0-9_-]{10,200}$').hasMatch(id)) {
       throw const FormatException('Enter the synthetic test folder ID.');
     }
     final meta = _json(
       await _request(
+        session,
         'GET',
         '/drive/v3/files/$id',
         query: {'fields': 'mimeType,appProperties,trashed'},
@@ -676,11 +736,13 @@ class GoogleDrive implements FamilyCloud {
   }
 
   Future<void> shareMonthlyProbe(String folderId, String email) async {
-    await _checkProbeFolder(folderId);
+    final session = auth.captureAccount();
+    await _checkProbeFolder(folderId, session);
     if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
       throw const FormatException('Enter the caregiver test account email.');
     }
     await _request(
+      session,
       'POST',
       '/drive/v3/files/$folderId/permissions',
       query: {'sendNotificationEmail': 'false'},
@@ -689,7 +751,8 @@ class GoogleDrive implements FamilyCloud {
   }
 
   Future<String> createMonthlyProbeFile(String folderId, String month) async {
-    await _checkProbeFolder(folderId);
+    final session = auth.captureAccount();
+    await _checkProbeFolder(folderId, session);
     if (!RegExp(r'^\d{4}-(0[1-9]|1[0-2])$').hasMatch(month)) {
       throw const FormatException('Enter a month as YYYY-MM.');
     }
@@ -710,6 +773,7 @@ class GoogleDrive implements FamilyCloud {
         '--$boundary\r\nContent-Type: text/csv; charset=utf-8\r\n\r\n$csv\r\n--$boundary--\r\n';
     final result = _json(
       await _request(
+        session,
         'POST',
         '/upload/drive/v3/files',
         query: {'uploadType': 'multipart', 'fields': 'id'},
@@ -721,11 +785,13 @@ class GoogleDrive implements FamilyCloud {
   }
 
   Future<String> verifyMonthlyProbe(String folderId) async {
-    await _checkProbeFolder(folderId);
+    final session = auth.captureAccount();
+    await _checkProbeFolder(folderId, session);
     final account = auth.user;
     if (account == null) throw StateError('Sign in first.');
     final result = _json(
       await _request(
+        session,
         'GET',
         '/drive/v3/files',
         query: {
@@ -745,7 +811,7 @@ class GoogleDrive implements FamilyCloud {
     }
     final reports = <String>[];
     for (final file in files) {
-      final family = await openFamily(file['id'] as String, account.id);
+      final family = await _openFamily(file['id'] as String, session);
       if (family.id != folderId || family.name != 'Synthetic monthly test') {
         throw const FormatException('Unexpected file in test folder; stopped.');
       }
@@ -758,6 +824,7 @@ class GoogleDrive implements FamilyCloud {
         note: 'Synthetic monthly permission test',
         author: account.email,
       );
+      auth.checkAccount(session);
       await appendFeeds(family, [entry]);
       reports.add(
         '${file['name']}: read, conditional write and readback passed; appAuthorized=${file['isAppAuthorized']}',

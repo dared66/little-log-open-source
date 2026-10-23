@@ -1,4 +1,5 @@
 import 'release_regression_test.dart' as regressions;
+import 'release_boundary_audit_test.dart' as boundaries;
 import 'onboarding_smoke_test.dart' as onboarding;
 import '../test/edit_log_test.dart' as editing;
 import 'invitation_harness_test.dart' as invitations;
@@ -26,4 +27,5 @@ void main() {
   portableWidgetChecks(delete_scope.main);
   google_migration.main();
   google_auth.main();
+  boundaries.main();
 }

@@ -5,11 +5,47 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../config.dart';
 
+class GoogleAccountSession {
+  const GoogleAccountSession(this.accountId, this.revision);
+  final String accountId;
+  final int revision;
+}
+
 class GoogleAuth extends ChangeNotifier {
   GoogleAuth({http.Client? verificationClient})
     : _verificationClient = verificationClient ?? http.Client();
   final http.Client _verificationClient;
-  GoogleSignInAccount? user;
+  GoogleSignInAccount? _user;
+  int _accountRevision = 0;
+  GoogleSignInAccount? get user => _user;
+  set user(GoogleSignInAccount? account) {
+    if (_user?.id != account?.id) {
+      _accountRevision++;
+      _authorizationCheck++;
+      _pickerToken = null;
+      _pickerAccount = null;
+      _pickerExpiry = null;
+      driveConnected = false;
+      checkingDrive = false;
+      connectingDrive = false;
+    }
+    _user = account;
+  }
+
+  GoogleAccountSession captureAccount({String? expectedAccountId}) {
+    final id = user?.id;
+    if (id == null || (expectedAccountId != null && id != expectedAccountId)) {
+      throw StateError('Sign in with this log’s Google account to continue.');
+    }
+    return GoogleAccountSession(id, _accountRevision);
+  }
+
+  void checkAccount(GoogleAccountSession session) {
+    if (user?.id != session.accountId || _accountRevision != session.revision) {
+      throw StateError('Google account changed. Try again.');
+    }
+  }
+
   String? _pickerToken;
   String? _pickerAccount;
   DateTime? _pickerExpiry;
@@ -18,6 +54,7 @@ class GoogleAuth extends ChangeNotifier {
     String token, {
     required String expectedEmail,
   }) async {
+    final session = captureAccount();
     final response = await _verificationClient
         .get(
           Uri.https('www.googleapis.com', '/drive/v3/about', {
@@ -26,6 +63,7 @@ class GoogleAuth extends ChangeNotifier {
           headers: {'Authorization': 'Bearer $token'},
         )
         .timeout(const Duration(seconds: 25));
+    checkAccount(session);
     if (response.statusCode != 200) {
       throw StateError(
         'Google could not verify the selected account. Please try again.',
@@ -145,8 +183,10 @@ class GoogleAuth extends ChangeNotifier {
       }
       driveConnected = true;
     } finally {
-      connectingDrive = false;
-      notifyListeners();
+      if (check == _authorizationCheck) {
+        connectingDrive = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -194,11 +234,11 @@ class GoogleAuth extends ChangeNotifier {
     _pickerToken = null;
     _pickerAccount = null;
     _authorizationCheck++;
-    await _signIn.signOut();
     user = null;
     driveConnected = false;
     checkingDrive = false;
     notifyListeners();
+    await _signIn.signOut();
   }
 
   @override
