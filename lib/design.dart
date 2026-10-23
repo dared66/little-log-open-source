@@ -56,6 +56,10 @@ class SectionHeading extends StatelessWidget {
     child: ConstrainedBox(
       constraints: BoxConstraints(minHeight: compact ? 44 : 48),
       child: Row(
+        crossAxisAlignment: action == null
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
         children: [
           Expanded(
             flex: compact ? 3 : 1,
