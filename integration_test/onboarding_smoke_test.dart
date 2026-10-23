@@ -62,7 +62,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Send invitation'));
+    await tester.tap(find.text('Share invitation'));
     await tester.pumpAndSettle();
     expect(find.text('Enter a valid email address.'), findsOneWidget);
     await tester.enterText(find.byType(TextFormField), 'caregiver@example.com');

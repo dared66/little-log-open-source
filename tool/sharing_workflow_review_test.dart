@@ -83,7 +83,7 @@ void main() {
         ),
       );
       await tap(t, 'Open invitation');
-      await tap(t, 'Send invitation');
+      await tap(t, 'Share invitation');
       await shot('validation');
       await t.enterText(find.byType(TextFormField), 'caregiver@example.com');
       FocusManager.instance.primaryFocus?.unfocus();
@@ -91,10 +91,10 @@ void main() {
       expect(find.text('Enter a valid email address.'), findsNothing);
       await shot('1-invite');
       server.inviteError = 503;
-      await tap(t, 'Send invitation');
+      await tap(t, 'Share invitation');
       await shot('send-error');
       server.inviteError = null;
-      await tap(t, 'Send invitation');
+      await tap(t, 'Share invitation');
       await shot('2-sent');
       await tap(t, 'Done');
       expect(find.text('Open invitation'), findsOneWidget);

@@ -489,15 +489,12 @@ class GoogleDrive implements FamilyCloud {
     return people;
   }
 
-  /// Use the same exact-log handoff in Google's email and the share sheet.
+  /// Share an exact-log HTTPS invitation through the user's chosen app.
   String invitationEmailMessage(Family family, String email) =>
-      '${auth.user?.email ?? 'A caregiver'} invited you to ${family.babyName}’s baby log in Little Log.\n\n'
-      'Sign in with ${email.trim()} in Little Log.\n\n'
-      'Open in Little Log:\n'
-      '${InvitationLink.forFamily(family, email)}\n\n'
-      'If the app link does not open, choose “Join an existing baby log” in Little Log and paste this Drive link:\n'
-      'https://drive.google.com/file/d/${family.driveFileId}/view\n\n'
-      'Google may ask you to approve access to this file. Then tap “Join baby log”.';
+      '${auth.user?.email ?? 'A caregiver'} invited you to ${family.babyName}’s log.\n\n'
+      'Join in Little Log:\n'
+      '${InvitationLink.webForFamily(family, email)}\n\n'
+      'Use ${email.trim()} to sign in.';
 
   String invitationInstructions(Family family, String email) =>
       invitationEmailMessage(family, email);
@@ -513,10 +510,9 @@ class GoogleDrive implements FamilyCloud {
     await _request(
       'POST',
       '/drive/v3/files/${family.driveFileId}/permissions',
-      query: {
-        'sendNotificationEmail': 'true',
-        'emailMessage': invitationEmailMessage(family, email),
-      },
+      // Drive's notification opens its CSV viewer, not Little Log.
+      // The caller opens the native share sheet after access is granted.
+      query: {'sendNotificationEmail': 'false'},
       json: {'type': 'user', 'role': 'writer', 'emailAddress': email},
     );
   }

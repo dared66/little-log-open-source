@@ -18,6 +18,31 @@ void main() {
     expect(parsed.babyName, 'Lila');
   });
 
+  test(
+    'email link preserves the exact log without sending recipient data to the host',
+    () {
+      const family = Family(
+        id: 'family',
+        name: 'Family',
+        babyName: 'Robin & Alex',
+        driveFileId: 'owner123456789',
+      );
+      final link = InvitationLink.webForFamily(family, 'caregiver@example.com');
+      final uri = Uri.parse(link);
+      expect(uri.scheme, 'https');
+      expect(uri.host, 'krupapc.dev');
+      expect(uri.query, isEmpty);
+      expect(InvitationLink.parse(link)!.babyName, 'Robin & Alex');
+      expect(InvitationLink.parse(link)!.invitedEmail, 'caregiver@example.com');
+      expect(
+        InvitationLink.parse(
+          link.replaceFirst('krupapc.dev', 'untrusted.example'),
+        ),
+        isNull,
+      );
+    },
+  );
+
   test('rejects unrelated and malformed app links', () {
     expect(
       InvitationLink.parse('littlelog://wrong?file=owner123456789'),

@@ -61,6 +61,8 @@ Use `lib/design.dart` as the single source for category colors. Each of the ten 
 
 Use `test/flow_journey_test.dart` when a holistic review is warranted. Avoid regenerating full capture sets or reports for routine edits. Run relevant tests and analysis once, then build, install and verify the build number once; repeat only after a failure or material change. Do not generate PDFs unless the user explicitly asks; this project-wide preference was set September 18, 2026. Identify the build and source revision in the artifact. Clearly distinguish test-rendered sample screens from physical-device verification. Do not claim a new build is on the phone until installation succeeds.
 
+Live account verification must use real Google authorization, Drive writes and recipient access. Label mocked services, sample renders and reconstructed emails explicitly; they are not evidence of delivered email or successful cross-account sharing. Preserve unrelated local logs and compare full history before and after backup/join.
+
 # Build and device policy
 
 After app changes, refresh and launch the latest build on both the Android emulator and iOS simulator. This standing user instruction was set October 9, 2026.

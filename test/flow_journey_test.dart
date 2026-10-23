@@ -726,10 +726,10 @@ void runJourney({
           note:
               'Sample connected-account fixture; live sync is not verified here.',
         );
-        await tap('Send invitation');
+        await tap('Share invitation');
         await snap(
           'Family / invitation validation',
-          'Family > Send invitation with blank email',
+          'Family > Share invitation with blank email',
           note: 'No invitation was sent.',
         );
         await tap('Join an existing baby log');

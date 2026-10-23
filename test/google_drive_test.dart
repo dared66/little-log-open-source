@@ -436,25 +436,8 @@ void main() {
         if (r.method == 'POST') {
           expect(r.url.path, '/drive/v3/files/csv123456789/permissions');
           expect(jsonDecode(r.body)['role'], 'writer');
-          expect(r.url.queryParameters['sendNotificationEmail'], 'true');
-          expect(
-            r.url.queryParameters['emailMessage'],
-            contains('Baby’s baby log in Little Log'),
-          );
-          expect(
-            r.url.queryParameters['emailMessage'],
-            contains('Sign in with synthetic@example.com'),
-          );
-          expect(
-            r.url.queryParameters['emailMessage'],
-            contains('Join baby log'),
-          );
-          expect(
-            r.url.queryParameters['emailMessage'],
-            contains(
-              'littlelog://join?file=csv123456789&to=synthetic%40example.com',
-            ),
-          );
+          expect(r.url.queryParameters['sendNotificationEmail'], 'false');
+          expect(r.url.queryParameters.containsKey('emailMessage'), isFalse);
           expect(jsonDecode(r.body)['emailAddress'], 'synthetic@example.com');
           return http.Response('{}', 200);
         }

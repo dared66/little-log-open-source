@@ -54,6 +54,7 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
       if (!mounted) return;
       setState(() => sentTo = address);
       widget.onSent?.call();
+      await shareInvitation();
     } catch (e) {
       if (mounted) setState(() => error = AppController.friendlyError(e));
     } finally {
@@ -101,6 +102,7 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
   Future<void> shareInvitation() async {
     final recipient = sentTo;
     if (recipient == null) return;
+    if (mounted) setState(() => error = null);
     try {
       await InvitationLinkBridge().share(
         widget.controller.drive.invitationInstructions(
@@ -157,7 +159,7 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
                     children: [
                       const Expanded(
                         child: Text(
-                          'Invitation sent',
+                          'Invitation ready',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
@@ -240,7 +242,7 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: busy ? null : send,
-              child: Text(busy ? 'Sending invitation…' : 'Send invitation'),
+              child: Text(busy ? 'Preparing invitation…' : 'Share invitation'),
             ),
           ],
           if (error != null) ...[

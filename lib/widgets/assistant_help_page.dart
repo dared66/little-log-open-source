@@ -432,11 +432,10 @@ const setupHelpTopics = [
     title: 'Invite a caregiver',
     steps: [
       'Select the baby you want to share and open Settings. Save the log to Google Drive first if it is device-only.',
-      'Scroll to Invite a caregiver. Enter their Google email and tap Send invitation.',
-      'After sending, use Share invitation to share a copy. The menu also offers Copy invitation.',
+      'Scroll to Invite a caregiver. Enter their Google email and tap Share invitation.',
+      'Choose an app in the share sheet to send the invitation. The menu also offers Copy invitation.',
     ],
-    note:
-        'Sharing one baby’s log does not share your other logs.',
+    note: 'Sharing one baby’s log does not share your other logs.',
   ),
   SetupHelpTopic(
     id: 'join',
