@@ -28,6 +28,7 @@ class GoogleAuth extends ChangeNotifier {
       driveConnected = false;
       checkingDrive = false;
       connectingDrive = false;
+      _interactiveAuthorization = null;
     }
     _user = account;
   }
@@ -89,6 +90,7 @@ class GoogleAuth extends ChangeNotifier {
   bool checkingDrive = false;
   bool connectingDrive = false;
   int _authorizationCheck = 0;
+  int? _interactiveAuthorization;
   StreamSubscription<GoogleSignInAuthenticationEvent>? _subscription;
   final _signIn = GoogleSignIn.instance;
 
@@ -163,6 +165,7 @@ class GoogleAuth extends ChangeNotifier {
     if (account == null) throw StateError('Sign in to Google first.');
     if (connectingDrive) return;
     final check = ++_authorizationCheck;
+    _interactiveAuthorization = check;
     checkingDrive = false;
     connectingDrive = true;
     notifyListeners();
@@ -183,7 +186,10 @@ class GoogleAuth extends ChangeNotifier {
       }
       driveConnected = true;
     } finally {
-      if (check == _authorizationCheck) {
+      // Token invalidation can supersede the grant without ending its dialog.
+      // Only the dialog that owns the busy state may clear it.
+      if (_interactiveAuthorization == check) {
+        _interactiveAuthorization = null;
         connectingDrive = false;
         notifyListeners();
       }

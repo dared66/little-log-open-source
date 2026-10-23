@@ -194,6 +194,57 @@ void main() {
       expect(auth.driveConnected, isTrue);
     });
 
+    test('token rejection during consent leaves reconnect retryable', () async {
+      await signedIn();
+      platform.interactiveGate = Completer<ClientAuthorizationTokenData?>();
+      final pending = auth.authorize();
+      final rejected = expectLater(pending, throwsStateError);
+      await drainEvents();
+      await auth.invalidateToken('expired-token');
+      platform.interactiveGate!.complete(
+        const ClientAuthorizationTokenData(accessToken: 'stale-consent-token'),
+      );
+      await rejected;
+      expect(auth.driveConnected, isFalse);
+      expect(auth.connectingDrive, isFalse);
+      platform.interactiveGate = null;
+      platform.granted = true;
+      await auth.authorize();
+      expect(platform.interactiveRequests, 2);
+      expect(auth.driveConnected, isTrue);
+      expect(auth.connectingDrive, isFalse);
+    });
+
+    test('old consent completion cannot clear a newer request', () async {
+      await signedIn();
+      final account = auth.user;
+      final oldGate = Completer<ClientAuthorizationTokenData?>();
+      platform.interactiveGate = oldGate;
+      final oldRequest = auth.authorize();
+      final rejected = expectLater(oldRequest, throwsStateError);
+      await drainEvents();
+      auth.user = null;
+      auth.user = account;
+      final newGate = Completer<ClientAuthorizationTokenData?>();
+      platform.interactiveGate = newGate;
+      final newRequest = auth.authorize();
+      await drainEvents();
+      oldGate.complete(
+        const ClientAuthorizationTokenData(accessToken: 'old-consent-token'),
+      );
+      await rejected;
+      expect(auth.connectingDrive, isTrue);
+      expect(auth.driveConnected, isFalse);
+      await auth.authorize();
+      expect(platform.interactiveRequests, 2);
+      newGate.complete(
+        const ClientAuthorizationTokenData(accessToken: 'new-consent-token'),
+      );
+      await newRequest;
+      expect(auth.connectingDrive, isFalse);
+      expect(auth.driveConnected, isTrue);
+    });
+
     test(
       'signing out during permission consent rejects its stale result',
       () async {
