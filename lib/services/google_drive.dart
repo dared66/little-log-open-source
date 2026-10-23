@@ -489,20 +489,18 @@ class GoogleDrive implements FamilyCloud {
     return people;
   }
 
-  /// Keep Google's notification short; some mail clients hide custom app links.
+  /// Use the same exact-log handoff in Google's email and the share sheet.
   String invitationEmailMessage(Family family, String email) =>
       '${auth.user?.email ?? 'A caregiver'} invited you to ${family.babyName}’s baby log in Little Log.\n\n'
-      'Sign in with ${email.trim()} in Little Log. Choose “Join an existing baby log” in setup or Settings, tap “Browse shared logs”, and select this log in Google Drive.\n'
-      'Check the baby and owner, then tap “Join baby log”.\n\n'
-      'If you need the app or cannot find the log, ask the sender to share the Little Log invitation with you.';
+      'Sign in with ${email.trim()} in Little Log.\n\n'
+      'Open in Little Log:\n'
+      '${InvitationLink.forFamily(family, email)}\n\n'
+      'If the app link does not open, choose “Join an existing baby log” in Little Log and paste this Drive link:\n'
+      'https://drive.google.com/file/d/${family.driveFileId}/view\n\n'
+      'Google may ask you to approve access to this file. Then tap “Join baby log”.';
 
   String invitationInstructions(Family family, String email) =>
-      '${invitationEmailMessage(family, email)}\n\n'
-      'Open in Little Log (app required):\n'
-      '${InvitationLink.forFamily(family, email)}\n\n'
-      'If the app link does not open, paste this file link into “Shared log’s Google Drive link” in Little Log:\n'
-      'https://drive.google.com/file/d/${family.driveFileId}/view\n'
-      'Tap “Open this shared log in Google Drive” and select the file. Confirm ${family.babyName} and owner ${family.ownerEmail ?? auth.user?.email ?? 'the sender'} before joining.';
+      invitationEmailMessage(family, email);
 
   Future<void> invite(Family family, String email) async {
     email = email.trim();

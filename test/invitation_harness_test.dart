@@ -307,6 +307,79 @@ void runInvitationHarness({bool native = false}) {
     },
   );
 
+  for (final alreadyJoined in [false, true]) {
+    testWidgets(
+      'invitation clears older routes after ${alreadyJoined ? 'open' : 'join'}',
+      (t) async {
+        final server = InvitationHarness()
+          ..editors.add('caregiver@example.com')
+          ..appAuthorized.add('caregiver@example.com');
+        final auth = HarnessAuth('caregiver@example.com');
+        final db = (await t.runAsync(
+          () => databaseFactoryMemory.openDatabase(newId.v4()),
+        ))!;
+        final initial = alreadyJoined
+            ? Family.fromJson({...family.toJson(), 'accountId': auth.user!.id})
+            : const Family(id: 'local', name: 'Local', babyName: 'Local');
+        final c = AppController(Repository(db), auth, server.client(auth))
+          ..family = initial
+          ..families = [initial]
+          ..loading = false;
+        await t.runAsync(() => c.repository.saveFamily(initial));
+        await t.pumpWidget(LittleLogApp(controller: c));
+        await settle(t);
+        final navigator = t.state<NavigatorState>(find.byType(Navigator).first);
+        navigator.push(
+          MaterialPageRoute<void>(
+            builder: (_) => const Scaffold(body: Text('Older join screen')),
+          ),
+        );
+        await settle(t);
+        await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .handlePlatformMessage(
+              'app.littlelog/invitation',
+              const StandardMethodCodec().encodeMethodCall(
+                MethodCall(
+                  'received',
+                  InvitationLink.forFamily(family, auth.user!.email),
+                ),
+              ),
+              (_) {},
+            );
+        await t.pump();
+        await settle(t);
+        // Cancelling leaves the prior route intact.
+        expect(find.byType(OnboardingPage), findsOneWidget);
+        navigator.pop();
+        await settle(t);
+        expect(find.text('Older join screen'), findsOneWidget);
+        await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .handlePlatformMessage(
+              'app.littlelog/invitation',
+              const StandardMethodCodec().encodeMethodCall(
+                MethodCall(
+                  'received',
+                  InvitationLink.forFamily(family, auth.user!.email),
+                ),
+              ),
+              (_) {},
+            );
+        await t.pump();
+        await settle(t);
+        await tap(t, alreadyJoined ? 'Open log' : 'Continue');
+        if (!alreadyJoined) await tap(t, 'Join baby log');
+        await settle(t);
+        expect(c.family?.driveFileId, family.driveFileId);
+        expect(find.text('Older join screen'), findsNothing);
+        expect(navigator.canPop(), isFalse);
+        expect(find.text('Quick log'), findsOneWidget);
+        await t.pumpWidget(const SizedBox());
+        c.dispose();
+        await t.runAsync(db.close);
+      },
+    );
+  }
+
   for (final scenario in [
     'direct',
     'authorize',
@@ -534,10 +607,15 @@ void runInvitationHarness({bool native = false}) {
       expect(message, contains('Little Log'));
       expect(message, contains('Sign in with caregiver@example.com'));
       expect(message, contains('Join baby log'));
-      expect(message, isNot(contains('littlelog://')));
+      expect(
+        message,
+        contains(InvitationLink.forFamily(family, 'caregiver@example.com')),
+      );
+      expect(message, isNot(contains('Browse shared logs')));
+      expect(message, isNot(contains('select this log')));
       expect(message.length, lessThan(1000));
       expect(find.text('Share invitation'), findsOneWidget);
-      expect(find.textContaining('Optional —'), findsOneWidget);
+      expect(find.textContaining('Optional —'), findsNothing);
       expect(find.byTooltip('More ways to send'), findsOneWidget);
       expect(find.text('caregiver@example.com'), findsOneWidget);
       expect(

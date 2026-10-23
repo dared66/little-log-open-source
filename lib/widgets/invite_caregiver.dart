@@ -205,11 +205,6 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Optional — share a copy directly.',
-            style: TextStyle(fontSize: 13, color: palette.secondary),
-          ),
           const SizedBox(height: 16),
           TextButton(
             onPressed: () => setState(() {

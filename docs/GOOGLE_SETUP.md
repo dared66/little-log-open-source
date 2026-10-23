@@ -185,7 +185,7 @@ production token lifecycle testing.
 Little Log grants editor access through Drive `permissions.create` with
 `sendNotificationEmail=true` and a plain-text `emailMessage`. Google Drive sends
 its own sharing notification. A successful request confirms permission creation,
-not inbox delivery. There is no Little Log email service. The separately shared joining message includes a `littlelog://join` app link and a Google Drive file-link fallback. Native app links require Little Log to be installed; some email and messaging clients do not make custom schemes clickable. There is no hosted HTTPS invitation page or deferred installation handoff.
+not inbox delivery. There is no Little Log email service. Both the Google notification and separately shared joining message include a `littlelog://join` app link and a Google Drive file-link fallback. Native app links require Little Log to be installed; some email and messaging clients do not make custom schemes clickable. There is no hosted HTTPS invitation page or deferred installation handoff.
 The app lists accessible Little Log CSVs and checks content-editing permission
 before joining. Both people need an installed copy of Little Log. Installation is arranged separately by the sender; this change does not establish a public app-store installation link. Copyable instructions provide a fallback
 when Google’s notification is missing or incomplete.
@@ -231,7 +231,7 @@ real-account apps as part of release acceptance.
 - Google's notification uses a short message identifying the sender, baby and
   invited account, with setup/Settings joining steps. Permission creation does
   not establish inbox delivery.
-- Share invitation is marked Optional and immediately available after permission creation. The
+- Share invitation is immediately available after permission creation. The
   native share sheet sends the existing app link, bound to the file and invited
   email, plus manual Drive-link instructions. Share failures stay visible with
   compose/copy fallbacks. Existing native account checks and baby/owner
@@ -282,3 +282,16 @@ limits, server failures, view-only access and known trashed files remain errors;
 they do not launch Picker. Cancellation leaves the current log unchanged.
 The invited account and selected file must still match. This does not assert
 that every newly invited account can skip Google's per-file authorization.
+
+### Live sharing follow-up, October 22
+
+Notification and share-sheet copy now use the same exact-log app link and Drive
+link fallback, without directing recipients to browse their files. Successful
+app invitations return to the log tab and remove older join routes; cancellation
+preserves the previous screen.
+
+Google's native OAuth Picker still requires explicit file selection and Insert
+for first-time file authorization. `file_ids` filters to the invited file; it
+does not preselect or authorize it. Keep direct access first and the filtered
+Picker only when app authorization is absent. Do not claim this last Google
+step has been removed. See Google's [native Picker contract](https://developers.google.com/workspace/drive/picker/guides/desktop-mobile-picker).

@@ -451,7 +451,9 @@ void main() {
           );
           expect(
             r.url.queryParameters['emailMessage'],
-            isNot(contains('littlelog://')),
+            contains(
+              'littlelog://join?file=csv123456789&to=synthetic%40example.com',
+            ),
           );
           expect(jsonDecode(r.body)['emailAddress'], 'synthetic@example.com');
           return http.Response('{}', 200);

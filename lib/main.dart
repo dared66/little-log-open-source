@@ -83,6 +83,7 @@ class LittleLogApp extends StatefulWidget {
 class _LittleLogAppState extends State<LittleLogApp>
     with WidgetsBindingObserver {
   final _navigatorKey = GlobalKey<NavigatorState>();
+  final _homeKey = GlobalKey<_HomePageState>();
   final _invitationBridge = InvitationLinkBridge();
   final _assistantActions = AssistantActions();
   String? _activeInvitationFile;
@@ -212,8 +213,14 @@ class _LittleLogAppState extends State<LittleLogApp>
               ),
             ),
           )
+          .then((joined) {
+            if (!mounted || joined != true) return;
+            navigator.popUntil((route) => route.isFirst);
+            _homeKey.currentState?.selectTab(0);
+          })
           .whenComplete(() => _activeInvitationFile = null);
     });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   @override
@@ -253,7 +260,7 @@ class _LittleLogAppState extends State<LittleLogApp>
             widget.controller.backgroundChoice(babyId ?? ''),
           ),
         ),
-        home: HomePage(controller: widget.controller),
+        home: HomePage(key: _homeKey, controller: widget.controller),
       );
     },
   );
