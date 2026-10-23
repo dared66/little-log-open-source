@@ -15,6 +15,7 @@ import 'diaper_details.dart';
 /// Shared vertical rhythm for every page. Field labels sit 8 px above their
 /// controls, section headings 12 px above content, and sections 24 px apart.
 abstract final class LogSpacing {
+  static const double page = 20;
   static const double detail = 4;
   static const double label = 8;
   static const double content = 12;
@@ -67,13 +68,17 @@ class SectionHeading extends StatelessWidget {
           if (action != null)
             TextButton(
               onPressed: onAction,
-              style: compact
-                  ? TextButton.styleFrom(
-                      textStyle: Theme.of(context).textTheme.labelLarge
-                          ?.copyWith(fontSize: 12, fontWeight: FontWeight.w500),
-                      padding: const EdgeInsets.only(left: 8),
-                    )
-                  : null,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(44, 44),
+                padding: const EdgeInsets.only(left: LogSpacing.content),
+                alignment: Alignment.centerRight,
+                textStyle: compact
+                    ? Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      )
+                    : null,
+              ),
               child: Text(action!, textAlign: TextAlign.end),
             ),
         ],
@@ -1113,7 +1118,12 @@ class EntrySheet extends StatelessWidget {
         Flexible(
           child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
+            padding: const EdgeInsets.fromLTRB(
+              LogSpacing.page,
+              8,
+              LogSpacing.page,
+              12,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1124,7 +1134,12 @@ class EntrySheet extends StatelessWidget {
         SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+            padding: const EdgeInsets.fromLTRB(
+              LogSpacing.page,
+              8,
+              LogSpacing.page,
+              16,
+            ),
             child: SizedBox(width: double.infinity, child: footer),
           ),
         ),

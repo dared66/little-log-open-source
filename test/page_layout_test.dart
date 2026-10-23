@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'support/test_fonts.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sembast/sembast_memory.dart' hide Finder;
@@ -16,10 +17,16 @@ import 'package:little_log/widgets/settings_page.dart';
 import 'package:little_log/widgets/summary_settings_page.dart';
 
 void main() {
-  for (final size in [const Size(320, 568), const Size(1024, 600)]) {
+  for (final size in [
+    const Size(320, 568),
+    const Size(390, 844),
+    const Size(1024, 600),
+  ]) {
     testWidgets(
       'settings pages share content bounds and readable titles at $size',
       (t) async {
+        const capture = bool.fromEnvironment('CAPTURE_ALIGNMENT');
+        if (capture) await t.runAsync(loadTestFonts);
         t.view.physicalSize = size;
         t.view.devicePixelRatio = 1;
         t.platformDispatcher.textScaleFactorTestValue = size.width == 320
@@ -58,6 +65,17 @@ void main() {
           );
           await t.pumpAndSettle();
           expect(t.takeException(), isNull, reason: entry.key);
+          if (capture) {
+            final name = entry.key
+                .replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '-')
+                .toLowerCase();
+            await expectLater(
+              find.byType(MaterialApp),
+              matchesGoldenFile(
+                '../../output/alignment-after/pages/$name-${size.width.toInt()}.png',
+              ),
+            );
+          }
           final title = find.descendant(
             of: find.byType(AppBar),
             matching: find.text(entry.key),
@@ -82,6 +100,17 @@ void main() {
           );
           if (size.width > 680) {
             expect(frame.width, lessThanOrEqualTo(680), reason: entry.key);
+          }
+          if (entry.key == 'Customize quick log') {
+            final heading = t.getRect(find.text('In your quick log'));
+            final expectedLeft = size.width > 680
+                ? (size.width - 680) / 2 + 20
+                : 20.0;
+            expect(
+              heading.left,
+              closeTo(expectedLeft, .1),
+              reason: 'Quick log uses the same gutter as other settings',
+            );
           }
           if (entry.key == 'Appearance') {
             final cards = find.byType(Card);

@@ -73,7 +73,7 @@ class _VolumeFieldState extends State<VolumeField> {
 
   @override
   Widget build(BuildContext context) {
-    final amountField = TextFormField(
+    Widget amountField({Widget? units}) => TextFormField(
       key: field,
       controller: input,
       enabled: widget.enabled,
@@ -82,6 +82,8 @@ class _VolumeFieldState extends State<VolumeField> {
       textInputAction: TextInputAction.done,
       decoration: InputDecoration(
         labelText: '${widget.label} (${unit.label})',
+        suffixIcon: units,
+        suffixIconConstraints: const BoxConstraints(minHeight: 48),
         errorMaxLines: 3,
       ),
       onChanged: edit,
@@ -119,19 +121,19 @@ class _VolumeFieldState extends State<VolumeField> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                amountField,
+                amountField(),
                 const SizedBox(height: LogSpacing.content),
                 pill,
               ],
             );
           }
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(child: amountField),
-              const SizedBox(width: 12),
-              pill,
-            ],
+          return amountField(
+            units: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: pill,
+              ),
+            ),
           );
         },
       ),

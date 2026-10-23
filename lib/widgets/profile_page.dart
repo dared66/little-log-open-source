@@ -89,7 +89,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const SizedBox(height: LogSpacing.section),
           const SectionHeading(title: 'Night hours'),
-          const SizedBox(height: LogSpacing.content),
           for (final start in [true, false])
             ListTile(
               contentPadding: EdgeInsets.zero,

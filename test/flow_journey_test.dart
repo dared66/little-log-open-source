@@ -709,6 +709,7 @@ void runJourney({
               'Sample signed-in account fixture; Google sign-in is outside this review.',
         );
         auth.driveConnected = true;
+        c.lastSync = DateTime.now();
         c.family = Family(
           id: local.id,
           name: local.name,
@@ -726,12 +727,15 @@ void runJourney({
           note:
               'Sample connected-account fixture; live sync is not verified here.',
         );
+        await tap('Invite a caregiver');
         await tap('Share invitation');
         await snap(
           'Family / invitation validation',
           'Family > Share invitation with blank email',
           note: 'No invitation was sent.',
         );
+        await t.pageBack();
+        await settle();
         await tap('Join an existing baby log');
         await snap(
           'Family / join or restore',

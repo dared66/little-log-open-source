@@ -552,6 +552,7 @@ class _CareEntryFormState extends State<_CareEntryForm> {
                     ),
                     const SizedBox(height: LogSpacing.label),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: TextFormField(
