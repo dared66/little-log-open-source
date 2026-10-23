@@ -59,6 +59,18 @@ void main() {
           final field = t.getRect(find.byType(TextFormField));
           expect(field.left, closeTo(headline.left, .1));
           expect(field.right, closeTo(headline.right, .1));
+          final drive = t.getRect(
+            find.widgetWithText(OutlinedButton, 'Google Drive'),
+          );
+          final device = t.getRect(
+            find.widgetWithText(OutlinedButton, 'This device'),
+          );
+          expect(drive.left, closeTo(field.left, .1));
+          expect(device.right, closeTo(field.right, .1));
+          expect(drive.width, closeTo(device.width, .1));
+          expect(drive.height, closeTo(device.height, .1));
+          expect(drive.top, closeTo(device.top, .1));
+          expect(find.text('Create baby log'), findsNothing);
           await t.ensureVisible(find.text('This device'));
           await t.tap(find.text('This device'));
           await t.pumpAndSettle();

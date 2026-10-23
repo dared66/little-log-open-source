@@ -93,6 +93,14 @@ void main() {
         await tap('This device');
         expect(find.text('Robin'), findsOneWidget);
         await capture('device');
+        if (const bool.fromEnvironment('CAPTURE_ONBOARDING')) {
+          await t.runAsync(() => c.setThemeMode(ThemeMode.dark));
+          await t.pumpAndSettle();
+          await capture('device-dark');
+          await t.runAsync(() => c.setThemeMode(ThemeMode.light));
+          await t.pumpAndSettle();
+        }
+
         await tap('Google Drive');
         expect(find.text('Robin'), findsOneWidget);
         await t.binding.handlePopRoute();
@@ -126,6 +134,31 @@ void main() {
       },
     );
   }
+
+  testWidgets('creation presents only the next account action', (t) async {
+    final db = (await t.runAsync(
+      () => databaseFactoryMemory.openDatabase(newId.v4()),
+    ))!;
+    final auth = Auth()
+      ..ready = true
+      ..user = Account();
+    final c = AppController(Repository(db), auth, Drive(auth))..loading = false;
+    await t.pumpWidget(LittleLogApp(controller: c));
+    await t.tap(find.text('New baby log'));
+    await t.pumpAndSettle();
+    expect(find.text('Connect Google Drive'), findsOneWidget);
+    expect(find.text('Create baby log'), findsNothing);
+    expect(find.byType(FilledButton), findsOneWidget);
+    auth.connected();
+    await t.pumpAndSettle();
+    expect(find.text('Connect Google Drive'), findsNothing);
+    expect(find.text('Create baby log'), findsOneWidget);
+    expect(find.byType(FilledButton), findsOneWidget);
+    expect(find.text('sample@example.com'), findsOneWidget);
+    await t.pumpWidget(const SizedBox());
+    c.dispose();
+    await t.runAsync(db.close);
+  });
 
   testWidgets(
     'Drive creation finishes on the log without an invitation prompt',
@@ -203,7 +236,7 @@ void main() {
     await t.tap(local);
     await t.pumpAndSettle();
     expect(
-      find.text('No backup or sharing. Removing the app can delete this log.'),
+      find.text('No backup or sharing. Deleting the app can delete this log.'),
       findsOneWidget,
     );
     await t.tap(find.byTooltip('Back'));

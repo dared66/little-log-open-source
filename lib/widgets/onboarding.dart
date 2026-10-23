@@ -10,7 +10,6 @@ import '../services/google_drive.dart';
 import '../services/invitation_link.dart';
 import '../services/picker.dart';
 import 'google_button.dart';
-import 'selection_chip.dart';
 
 enum OnboardingStage { tour, setup, create, local, join }
 
@@ -326,7 +325,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       child: Scaffold(
         appBar: logPageAppBar(
           context,
-          'Little Log',
+          stage == OnboardingStage.create || stage == OnboardingStage.local
+              ? 'New baby log'
+              : 'Little Log',
           showBackButton: showBack,
           onBack: busy ? () {} : back,
         ),
@@ -406,7 +407,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
       return [
         AbsorbPointer(
           absorbing: busy,
-          child: googleButton(() => act(c.auth.signIn)),
+          child: googleButton(
+            () => act(c.auth.signIn),
+            primary: stage != OnboardingStage.join,
+            style: stage != OnboardingStage.join ? creationButtonStyle : null,
+          ),
         ),
       ];
     }
@@ -468,34 +473,41 @@ class _OnboardingPageState extends State<OnboardingPage> {
       ];
     }
     return [
-      ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: const Icon(Icons.account_circle_outlined),
-        title: Text(c.auth.user!.email),
+      Row(
+        children: [
+          Icon(
+            Icons.account_circle_outlined,
+            color: logPalette(context).secondary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Text(c.auth.user!.email)),
+          IconButton(
+            tooltip: 'Use a different Google account',
+            onPressed: busy ? null : () => act(c.auth.signOut),
+            icon: const Icon(Icons.swap_horiz),
+          ),
+        ],
       ),
-      TextButton(
-        onPressed: busy
-            ? null
-            : () => act(() async {
-                await c.auth.signOut();
-                loadedEmail = null;
-                logs = null;
-              }),
-        child: const Text('Use a different Google account'),
-      ),
-      if (!c.auth.driveConnected)
+      if (!c.auth.driveConnected) ...[
+        const SizedBox(height: 16),
         FilledButton(
+          style: creationButtonStyle,
           onPressed: busy || c.auth.checkingDrive
               ? null
               : () => act(c.auth.authorize),
           child: Text(
-            c.auth.checkingDrive
-                ? 'Checking Google Drive…'
-                : 'Connect Google Drive',
+            c.auth.checkingDrive ? 'Connecting…' : 'Connect Google Drive',
           ),
         ),
+      ],
     ];
   }
+
+  ButtonStyle get creationButtonStyle => FilledButton.styleFrom(
+    minimumSize: const Size(48, 52),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  );
 
   List<Widget> create() => creation(localOnly: false);
   List<Widget> local() => creation(localOnly: true);
@@ -504,12 +516,48 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final c = widget.controller;
     final canChangeStorage =
         !busy && (!c.onboardingSyncedSetup || c.family?.isLocal == true);
-    return [
-      const Text(
-        'New baby log',
-        style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
+    final palette = logPalette(context);
+    final outline = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: palette.secondary),
+    );
+    Widget storageOption(
+      String label,
+      bool selected,
+      OnboardingStage target,
+    ) => Expanded(
+      child: Semantics(
+        selected: selected,
+        child: OutlinedButton(
+          onPressed: canChangeStorage ? () => go(target) : null,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(48, 52),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+            backgroundColor: selected ? palette.actionTint : palette.surface,
+            foregroundColor: selected ? palette.actionInk : palette.ink,
+            side: BorderSide(
+              color: selected ? palette.actionInk : palette.secondary,
+              width: selected ? 1.5 : 1,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Flexible(child: Text(label, textAlign: TextAlign.center)),
+            ],
+          ),
+        ),
       ),
-      const SizedBox(height: 24),
+    );
+    return [
       const FieldLabel('Baby’s name'),
       Form(
         key: form,
@@ -518,7 +566,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
           readOnly: c.onboardingSyncedSetup,
           maxLength: 60,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(counterText: ''),
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(
+            counterText: '',
+            fillColor: palette.surface,
+            contentPadding: const EdgeInsets.all(16),
+            border: outline,
+            enabledBorder: outline,
+            focusedBorder: outline.copyWith(
+              borderSide: BorderSide(color: palette.actionInk, width: 2),
+            ),
+          ),
           validator: (value) => value == null || value.trim().isEmpty
               ? 'Enter your baby’s name.'
               : null,
@@ -526,62 +584,75 @@ class _OnboardingPageState extends State<OnboardingPage> {
       ),
       const SizedBox(height: 24),
       const FieldLabel('Storage'),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          SelectionChip(
-            label: const Text('Google Drive'),
-            selected: !localOnly,
-            onSelected: canChangeStorage
-                ? (_) => go(OnboardingStage.create)
-                : null,
-          ),
-          SelectionChip(
-            label: const Text('This device'),
-            selected: localOnly,
-            onSelected: canChangeStorage
-                ? (_) => go(OnboardingStage.local)
-                : null,
-          ),
-        ],
-      ),
-      const SizedBox(height: 16),
-      if (localOnly)
-        Text(
-          'No backup or sharing. Removing the app can delete this log.',
-          style: TextStyle(color: logPalette(context).secondary),
-        )
-      else
-        ...accountControls(),
-      const SizedBox(height: 24),
-      FilledButton(
-        onPressed: busy || (!localOnly && !c.auth.driveConnected)
-            ? null
-            : () {
-                if (!form.currentState!.validate()) return;
-                FocusManager.instance.primaryFocus?.unfocus();
-                act(() async {
-                  if (!localOnly) {
-                    await c.createSynced(baby.text);
-                  } else if (c.onboardingSyncedSetup) {
-                    await c.usePendingSetupLocally();
-                  } else {
-                    await c.createLocal(
-                      '${baby.text.trim()}’s family',
-                      baby.text,
-                    );
-                  }
-                });
-              },
-        child: Text(
-          busy
-              ? 'Saving…'
-              : c.onboardingSyncedSetup && !localOnly
-              ? 'Retry saving to Google Drive'
-              : 'Create baby log',
+      IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            storageOption('Google Drive', !localOnly, OnboardingStage.create),
+            const SizedBox(width: 8),
+            storageOption('This device', localOnly, OnboardingStage.local),
+          ],
         ),
       ),
+      if (localOnly) ...[
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 18,
+              color: palette.dark
+                  ? const Color(0xFFE6BE76)
+                  : const Color(0xFF805500),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'No backup or sharing. Deleting the app can delete this log.',
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: palette.secondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+      const SizedBox(height: 24),
+      if (!localOnly) ...accountControls(),
+      if (localOnly || c.auth.driveConnected) ...[
+        if (!localOnly) const SizedBox(height: 16),
+        FilledButton(
+          style: creationButtonStyle,
+          onPressed: busy
+              ? null
+              : () {
+                  if (!form.currentState!.validate()) return;
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  act(() async {
+                    if (!localOnly) {
+                      await c.createSynced(baby.text);
+                    } else if (c.onboardingSyncedSetup) {
+                      await c.usePendingSetupLocally();
+                    } else {
+                      await c.createLocal(
+                        '${baby.text.trim()}’s family',
+                        baby.text,
+                      );
+                    }
+                  });
+                },
+          child: Text(
+            busy
+                ? 'Saving…'
+                : c.onboardingSyncedSetup && !localOnly
+                ? 'Retry saving to Google Drive'
+                : 'Create baby log',
+          ),
+        ),
+      ],
       if (c.onboardingSyncedSetup && c.family?.isLocal == false) ...[
         const SizedBox(height: 12),
         const Text(
