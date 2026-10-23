@@ -19,12 +19,10 @@ void main() {
     final c = AppController(repo, auth, GoogleDrive(auth));
     await tester.runAsync(c.initialize);
     await tester.pumpWidget(LittleLogApp(controller: c));
-    await tester.tap(find.text('Skip introduction'));
+    await tester.tap(find.text('New baby log'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Set up my baby'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Save only on this device'));
-    await tester.tap(find.text('Save only on this device'));
+    await tester.ensureVisible(find.text('This device'));
+    await tester.tap(find.text('This device'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'Robin');
     await tester.ensureVisible(find.text('Create baby log'));

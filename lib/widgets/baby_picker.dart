@@ -373,11 +373,8 @@ class _AddBabyState extends State<_AddBaby> {
                 ),
               ],
             ),
-            Text(
-              widget.baby == null
-                  ? 'Each baby has their own history and timers.'
-                  : 'Name changes apply on this device.',
-            ),
+            if (widget.baby != null)
+              const Text('Name changes apply on this device.'),
             if (widget.baby == null) ...[
               const SizedBox(height: LogSpacing.section),
               OutlinedButton.icon(

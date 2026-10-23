@@ -87,13 +87,15 @@ class _MeasurementFieldState extends State<MeasurementField> {
 
   @override
   Widget build(BuildContext context) {
-    final amount = TextFormField(
+    Widget amount({Widget? units}) => TextFormField(
       key: field,
       controller: input,
       enabled: widget.enabled,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         labelText: '${widget.label} ($unit)',
+        suffixIcon: units,
+        suffixIconConstraints: const BoxConstraints(minHeight: 48),
         helperText: widget.optional ? 'Optional' : null,
         errorMaxLines: 3,
       ),
@@ -127,18 +129,19 @@ class _MeasurementFieldState extends State<MeasurementField> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                amount,
+                amount(),
                 const SizedBox(height: LogSpacing.content),
                 pill,
               ],
             );
           }
-          return Row(
-            children: [
-              Expanded(child: amount),
-              const SizedBox(width: 12),
-              pill,
-            ],
+          return amount(
+            units: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: pill,
+              ),
+            ),
           );
         },
       ),

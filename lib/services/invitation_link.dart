@@ -19,12 +19,27 @@ class InvitationLink {
 
   static InvitationLink? parse(String raw) {
     final uri = Uri.tryParse(raw);
-    if (uri == null || uri.scheme != 'littlelog' || uri.host != 'join') {
+    if (uri == null) return null;
+    final appLink = uri.scheme == 'littlelog' && uri.host == 'join';
+    final webLink =
+        uri.scheme == 'https' &&
+        uri.host == 'krupapc.dev' &&
+        uri.userInfo.isEmpty &&
+        uri.port == 443 &&
+        (uri.path == '/apps/little-log/join/' ||
+            uri.path == '/apps/little-log/join');
+    if (!appLink && !webLink) return null;
+    Map<String, String> params;
+    try {
+      params = webLink
+          ? Uri.splitQueryString(uri.fragment)
+          : uri.queryParameters;
+    } on FormatException {
       return null;
     }
-    final fileId = uri.queryParameters['file'];
-    final email = uri.queryParameters['to'];
-    final babyName = uri.queryParameters['baby'];
+    final fileId = params['file'];
+    final email = params['to'];
+    final babyName = params['baby'];
     if (fileId == null ||
         !_fileIdPattern.hasMatch(fileId) ||
         email == null ||
@@ -39,6 +54,18 @@ class InvitationLink {
       invitedEmail: email.toLowerCase(),
       babyName: babyName.trim(),
     );
+  }
+
+  /// HTTPS makes the invitation actionable in email clients. The fragment
+  /// keeps the recipient and file metadata out of the website's HTTP request.
+  static String webForFamily(Family family, String email) {
+    final app = Uri.parse(forFamily(family, email));
+    return Uri(
+      scheme: 'https',
+      host: 'krupapc.dev',
+      path: '/apps/little-log/join/',
+      fragment: app.query,
+    ).toString();
   }
 
   static String forFamily(Family family, String email) {

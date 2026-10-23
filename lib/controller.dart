@@ -459,6 +459,21 @@ class AppController extends ChangeNotifier {
 
   Future<void> publishFamily() => sync(manual: true);
 
+  /// An explicit backup applies only to the log selected when it was requested.
+  /// Ordinary sign-in (including invitation acceptance) never calls this path.
+  Future<void> backUpFamily() async {
+    final selectedId = family?.id;
+    if (selectedId == null) throw StateError('Choose a log to back up.');
+    if (auth.user == null) await auth.signIn();
+    final accountId = auth.user?.id;
+    if (accountId == null) throw StateError('Google sign-in did not complete.');
+    if (!auth.driveConnected) await auth.authorize();
+    if (auth.user?.id != accountId) {
+      throw StateError('The Google account changed. Try backing up again.');
+    }
+    await sync(manual: true, expectedFamilyId: selectedId);
+  }
+
   Future<void> join(String driveFileId, {String? expectedFamilyId}) async {
     final account = auth.user;
     if (account == null) {
@@ -1290,12 +1305,15 @@ class AppController extends ChangeNotifier {
 
   Future<void>? _syncTask;
 
-  Future<void> sync({bool manual = false}) async {
+  Future<void> sync({bool manual = false, String? expectedFamilyId}) async {
     // A pull-to-refresh must wait for an in-flight upload, then flush anything
     // logged during that upload. Automatic ticks simply join the active pass.
     while (_syncTask != null) {
       await _syncTask;
       if (!manual) return;
+    }
+    if (expectedFamilyId != null && family?.id != expectedFamilyId) {
+      throw StateError('The selected log changed. Choose it and try again.');
     }
     final task = _syncOnce(manual: manual);
     _syncTask = task;

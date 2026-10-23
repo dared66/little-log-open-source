@@ -89,10 +89,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const SizedBox(height: LogSpacing.section),
           const SectionHeading(title: 'Night hours'),
-          const Text(
-            'Saved with the baby’s profile and shared with caregivers. Daily history still uses calendar days.',
-          ),
-          const SizedBox(height: LogSpacing.content),
           for (final start in [true, false])
             ListTile(
               contentPadding: EdgeInsets.zero,

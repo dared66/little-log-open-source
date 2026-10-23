@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in_web/web_only.dart' as google;
 
-Widget googleButton(VoidCallback onPressed) => google.renderButton();
+Widget googleButton(
+  VoidCallback onPressed, {
+  bool primary = false,
+  ButtonStyle? style,
+}) => google.renderButton();

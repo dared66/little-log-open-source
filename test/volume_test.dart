@@ -102,10 +102,11 @@ void main() {
       );
       expect(
         t.getTopLeft(find.byKey(const ValueKey('volume-unit-pill'))).dx,
-        greaterThan(t.getTopRight(find.byType(TextFormField)).dx),
+        greaterThan(t.getTopLeft(find.byType(TextFormField)).dx),
       );
       final pill = find.byKey(const ValueKey('volume-unit-pill'));
       final amount = find.byType(TextFormField);
+      expect(t.getTopRight(pill).dx, lessThan(t.getTopRight(amount).dx));
       expect(t.getCenter(pill).dy, closeTo(t.getCenter(amount).dy, 1));
       expect(t.getSize(pill).height, lessThanOrEqualTo(40));
       expect(t.getSize(pill).height, lessThan(t.getSize(amount).height));

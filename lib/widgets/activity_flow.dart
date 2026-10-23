@@ -237,23 +237,22 @@ class _TimedActivityFlowState extends State<TimedActivityFlow> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (started == null) ...[
-              if (widget.method == 'nursing')
-                for (final side in ['left', 'right'])
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: FilledButton(
-                      onPressed: busy
-                          ? null
-                          : () => change('start', side: side),
-                      child: Text('Start $side'),
-                    ),
-                  )
-              else
+              if (widget.method == 'nursing') ...[
+                FilledButton(
+                  onPressed: busy ? null : () => change('start', side: 'left'),
+                  child: const Text('Start left'),
+                ),
+                const SizedBox(height: LogSpacing.content),
+                FilledButton(
+                  onPressed: busy ? null : () => change('start', side: 'right'),
+                  child: const Text('Start right'),
+                ),
+              ] else
                 FilledButton(
                   onPressed: busy ? null : () => change('start'),
                   child: Text('Start ${widget.method}'),
                 ),
-              const SizedBox(height: LogSpacing.label),
+              const SizedBox(height: LogSpacing.content),
               OutlinedButton(
                 onPressed: busy ? null : () => Navigator.pop(context, true),
                 child: const Text('Enter manually'),
@@ -269,7 +268,7 @@ class _TimedActivityFlowState extends State<TimedActivityFlow> {
                   onPressed: busy ? null : () => change('finish'),
                   child: Text(saving ? 'Saving…' : 'Finish ${widget.method}'),
                 ),
-                const SizedBox(height: LogSpacing.label),
+                const SizedBox(height: LogSpacing.content),
                 OutlinedButton(
                   onPressed: busy ? null : () => change('resume'),
                   child: Text('Resume ${widget.method}'),
@@ -356,6 +355,7 @@ class _TimedActivityFlowState extends State<TimedActivityFlow> {
                   '${paused ? 'Start' : 'Switch to'} ${session.side == 'left' ? 'right' : 'left'}',
                 ),
               ),
+              const SizedBox(height: LogSpacing.field),
               TextField(
                 controller: note,
                 enabled: !busy,

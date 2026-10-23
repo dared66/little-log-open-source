@@ -41,33 +41,46 @@ void main() {
           });
           await t.pumpWidget(LittleLogApp(controller: c));
           await t.pumpAndSettle();
-          final headline = t.getRect(
-            find.text('Less remembering. More caring.'),
-          );
+          final headline = t.getRect(find.text('Baby logs'));
           final title = t.getRect(find.text('Little Log'));
-          final card = t.getRect(find.byType(Card));
-          final next = t.getRect(find.widgetWithText(FilledButton, 'Next'));
-          expect(title.left, closeTo(headline.left, .1));
-          expect(card.left, closeTo(headline.left, .1));
-          expect(card.right, closeTo(headline.right, .1));
-          expect(next.left, closeTo(headline.left, .1));
-          expect(next.right, closeTo(headline.right, .1));
-          expect(
-            t.getTopRight(find.text('Skip introduction')).dx,
-            closeTo(headline.right, .1),
+          final next = t.getRect(
+            find.widgetWithText(FilledButton, 'New baby log'),
           );
-          await t.tap(find.text('Skip introduction'));
-          await t.pumpAndSettle();
-          await t.ensureVisible(find.text('Set up my baby'));
-          await t.tap(find.text('Set up my baby'));
-          await t.pumpAndSettle();
-          final choices = find.byType(Card);
-          for (final choice in choices.evaluate()) {
-            final rect = t.getRect(find.byWidget(choice.widget));
+          final join = t.getRect(
+            find.widgetWithText(OutlinedButton, 'Join an existing baby log'),
+          );
+          expect(title.left, closeTo(headline.left, .1));
+          for (final rect in [next, join]) {
             expect(rect.left, closeTo(headline.left, .1));
             expect(rect.right, closeTo(headline.right, .1));
           }
-          expect(find.byTooltip('Back').hitTestable(), findsOneWidget);
+          await t.tap(find.text('New baby log'));
+          await t.pumpAndSettle();
+          final field = t.getRect(find.byType(TextFormField));
+          expect(field.left, closeTo(headline.left, .1));
+          expect(field.right, closeTo(headline.right, .1));
+          final drive = t.getRect(
+            find.widgetWithText(OutlinedButton, 'Google Drive'),
+          );
+          final device = t.getRect(
+            find.widgetWithText(OutlinedButton, 'This device'),
+          );
+          expect(drive.left, closeTo(field.left, .1));
+          expect(device.right, closeTo(field.right, .1));
+          expect(drive.width, closeTo(device.width, .1));
+          expect(drive.height, closeTo(device.height, .1));
+          expect(drive.top, closeTo(device.top, .1));
+          expect(find.text('Create baby log'), findsNothing);
+          await t.ensureVisible(find.text('This device'));
+          await t.tap(find.text('This device'));
+          await t.pumpAndSettle();
+          await t.ensureVisible(find.text('Create baby log'));
+          final save = t.getRect(
+            find.widgetWithText(FilledButton, 'Create baby log'),
+          );
+          expect(save.left, closeTo(headline.left, .1));
+          expect(save.right, closeTo(headline.right, .1));
+          expect(find.byTooltip('Back'), findsOneWidget);
           expect(t.takeException(), isNull);
           await t.pumpWidget(const SizedBox());
           debugDefaultTargetPlatformOverride = null;

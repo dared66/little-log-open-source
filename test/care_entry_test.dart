@@ -103,16 +103,6 @@ void main() {
       await setup(t);
       await tap(t, find.text('Settings').last);
       await tap(t, find.text('Units'));
-      expect(
-        t
-            .getTopLeft(
-              find.text(
-                'Applies on this device. Recorded amounts are unchanged.',
-              ),
-            )
-            .dy,
-        lessThan(t.getTopLeft(find.text('Volume')).dy),
-      );
       expect(find.byType(TogglePill<VolumeUnit>), findsOneWidget);
       expect(find.byType(TogglePill<String>), findsNWidgets(3));
       await tap(t, find.text('lb'));

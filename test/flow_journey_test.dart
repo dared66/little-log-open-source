@@ -354,9 +354,8 @@ void runJourney({
         'Welcome > Join an existing baby log',
       );
       await tapFinder(find.byTooltip('Back'));
-      await tap('Skip introduction');
-      await tap('Set up my baby');
-      await tap('Save only on this device');
+      await tap('New baby log');
+      await tap('This device');
       await tap('Create baby log');
       await snap('Welcome / missing name', 'Welcome > Create baby log');
       await t.enterText(find.byType(TextFormField), 'Robin');
@@ -710,6 +709,7 @@ void runJourney({
               'Sample signed-in account fixture; Google sign-in is outside this review.',
         );
         auth.driveConnected = true;
+        c.lastSync = DateTime.now();
         c.family = Family(
           id: local.id,
           name: local.name,
@@ -727,12 +727,15 @@ void runJourney({
           note:
               'Sample connected-account fixture; live sync is not verified here.',
         );
-        await tap('Send invitation');
+        await tap('Invite a caregiver');
+        await tap('Share invitation');
         await snap(
           'Family / invitation validation',
-          'Family > Send invitation with blank email',
+          'Family > Share invitation with blank email',
           note: 'No invitation was sent.',
         );
+        await t.pageBack();
+        await settle();
         await tap('Join an existing baby log');
         await snap(
           'Family / join or restore',

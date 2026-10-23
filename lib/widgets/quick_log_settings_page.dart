@@ -108,89 +108,82 @@ class _QuickLogSettingsPageState extends State<QuickLogSettingsPage> {
           final available = availableOrder
               .where((method) => !selected.contains(method))
               .toList();
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 640),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                children: [
-                  SwitchListTile.adaptive(
-                    key: const ValueKey('show-elapsed-in-icons'),
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            children: [
+              SwitchListTile.adaptive(
+                key: const ValueKey('show-elapsed-in-icons'),
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Show time since last activity'),
+                value: widget.controller.showElapsedInIcons,
+                onChanged: saving ? null : setElapsedIcons,
+              ),
+              const SizedBox(height: LogSpacing.field),
+              SectionHeading(
+                title: 'In your quick log',
+                trailing: selected.length == maxQuickLogItems
+                    ? const Text('Max 6')
+                    : null,
+              ),
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                itemCount: selected.length + available.length + 1,
+                onReorderItem: saving ? (_, _) {} : reorder,
+                itemBuilder: (context, index) {
+                  if (index == selected.length) {
+                    return Padding(
+                      key: const ValueKey('quick-log-divider'),
+                      padding: const EdgeInsets.only(top: LogSpacing.section),
+                      child: const SectionHeading(title: 'Add an activity'),
+                    );
+                  }
+                  final isSelected = index < selected.length;
+                  final method = isSelected
+                      ? selected[index]
+                      : available[index - selected.length - 1];
+                  return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Show time since last activity'),
-                    value: widget.controller.showElapsedInIcons,
-                    onChanged: saving ? null : setElapsedIcons,
-                  ),
-                  const SizedBox(height: LogSpacing.field),
-                  SectionHeading(
-                    title: 'In your quick log',
-                    trailing: selected.length == maxQuickLogItems
-                        ? const Text('Max 6')
-                        : null,
-                  ),
-                  ReorderableListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    buildDefaultDragHandles: false,
-                    itemCount: selected.length + available.length + 1,
-                    onReorderItem: saving ? (_, _) {} : reorder,
-                    itemBuilder: (context, index) {
-                      if (index == selected.length) {
-                        return Padding(
-                          key: const ValueKey('quick-log-divider'),
-                          padding: const EdgeInsets.only(
-                            top: LogSpacing.section,
-                          ),
-                          child: const SectionHeading(title: 'Add an activity'),
-                        );
-                      }
-                      final isSelected = index < selected.length;
-                      final method = isSelected
-                          ? selected[index]
-                          : available[index - selected.length - 1];
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        horizontalTitleGap: LogSpacing.content,
-                        key: ValueKey(
-                          isSelected
-                              ? 'quick-log-selected-$method'
-                              : 'quick-log-add-$method',
-                        ),
-                        leading: ActivityBadge(method: method),
-                        title: Text(quickLogActivities[method]!),
-                        trailing: ReorderableDragStartListener(
-                          key: ValueKey('quick-log-move-$method'),
-                          index: index,
-                          enabled: !saving,
-                          child: const Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Icon(Icons.drag_handle),
-                          ),
-                        ),
-                        enabled:
-                            !saving &&
-                            (isSelected
-                                ? selected.length > 1
-                                : selected.length < maxQuickLogItems),
-                        onTap: () => toggle(method),
-                      );
-                    },
-                  ),
-                  if (error != null) ...[
-                    const SizedBox(height: LogSpacing.field),
-                    Semantics(
-                      liveRegion: true,
-                      child: Text(
-                        error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
+                    horizontalTitleGap: LogSpacing.content,
+                    key: ValueKey(
+                      isSelected
+                          ? 'quick-log-selected-$method'
+                          : 'quick-log-add-$method',
+                    ),
+                    leading: ActivityBadge(method: method),
+                    title: Text(quickLogActivities[method]!),
+                    trailing: ReorderableDragStartListener(
+                      key: ValueKey('quick-log-move-$method'),
+                      index: index,
+                      enabled: !saving,
+                      child: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Icon(Icons.drag_handle),
                       ),
                     ),
-                  ],
-                ],
+                    enabled:
+                        !saving &&
+                        (isSelected
+                            ? selected.length > 1
+                            : selected.length < maxQuickLogItems),
+                    onTap: () => toggle(method),
+                  );
+                },
               ),
-            ),
+              if (error != null) ...[
+                const SizedBox(height: LogSpacing.field),
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           );
         },
       ),

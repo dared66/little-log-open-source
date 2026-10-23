@@ -217,8 +217,7 @@ class TipJar extends ChangeNotifier {
               ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
         if (products.isEmpty) {
           _retryNeeded = true;
-          message =
-              'Tips aren’t available yet. Thanks for supporting Little Log!';
+          message = 'Tips are currently unavailable.';
         } else if (response.notFoundIDs.any(productIds.contains)) {
           _retryNeeded = true;
           message = 'Some tip amounts aren’t available right now.';
@@ -305,9 +304,9 @@ class TipJar extends ChangeNotifier {
             case PurchaseStatus.restored:
               // Platform verification happens before finishing. Tips grant no
               // entitlement and are never recorded in the family's baby log.
-              message = 'Thank you for supporting Little Log!';
+              message = 'Tip completed.';
             case PurchaseStatus.canceled:
-              message = 'Tip canceled. You can keep using Little Log for free.';
+              message = 'Tip canceled.';
             case PurchaseStatus.error:
               message = 'Your tip could not be completed. Please try again.';
             case PurchaseStatus.pending:

@@ -1,6 +1,6 @@
 # Build 59 QA and release preparation
 
-Updated October 21, 2026. Version: **1.0.0 (59)**. Development and release
+Updated October 23, 2026. Version: **1.0.0 (59)**. Development and release
 source: `dared66/little-log-open-source`, based on public main. The retained
 private app repository is an archived historical backup. Build 58 remains the
 last distributed TestFlight build; build 59 preparation does not authorize an
@@ -19,6 +19,13 @@ belong in the local release receipt, outside public Git.
 
 User-facing iPhone notes: [BUILD59_TESTER_NOTES.txt](BUILD59_TESTER_NOTES.txt).
 Build 57's historical approved notes remain unchanged.
+
+- Back up the selected local log and its history with one explicit action;
+  invitation sign-in does not upload unrelated local logs.
+- Grant caregiver access and open the native share sheet with an HTTPS
+  invitation for the exact log. Google notification emails are disabled.
+- Replace the onboarding tour with direct setup and align activity forms,
+  settings gutters, unit selectors and section actions.
 
 ## Acceptance and regression coverage
 
@@ -49,7 +56,7 @@ These are single-run debug emulator observations, not physical-device or release
 performance guarantees. Large-outbox cloud tests use the real CSV/Drive client
 against a controlled HTTP double, not a 10,000-record live Google transfer.
 
-Local validation passed: 483 Flutter tests (13 existing optional skips), 54
+Local validation passed: 528 Flutter tests, 54
 Python build-script tests, Flutter analysis, and the mandatory frozen-reader
 compatibility gate (24 tests). Public CI must also pass for the resulting main
 revision before release packaging is considered ready.

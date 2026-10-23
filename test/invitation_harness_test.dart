@@ -254,14 +254,11 @@ void runInvitationHarness({bool native = false}) {
       await settle(t);
       expect(find.text('Shared with you'), findsOneWidget);
       expect(find.text('Owner: sender@example.com'), findsOneWidget);
-      expect(find.text('Shared by: sender@example.com'), findsOneWidget);
+      expect(find.text('Shared by: sender@example.com'), findsNothing);
       expect(find.textContaining('Last updated:'), findsOneWidget);
       await captureInvitation(t, 'available-large');
       await tap(t, 'Baby');
-      expect(
-        find.text('Log’s Drive account: sender@example.com'),
-        findsOneWidget,
-      );
+      expect(find.text('Owner: sender@example.com'), findsOneWidget);
       expect(
         find.textContaining('You already have a separate log named Baby'),
         findsOneWidget,
@@ -310,6 +307,150 @@ void runInvitationHarness({bool native = false}) {
     },
   );
 
+  for (final alreadyJoined in [false, true]) {
+    testWidgets(
+      'invitation clears older routes after ${alreadyJoined ? 'open' : 'join'}',
+      (t) async {
+        final server = InvitationHarness()
+          ..editors.add('caregiver@example.com')
+          ..appAuthorized.add('caregiver@example.com');
+        final auth = HarnessAuth('caregiver@example.com');
+        final db = (await t.runAsync(
+          () => databaseFactoryMemory.openDatabase(newId.v4()),
+        ))!;
+        final initial = alreadyJoined
+            ? Family.fromJson({...family.toJson(), 'accountId': auth.user!.id})
+            : const Family(id: 'local', name: 'Local', babyName: 'Local');
+        final c = AppController(Repository(db), auth, server.client(auth))
+          ..family = initial
+          ..families = [initial]
+          ..loading = false;
+        await t.runAsync(() => c.repository.saveFamily(initial));
+        await t.pumpWidget(LittleLogApp(controller: c));
+        await settle(t);
+        final navigator = t.state<NavigatorState>(find.byType(Navigator).first);
+        navigator.push(
+          MaterialPageRoute<void>(
+            builder: (_) => const Scaffold(body: Text('Older join screen')),
+          ),
+        );
+        await settle(t);
+        await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .handlePlatformMessage(
+              'app.littlelog/invitation',
+              const StandardMethodCodec().encodeMethodCall(
+                MethodCall(
+                  'received',
+                  InvitationLink.forFamily(family, auth.user!.email),
+                ),
+              ),
+              (_) {},
+            );
+        await t.pump();
+        await settle(t);
+        // Cancelling leaves the prior route intact.
+        expect(find.byType(OnboardingPage), findsOneWidget);
+        navigator.pop();
+        await settle(t);
+        expect(find.text('Older join screen'), findsOneWidget);
+        await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .handlePlatformMessage(
+              'app.littlelog/invitation',
+              const StandardMethodCodec().encodeMethodCall(
+                MethodCall(
+                  'received',
+                  InvitationLink.forFamily(family, auth.user!.email),
+                ),
+              ),
+              (_) {},
+            );
+        await t.pump();
+        await settle(t);
+        await tap(t, alreadyJoined ? 'Open log' : 'Continue');
+        if (!alreadyJoined) await tap(t, 'Join baby log');
+        await settle(t);
+        expect(c.family?.driveFileId, family.driveFileId);
+        expect(find.text('Older join screen'), findsNothing);
+        expect(navigator.canPop(), isFalse);
+        expect(find.text('Quick log'), findsOneWidget);
+        await t.pumpWidget(const SizedBox());
+        c.dispose();
+        await t.runAsync(db.close);
+      },
+    );
+  }
+
+  for (final scenario in [
+    'direct',
+    'authorize',
+    'cancel',
+    'rate limit',
+    'server error',
+    'view only',
+    'trash',
+  ]) {
+    testWidgets('exact invitation: $scenario', (t) async {
+      final server = InvitationHarness()..editors.add('caregiver@example.com');
+      final needsAccess = scenario == 'authorize' || scenario == 'cancel';
+      if (!needsAccess) server.appAuthorized.add('caregiver@example.com');
+      if (scenario == 'rate limit') server.file.error = 403;
+      if (scenario == 'server error') server.file.error = 503;
+      if (scenario == 'view only') server.file.canModifyContent = false;
+      if (scenario == 'trash') server.file.trashed = true;
+      final auth = HarnessAuth('caregiver@example.com');
+      final db = (await t.runAsync(
+        () => databaseFactoryMemory.openDatabase(newId.v4()),
+      ))!;
+      final c = AppController(Repository(db), auth, server.client(auth))
+        ..loading = false;
+      const invitation = InvitationLink(
+        fileId: 'csv123456789',
+        invitedEmail: 'caregiver@example.com',
+        babyName: 'Baby',
+      );
+      var pickerCalls = 0;
+      const picker = MethodChannel('app.littlelog/picker');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(picker, (call) async {
+            pickerCalls++;
+            expect(call.arguments['fileId'], invitation.fileId);
+            expect(call.arguments['email'], invitation.invitedEmail);
+            if (scenario == 'cancel') return null;
+            server.appAuthorized.add(invitation.invitedEmail);
+            return {
+              'fileId': invitation.fileId,
+              'accessToken': invitation.invitedEmail,
+            };
+          });
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(picker, null),
+      );
+      await t.pumpWidget(
+        MaterialApp(
+          home: OnboardingPage(
+            controller: c,
+            initialStage: OnboardingStage.join,
+            invitation: invitation,
+          ),
+        ),
+      );
+      await settle(t);
+      await tap(t, 'Continue');
+      expect(pickerCalls, needsAccess ? 1 : 0);
+      expect(
+        find.text('Join baby log'),
+        scenario == 'direct' || scenario == 'authorize'
+            ? findsOneWidget
+            : findsNothing,
+      );
+      expect(c.family, isNull);
+      await t.pumpWidget(const SizedBox());
+      c.dispose();
+      await t.runAsync(db.close);
+    });
+  }
+
   testWidgets('app invitation selects only its file with the invited account', (
     t,
   ) async {
@@ -357,21 +498,19 @@ void runInvitationHarness({bool native = false}) {
       findsOneWidget,
     );
     expect(find.text('Shared log’s Google Drive link'), findsNothing);
+    expect(find.text('Continue'), findsNothing);
     expect(
       t
           .widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'Continue with this invitation'),
+            find.widgetWithText(FilledButton, 'Switch account'),
           )
           .onPressed,
-      isNull,
+      isNotNull,
     );
     auth.use('caregiver@example.com');
     await settle(t);
-    await tap(t, 'Continue with this invitation');
-    expect(
-      find.text('Log’s Drive account: sender@example.com'),
-      findsOneWidget,
-    );
+    await tap(t, 'Continue');
+    expect(find.text('Owner: sender@example.com'), findsOneWidget);
     await tap(t, 'Join baby log');
     expect(c.family?.driveFileId, invitation.fileId);
     await t.pumpWidget(const SizedBox());
@@ -379,7 +518,49 @@ void runInvitationHarness({bool native = false}) {
     await t.runAsync(db.close);
   });
 
-  testWidgets('sender email → receiver selection → confirmation → shared history', (
+  testWidgets(
+    'unavailable shared log explains account and authorization recovery',
+    (t) async {
+      final server = InvitationHarness()
+        ..editors.add('caregiver@example.com')
+        ..appAuthorized.add('caregiver@example.com');
+      final auth = HarnessAuth('caregiver@example.com');
+      final db = (await t.runAsync(
+        () => databaseFactoryMemory.openDatabase(newId.v4()),
+      ))!;
+      final c = AppController(Repository(db), auth, server.client(auth))
+        ..loading = false;
+      await t.pumpWidget(
+        MaterialApp(
+          home: OnboardingPage(
+            controller: c,
+            initialStage: OnboardingStage.join,
+          ),
+        ),
+      );
+      await settle(t);
+      expect(find.text('caregiver@example.com'), findsOneWidget);
+      for (final status in [403, 404]) {
+        server.file.error = status;
+        await tap(t, 'Baby');
+        expect(
+          find.textContaining(
+            'This log could not be opened with caregiver@example.com',
+          ),
+          findsOneWidget,
+        );
+        expect(c.family, isNull);
+      }
+      server.file.error = null;
+      await tap(t, 'Baby');
+      expect(find.text('Join baby log'), findsOneWidget);
+      await t.pumpWidget(const SizedBox());
+      c.dispose();
+      await t.runAsync(db.close);
+    },
+  );
+
+  testWidgets('grant → automatic share sheet → receiver → shared history', (
     t,
   ) async {
     final server = InvitationHarness();
@@ -404,42 +585,93 @@ void runInvitationHarness({bool native = false}) {
         ),
       ),
     );
-    await tap(t, 'Send invitation');
+    const initialSharing = MethodChannel('app.littlelog/invitation');
+    String? automaticallyShared;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(initialSharing, (call) async {
+          if (call.method == 'share') {
+            automaticallyShared = call.arguments['message'] as String;
+          }
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(initialSharing, null),
+    );
+    await tap(t, 'Share invitation');
     expect(find.text('Enter a valid email address.'), findsOneWidget);
     expect(server.invitations, isEmpty);
     await t.enterText(find.byType(TextFormField), 'caregiver@example.com');
     server.gate = Completer<void>();
-    await t.tap(find.text('Send invitation'));
+    await t.tap(find.text('Share invitation'));
     await t.pump();
-    expect(find.text('Sending invitation…'), findsOneWidget);
+    expect(find.text('Preparing invitation…'), findsOneWidget);
     expect(t.widget<FilledButton>(find.byType(FilledButton)).onPressed, isNull);
     server.gate!.complete();
     server.gate = null;
     await settle(t);
     expect(server.invitations.length, 1);
-    final message =
-        server.invitations.single.url.queryParameters['emailMessage']!;
+    final message = sender.drive.invitationInstructions(
+      family,
+      'caregiver@example.com',
+    );
+    expect(automaticallyShared, message);
+    expect(
+      server.invitations.single.url.queryParameters.containsKey('emailMessage'),
+      isFalse,
+    );
     expect(message, contains('sender@example.com invited you to Baby'));
     expect(message, contains('Little Log'));
-    expect(message, contains('Sign in with caregiver@example.com'));
-    expect(message, contains('Join baby log'));
-    expect(message, isNot(contains('littlelog://')));
-    expect(message, contains('Shared log’s Google Drive link'));
-    expect(find.text('Share joining instructions'), findsOneWidget);
-    expect(find.text('Share instructions'), findsNothing);
+    expect(message, contains('Use caregiver@example.com to sign in.'));
+    expect(message, contains('Join in Little Log:'));
     expect(
-      find.text(
-        'Google Drive was asked to email the invitation to caregiver@example.com. They can now view and add entries to this log.',
-      ),
-      findsOneWidget,
+      message,
+      contains(InvitationLink.webForFamily(family, 'caregiver@example.com')),
     );
+    expect(message, isNot(contains('Browse shared logs')));
+    expect(message, isNot(contains('select this log')));
+    expect(message.length, lessThan(1000));
+    expect(find.text('Share invitation'), findsOneWidget);
+    expect(find.textContaining('Optional —'), findsNothing);
+    expect(find.byTooltip('More ways to send'), findsOneWidget);
+    expect(find.text('caregiver@example.com'), findsOneWidget);
     expect(
       server.invitations.single.url.queryParameters['sendNotificationEmail'],
-      'true',
+      'false',
     );
-    await tap(t, 'Share joining instructions');
-    expect(find.text('Share instructions'), findsOneWidget);
-    expect(find.text('Access granted'), findsOneWidget);
+    const sharing = MethodChannel('app.littlelog/invitation');
+    String? sharedMessage;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(sharing, (call) async {
+          if (call.method == 'listen') return null;
+          expect(call.method, 'share');
+          sharedMessage = call.arguments['message'] as String;
+          throw PlatformException(code: 'share_unavailable');
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(sharing, null),
+    );
+    await tap(t, 'Share invitation');
+    final appLink = sharedMessage!
+        .split('\n')
+        .firstWhere((line) => line.startsWith('https://krupapc.dev/'));
+    final parsed = InvitationLink.parse(appLink)!;
+    expect(parsed.fileId, family.driveFileId);
+    expect(parsed.invitedEmail, 'caregiver@example.com');
+    expect(
+      sharedMessage,
+      contains(InvitationLink.webForFamily(family, 'caregiver@example.com')),
+    );
+    expect(
+      find.textContaining('The share sheet could not open'),
+      findsOneWidget,
+    );
+    await t.tap(find.byTooltip('More ways to send'));
+    await settle(t);
+    expect(find.text('Copy invitation'), findsOneWidget);
+    await tap(t, 'Copy invitation');
+    expect(find.text('Invitation ready'), findsOneWidget);
 
     final auth = HarnessAuth('caregiver@example.com');
     final db = (await t.runAsync(
@@ -479,7 +711,7 @@ void runInvitationHarness({bool native = false}) {
       find.byType(TextField),
       'https://drive.google.com/file/d/csv123456789/view',
     );
-    await tap(t, 'Open this shared log in Google Drive');
+    await tap(t, 'Open log');
     expect(c.family, isNull);
     expect(find.text('Join baby log'), findsOneWidget);
     server.gate = Completer<void>();
@@ -565,7 +797,7 @@ void runInvitationHarness({bool native = false}) {
       await settle(t);
       expect(find.text('caregiver@example.com'), findsOneWidget);
       await tap(t, 'Baby');
-      await tap(t, 'Choose a different baby');
+      await tap(t, 'Back to shared logs');
       expect(c.family, isNull);
       expect(find.text('Join baby log'), findsNothing);
       await t.pumpWidget(const SizedBox());
@@ -619,8 +851,8 @@ void runInvitationHarness({bool native = false}) {
         );
         await captureInvitation(t, 'sender-${large ? 'large' : 'standard'}');
         await t.enterText(find.byType(TextFormField), 'caregiver@example.com');
-        await tap(t, 'Send invitation');
-        expect(find.text('Access granted'), findsOneWidget);
+        await tap(t, 'Share invitation');
+        expect(find.text('Invitation ready'), findsOneWidget);
         await captureInvitation(t, 'sent-${large ? 'large' : 'standard'}');
         expect(t.takeException(), isNull);
         await t.pumpWidget(
@@ -757,16 +989,16 @@ void runInvitationHarness({bool native = false}) {
       ),
     );
     await t.enterText(find.byType(TextFormField), '  caregiver@example.com  ');
-    await tap(t, 'Send invitation');
-    expect(find.text('Access granted'), findsNothing);
+    await tap(t, 'Share invitation');
+    expect(find.text('Invitation ready'), findsNothing);
     expect(find.textContaining('Google denied this request'), findsOneWidget);
     expect(
       t.widget<TextFormField>(find.byType(TextFormField)).controller!.text,
       '  caregiver@example.com  ',
     );
     server.inviteError = null;
-    await tap(t, 'Send invitation');
-    expect(find.text('Access granted'), findsOneWidget);
+    await tap(t, 'Share invitation');
+    expect(find.text('Invitation ready'), findsOneWidget);
     expect(server.editors, contains('caregiver@example.com'));
     await t.pumpWidget(const SizedBox());
     c.dispose();

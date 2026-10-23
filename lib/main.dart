@@ -24,6 +24,7 @@ import 'design.dart';
 import 'activity_details.dart';
 import 'widgets/activity_panel.dart';
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -83,6 +84,7 @@ class LittleLogApp extends StatefulWidget {
 class _LittleLogAppState extends State<LittleLogApp>
     with WidgetsBindingObserver {
   final _navigatorKey = GlobalKey<NavigatorState>();
+  final _homeKey = GlobalKey<_HomePageState>();
   final _invitationBridge = InvitationLinkBridge();
   final _assistantActions = AssistantActions();
   String? _activeInvitationFile;
@@ -212,8 +214,14 @@ class _LittleLogAppState extends State<LittleLogApp>
               ),
             ),
           )
+          .then((joined) {
+            if (!mounted || joined != true) return;
+            navigator.popUntil((route) => route.isFirst);
+            _homeKey.currentState?.selectTab(0);
+          })
           .whenComplete(() => _activeInvitationFile = null);
     });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   @override
@@ -253,7 +261,7 @@ class _LittleLogAppState extends State<LittleLogApp>
             widget.controller.backgroundChoice(babyId ?? ''),
           ),
         ),
-        home: HomePage(controller: widget.controller),
+        home: HomePage(key: _homeKey, controller: widget.controller),
       );
     },
   );
@@ -404,17 +412,7 @@ class _HomePageState extends State<HomePage> {
           c.joiningFromOnboarding) {
         return OnboardingPage(controller: c);
       }
-      if (c.onboardingInvitePending) {
-        c.onboardingInvitePending = false;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            showDialog<void>(
-              context: context,
-              builder: (_) => _FirstInvite(controller: c),
-            );
-          }
-        });
-      }
+      c.onboardingInvitePending = false;
       return Scaffold(
         appBar: AppBar(
           toolbarHeight: 24 + MediaQuery.textScalerOf(context).scale(26) * 1.2,
@@ -835,39 +833,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class _FirstInvite extends StatefulWidget {
-  const _FirstInvite({required this.controller});
-  final AppController controller;
-  @override
-  State<_FirstInvite> createState() => _FirstInviteState();
-}
-
-class _FirstInviteState extends State<_FirstInvite> {
-  bool busy = false;
-  @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !busy,
-    child: AlertDialog(
-      scrollable: true,
-      title: const Text('Invite a caregiver'),
-      content: SizedBox(
-        width: 380,
-        child: InviteCaregiverForm(
-          controller: widget.controller,
-          family: widget.controller.family!,
-          onBusy: (value) => setState(() => busy = value),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: busy ? null : () => Navigator.pop(context),
-          child: const Text('Done'),
-        ),
-      ],
-    ),
-  );
-}
-
 class _SyncStatus extends StatelessWidget {
   const _SyncStatus({required this.controller, this.openFamily});
   final AppController controller;
@@ -1045,7 +1010,23 @@ class _FamilyPanelState extends State<FamilyPanel> {
   String? collaboratorFileId;
   String? collaboratorError;
   bool loadingCollaborators = false;
-  String? success;
+  String? backupAttemptId;
+  bool backingUp = false;
+
+  Future<void> backUp() async {
+    final c = widget.controller;
+    if (c.babyPickerBusy) return;
+    setState(() {
+      backupAttemptId = c.family?.id;
+      backingUp = true;
+    });
+    await c.run(c.backUpFamily);
+    if (!mounted) return;
+    setState(() {
+      backingUp = false;
+      if (c.message == null) backupAttemptId = null;
+    });
+  }
 
   String collaboratorRole(String role) => switch (role) {
     'owner' => 'Owner',
@@ -1125,6 +1106,14 @@ class _FamilyPanelState extends State<FamilyPanel> {
       final c = widget.controller;
       final busy = c.working || c.syncing;
       final user = c.auth.user;
+      final backupAttempt =
+          backupAttemptId != null && backupAttemptId == c.family?.id;
+      final incompleteBackup =
+          c.family?.isLocal == false &&
+          c.lastSync == null &&
+          c.pendingCount > 0;
+      final needsBackup =
+          c.family?.isLocal == true || backupAttempt || incompleteBackup;
       final fileId = c.family?.driveFileId;
       if (fileId != null && c.canSync && collaboratorFileId != fileId) {
         collaboratorFileId = fileId;
@@ -1231,123 +1220,116 @@ class _FamilyPanelState extends State<FamilyPanel> {
               ),
             if (widget.embedded) const AssistantHelpTile(),
             const SizedBox(height: LogSpacing.section),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: logPalette(context).surface,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Icon(
-                    c.family?.isLocal == false
-                        ? Icons.cloud_done_outlined
-                        : Icons.phone_iphone,
-                    color: logPalette(context).actionInk,
-                    size: 28,
-                  ),
-                  const SizedBox(height: LogSpacing.content),
-                  Text(
-                    c.family?.storageLabel ?? 'Device storage',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
+            Theme(
+              data: setupTheme(context),
+              child: Container(
+                key: const ValueKey('log-storage-card'),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: logPalette(context).surface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Icon(
+                      c.family?.isLocal == false
+                          ? needsBackup
+                                ? Icons.cloud_upload_outlined
+                                : Icons.cloud_done_outlined
+                          : Icons.phone_iphone,
+                      color: logPalette(context).actionInk,
+                      size: 28,
                     ),
-                  ),
-                  const SizedBox(height: LogSpacing.label),
-                  Text(
-                    c.family?.isLocal == false
-                        ? 'Completed entries sync to Google Drive.'
-                        : 'Entries are stored on this device until Google Drive is connected.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: logPalette(context).secondary,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: LogSpacing.field),
-                  if (!AppConfig.configured)
-                    const _Notice(
-                      'Google Drive is unavailable in this build. Entries are stored locally.',
-                    )
-                  else if (!c.auth.ready)
-                    _Notice(c.auth.error ?? 'Preparing sign-in…')
-                  else if (user == null)
-                    Align(
-                      alignment: Alignment.center,
-                      child: googleButton(() => c.run(c.auth.signIn)),
-                    )
-                  else ...[
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(user.displayName ?? 'Google account'),
-                      subtitle: Text(user.email),
-                    ),
-                    if (!c.auth.driveConnected)
-                      FilledButton(
-                        onPressed: busy || c.auth.checkingDrive
-                            ? null
-                            : () => c.run(() async {
-                                await c.auth.authorize();
-                                if (mounted) {
-                                  setState(() => success = null);
-                                }
-                                await c.sync(manual: true);
-                                if (mounted &&
-                                    c.message == null &&
-                                    c.lastSync != null) {
-                                  setState(
-                                    () => success =
-                                        'All entries saved to Google Drive.',
-                                  );
-                                }
-                              }),
-                        child: Text(
-                          c.auth.connectingDrive
-                              ? 'Connecting…'
-                              : c.auth.checkingDrive
-                              ? 'Checking Google Drive…'
-                              : 'Connect Google Drive',
-                        ),
-                      )
-                    else
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.check_circle_outline, size: 18),
-                          SizedBox(width: 6),
-                          Flexible(child: Text('Google Drive connected')),
-                        ],
-                      ),
-                    if (c.family?.isLocal == true && c.auth.driveConnected) ...[
-                      const SizedBox(height: LogSpacing.field),
-                      FilledButton(
-                        onPressed: busy ? null : () => c.run(c.publishFamily),
-                        child: const Text('Save log to Google Drive'),
-                      ),
-                      const SizedBox(height: LogSpacing.label),
-                      Text(
-                        'Saved in the Little Log folder. Private until shared.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: logPalette(context).secondary,
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: LogSpacing.content),
-                    OutlinedButton.icon(
-                      onPressed: busy ? null : () => c.run(c.auth.signOut),
-                      icon: const Icon(Icons.logout, size: 20),
-                      label: const Text('Sign out of Google'),
+                    Text(
+                      backingUp && backupAttempt
+                          ? 'Google Drive'
+                          : incompleteBackup
+                          ? 'Backup incomplete'
+                          : c.family?.storageLabel ?? 'Device storage',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
+                    const SizedBox(height: LogSpacing.field),
+                    if (!AppConfig.configured)
+                      const _Notice(
+                        'Google Drive is unavailable in this build. Entries are stored locally.',
+                      )
+                    else if (!c.auth.ready)
+                      _Notice(c.auth.error ?? 'Preparing sign-in…')
+                    else ...[
+                      if (user != null) ...[
+                        Text(user.email, textAlign: TextAlign.center),
+                        const SizedBox(height: LogSpacing.field),
+                      ],
+                      if (needsBackup) ...[
+                        if (kIsWeb && user == null)
+                          Center(
+                            child: googleButton(() => c.run(c.auth.signIn)),
+                          )
+                        else
+                          FilledButton(
+                            onPressed: busy || c.auth.checkingDrive
+                                ? null
+                                : backUp,
+                            child: Text(
+                              backingUp
+                                  ? 'Backing up…'
+                                  : backupAttempt || incompleteBackup
+                                  ? 'Retry backup'
+                                  : 'Back up to Google Drive',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                      ] else if (user == null)
+                        Center(child: googleButton(() => c.run(c.auth.signIn)))
+                      else if (!c.auth.driveConnected)
+                        FilledButton(
+                          onPressed: busy || c.auth.checkingDrive
+                              ? null
+                              : () => c.run(() async {
+                                  await c.auth.authorize();
+                                  await c.sync(manual: true);
+                                }),
+                          child: Text(
+                            c.auth.connectingDrive
+                                ? 'Connecting…'
+                                : c.auth.checkingDrive
+                                ? 'Checking Google Drive…'
+                                : 'Connect Google Drive',
+                          ),
+                        )
+                      else
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle_outline, size: 18),
+                            SizedBox(width: 6),
+                            Flexible(child: Text('Google Drive connected')),
+                          ],
+                        ),
+                      if (backupAttempt && c.message != null) ...[
+                        const SizedBox(height: LogSpacing.content),
+                        _Notice(c.message!),
+                      ],
+                      if (user != null) ...[
+                        const SizedBox(height: LogSpacing.content),
+                        OutlinedButton.icon(
+                          onPressed: busy ? null : () => c.run(c.auth.signOut),
+                          icon: const Icon(Icons.logout, size: 20),
+                          label: const Text('Sign out of Google'),
+                        ),
+                      ],
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-            if (c.family != null && !c.family!.isLocal && c.canSync) ...[
+            if (c.family != null && !needsBackup && c.canSync) ...[
               const SizedBox(height: LogSpacing.section),
               SectionHeading(
                 title: 'People with access to ${c.family!.babyName}',
@@ -1357,14 +1339,6 @@ class _FamilyPanelState extends State<FamilyPanel> {
                   icon: const Icon(Icons.refresh),
                 ),
               ),
-              Text(
-                'Log reference: ${c.family!.logReference}\nThese permissions apply only to this log.',
-                style: TextStyle(
-                  color: logPalette(context).secondary,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: LogSpacing.label),
               if (loadingCollaborators)
                 const LinearProgressIndicator()
               else if (collaboratorError != null)
@@ -1398,13 +1372,40 @@ class _FamilyPanelState extends State<FamilyPanel> {
                       ].join(' · '),
                     ),
                   ),
+              TextButton.icon(
+                onPressed: busy
+                    ? null
+                    : () => c.run(() async {
+                        final opened = await launchUrl(
+                          Uri.parse(
+                            'https://drive.google.com/file/d/${c.family!.driveFileId}/view',
+                          ),
+                          mode: LaunchMode.externalApplication,
+                        );
+                        if (!opened) {
+                          throw StateError(
+                            'Google Drive could not open. Try again.',
+                          );
+                        }
+                      }),
+                icon: const Icon(Icons.open_in_new),
+                label: const Text('Manage access in Google Drive'),
+              ),
               const SizedBox(height: LogSpacing.section),
-              const SectionHeading(title: 'Invite a caregiver'),
-              InviteCaregiverForm(
-                key: ValueKey(c.family!.id),
-                controller: c,
-                family: c.family!,
-                onSent: loadCollaborators,
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.person_add_outlined),
+                title: const Text('Invite a caregiver'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => InviteCaregiverPage(
+                      controller: c,
+                      family: c.family!,
+                      onSent: loadCollaborators,
+                    ),
+                  ),
+                ),
               ),
             ],
             ...[
@@ -1433,14 +1434,11 @@ class _FamilyPanelState extends State<FamilyPanel> {
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 children: [
-                  Text(
-                    'Drive location: Little Log. Exports include all local entries and active timers.',
-                    style: TextStyle(
-                      color: logPalette(context).secondary,
-                      height: 1.5,
-                    ),
+                  SelectableText(
+                    'Log reference: ${c.family!.logReference}',
+                    style: TextStyle(color: logPalette(context).secondary),
                   ),
-                  const SizedBox(height: LogSpacing.content),
+                  const SizedBox(height: LogSpacing.field),
                   if (c.family!.driveFileId != null)
                     TextButton.icon(
                       onPressed: () => launchUrl(
@@ -1475,18 +1473,7 @@ class _FamilyPanelState extends State<FamilyPanel> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: LinearProgressIndicator(),
               ),
-            if (success != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    success!,
-                    style: TextStyle(color: logPalette(context).actionInk),
-                  ),
-                ),
-              ),
-            if (c.message != null)
+            if (c.message != null && !backupAttempt)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: _Notice(c.message!),

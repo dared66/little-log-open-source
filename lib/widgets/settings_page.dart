@@ -68,15 +68,6 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Default units',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: LogSpacing.label),
-                  const Text(
-                    'Applies on this device. Recorded amounts are unchanged.',
-                  ),
-                  const SizedBox(height: LogSpacing.section),
                   const FieldLabel('Volume'),
                   Align(
                     alignment: Alignment.centerLeft,

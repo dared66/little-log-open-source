@@ -27,7 +27,7 @@ class JoinDrive extends Drive {
 void main() {
   for (final largeText in [false, true]) {
     testWidgets(
-      'nested storage choice and back navigation (${largeText ? 'small, large text' : 'phone'})',
+      'creation, storage switching and back navigation (${largeText ? 'small, large text' : 'phone'})',
       (t) async {
         t.view.physicalSize = largeText
             ? const Size(320, 568)
@@ -59,6 +59,8 @@ void main() {
         final c = AppController(Repository(db), auth, GoogleDrive(auth))
           ..loading = false;
         Future<void> tap(String label) async {
+          FocusManager.instance.primaryFocus?.unfocus();
+          await t.pumpAndSettle();
           final target = find.text(label);
           await t.ensureVisible(target);
           await t.pumpAndSettle();
@@ -79,43 +81,42 @@ void main() {
         }
 
         await t.pumpWidget(LittleLogApp(controller: c));
-        await tap('Skip introduction');
-        expect(find.text('Save only on this device'), findsNothing);
-        expect(find.text('Use Google Drive'), findsNothing);
         await capture('welcome');
-        await tap('Set up my baby');
-        await capture('storage');
-        expect(find.text('Use Google Drive'), findsOneWidget);
-        expect(find.text('Save only on this device'), findsOneWidget);
+        await tap('New baby log');
+        await capture('drive');
+        expect(find.text('Google Drive'), findsOneWidget);
+        expect(find.text('This device'), findsOneWidget);
         expect(c.auth.user, isNull);
         expect(c.family, isNull);
-        await tap('Use Google Drive');
-        expect(find.text('Set up with Google Drive'), findsOneWidget);
         await t.enterText(find.byType(TextFormField), 'Robin');
-        await t.pumpAndSettle();
-        await capture('drive');
-        // Platform back and app-bar back have the same parent destination.
-        await t.binding.handlePopRoute();
-        await t.pumpAndSettle();
-        expect(
-          find.text('Where would you like to save your baby’s log?'),
-          findsOneWidget,
-        );
-        await tap('Save only on this device');
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tap('This device');
         expect(find.text('Robin'), findsOneWidget);
         await capture('device');
-        await t.tap(find.byTooltip('Back'));
-        await t.pumpAndSettle();
-        await tap('Use Google Drive');
+        if (const bool.fromEnvironment('CAPTURE_ONBOARDING')) {
+          await t.runAsync(() => c.setThemeMode(ThemeMode.dark));
+          await t.pumpAndSettle();
+          await capture('device-dark');
+          await t.runAsync(() => c.setThemeMode(ThemeMode.light));
+          await t.pumpAndSettle();
+        }
+
+        await tap('Google Drive');
         expect(find.text('Robin'), findsOneWidget);
-        await t.tap(find.byTooltip('Back'));
+        await t.binding.handlePopRoute();
         await t.pumpAndSettle();
-        await tap('Save only on this device');
+        expect(find.text('Baby logs'), findsOneWidget);
+        await tap('New baby log');
+        expect(find.text('Robin'), findsOneWidget);
+        await tap('This device');
         await t.enterText(find.byType(TextFormField), '  ');
         await tap('Create baby log');
         expect(find.text('Enter your baby’s name.'), findsOneWidget);
+        await capture('validation');
         expect(c.family, isNull);
         await t.enterText(find.byType(TextFormField), 'Robin');
+        FocusManager.instance.primaryFocus?.unfocus();
+        await t.pumpAndSettle();
         final action = find.text('Create baby log');
         await t.ensureVisible(action);
         await t.pumpAndSettle();
@@ -136,6 +137,64 @@ void main() {
     );
   }
 
+  testWidgets('creation presents only the next account action', (t) async {
+    final db = (await t.runAsync(
+      () => databaseFactoryMemory.openDatabase(newId.v4()),
+    ))!;
+    final auth = Auth()
+      ..ready = true
+      ..user = Account();
+    final c = AppController(Repository(db), auth, Drive(auth))..loading = false;
+    await t.pumpWidget(LittleLogApp(controller: c));
+    await t.tap(find.text('New baby log'));
+    await t.pumpAndSettle();
+    expect(find.text('Connect Google Drive'), findsOneWidget);
+    expect(find.text('Create baby log'), findsNothing);
+    expect(find.byType(FilledButton), findsOneWidget);
+    auth.connected();
+    await t.pumpAndSettle();
+    expect(find.text('Connect Google Drive'), findsNothing);
+    expect(find.text('Create baby log'), findsOneWidget);
+    expect(find.byType(FilledButton), findsOneWidget);
+    expect(find.text('sample@example.com'), findsOneWidget);
+    await t.pumpWidget(const SizedBox());
+    c.dispose();
+    await t.runAsync(db.close);
+  });
+
+  testWidgets(
+    'Drive creation finishes on the log without an invitation prompt',
+    (t) async {
+      final db = (await t.runAsync(
+        () => databaseFactoryMemory.openDatabase(newId.v4()),
+      ))!;
+      final auth = Auth()
+        ..user = Account()
+        ..connected();
+      final drive = Drive(auth);
+      final c = AppController(Repository(db), auth, drive)..loading = false;
+      await t.pumpWidget(LittleLogApp(controller: c));
+      await t.tap(find.text('New baby log'));
+      await t.pumpAndSettle();
+      await t.enterText(find.byType(TextFormField), 'Robin');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await t.pumpAndSettle();
+      await t.ensureVisible(find.text('Create baby log'));
+      await t.runAsync(() async {
+        await t.tap(find.text('Create baby log'));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      });
+      await t.pumpAndSettle();
+      expect(drive.creations, 1);
+      expect(c.family?.isLocal, isFalse);
+      expect(find.text('Quick log'), findsOneWidget);
+      expect(find.byType(AlertDialog), findsNothing);
+      await t.pumpWidget(const SizedBox());
+      c.dispose();
+      await t.runAsync(db.close);
+    },
+  );
+
   for (final step in ['setup', 'create', 'local']) {
     testWidgets('resumes saved $step stage', (t) async {
       final db = (await t.runAsync(
@@ -148,14 +207,7 @@ void main() {
       await t.runAsync(c.initialize);
       await t.pumpWidget(LittleLogApp(controller: c));
       await t.pumpAndSettle();
-      expect(
-        find.text(switch (step) {
-          'setup' => 'Where would you like to save your baby’s log?',
-          'create' => 'Set up with Google Drive',
-          _ => 'Set up on this device',
-        }),
-        findsOneWidget,
-      );
+      expect(find.text('New baby log'), findsOneWidget);
       await t.pumpWidget(const SizedBox());
       c.dispose();
       await t.runAsync(db.close);
@@ -180,15 +232,18 @@ void main() {
     await t.pumpAndSettle();
     await t.binding.handlePopRoute();
     await t.pumpAndSettle();
-    expect(find.text('Set up with Google Drive'), findsOneWidget);
-    final local = find.text('Save only on this device');
+    expect(find.text('New baby log'), findsOneWidget);
+    final local = find.text('This device');
     await t.ensureVisible(local);
     await t.tap(local);
     await t.pumpAndSettle();
-    expect(find.text('Set up on this device'), findsOneWidget);
+    expect(
+      find.text('Stored only on this device. Deleting the app can delete this log.'),
+      findsOneWidget,
+    );
     await t.tap(find.byTooltip('Back'));
     await t.pumpAndSettle();
-    expect(find.text('Set up with Google Drive'), findsOneWidget);
+    expect(find.text('New baby log'), findsOneWidget);
     await t.ensureVisible(local);
     await t.tap(local);
     await t.pumpAndSettle();
@@ -231,7 +286,7 @@ void main() {
         expect(controller.family?.id, family.id);
         expect(find.text('Robin'), findsOneWidget);
         expect(find.text('Skip introduction'), findsNothing);
-        expect(find.text('Set up with Google Drive'), findsNothing);
+        expect(find.text('New baby log'), findsNothing);
         await tester.pumpWidget(const SizedBox());
         controller.dispose();
         await tester.runAsync(db.close);
@@ -260,7 +315,7 @@ void main() {
       await tester.runAsync(controller.initialize);
       await tester.pumpWidget(LittleLogApp(controller: controller));
       await tester.pumpAndSettle();
-      expect(find.text('Set up with Google Drive'), findsOneWidget);
+      expect(find.text('New baby log'), findsOneWidget);
       expect(controller.onboardingSyncedSetup, isTrue);
       expect(controller.family?.id, family.id);
       expect((await tester.runAsync(repo.families))!.length, 1);
@@ -346,13 +401,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Join an existing baby log'));
     await tester.pumpAndSettle();
-    expect(find.text('Join your baby’s shared log'), findsOneWidget);
-    expect(
-      find.text(
-        'Join a baby log shared by a parent or caregiver. Sign in with the Google account they invited.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Join a shared log'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     controller.dispose();

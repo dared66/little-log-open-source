@@ -4,11 +4,13 @@ import '../models.dart';
 import 'family_cloud.dart';
 import 'family_csv.dart';
 import 'google_auth.dart';
+import 'invitation_link.dart';
 
 class CloudException implements Exception {
-  CloudException(this.message, [this.status]);
+  CloudException(this.message, [this.status, this.reason]);
   final String message;
   final int? status;
+  final String? reason;
   @override
   String toString() => message;
 }
@@ -138,6 +140,7 @@ class GoogleDrive implements FamilyCloud {
       throw CloudException(
         'This baby’s Drive log is in Trash. Restore it in Google Drive, then retry. Entries remain on this device.',
         404,
+        'trashed',
       );
     }
     if (meta['ownedByMe'] == true) {
@@ -199,18 +202,33 @@ class GoogleDrive implements FamilyCloud {
             .invalidateToken(token)
             .timeout(const Duration(seconds: 10), onTimeout: () {});
       }
-      throw CloudException(switch (response.statusCode) {
-        401 => 'Google access expired. Connect Google Drive again.',
-        403 =>
-          'Google denied this request. Check file permissions or retry if Drive is rate limiting.',
-        404 =>
-          'This baby’s Drive log is unavailable. It may be in Trash, deleted, or no longer shared with you. Entries remain on this device.',
-        412 => 'Another caregiver updated the CSV. Sync will merge and retry.',
-        429 =>
-          'Drive is busy. Your entries are saved locally and will retry later.',
-        _ =>
-          'Drive could not finish syncing (${response.statusCode}). Local entries are retained.',
-      }, response.statusCode);
+      String? reason;
+      try {
+        final body = jsonDecode(response.body);
+        final errors = body['error']?['errors'];
+        if (errors is List && errors.isNotEmpty) {
+          reason = errors.first['reason'] as String?;
+        }
+      } catch (_) {
+        // Preserve the HTTP error when Drive returns an unexpected body.
+      }
+      throw CloudException(
+        switch (response.statusCode) {
+          401 => 'Google access expired. Connect Google Drive again.',
+          403 =>
+            'Google denied this request. Check file permissions or retry if Drive is rate limiting.',
+          404 =>
+            'This baby’s Drive log is unavailable. It may be in Trash, deleted, or no longer shared with you. Entries remain on this device.',
+          412 =>
+            'Another caregiver updated the CSV. Sync will merge and retry.',
+          429 =>
+            'Drive is busy. Your entries are saved locally and will retry later.',
+          _ =>
+            'Drive could not finish syncing (${response.statusCode}). Local entries are retained.',
+        },
+        response.statusCode,
+        reason,
+      );
     }
     return response;
   }
@@ -234,6 +252,7 @@ class GoogleDrive implements FamilyCloud {
       throw CloudException(
         'This baby’s Drive log is in Trash. Restore it in Google Drive, then retry. Entries remain on this device.',
         404,
+        'trashed',
       );
     }
     if (!['text/csv', 'application/csv'].contains(meta['mimeType'])) {
@@ -470,15 +489,15 @@ class GoogleDrive implements FamilyCloud {
     return people;
   }
 
+  /// Share an exact-log HTTPS invitation through the user's chosen app.
+  String invitationEmailMessage(Family family, String email) =>
+      '${auth.user?.email ?? 'A caregiver'} invited you to ${family.babyName}’s log.\n\n'
+      'Join in Little Log:\n'
+      '${InvitationLink.webForFamily(family, email)}\n\n'
+      'Use ${email.trim()} to sign in.';
+
   String invitationInstructions(Family family, String email) =>
-      '${auth.user?.email ?? 'A caregiver'} invited you to ${family.babyName}’s baby log in Little Log. You can view the history and add entries together.\n\n'
-      'To join, open Little Log and tap “Join an existing baby log”. If you already use Little Log, find “Join an existing baby log” in Settings.\n'
-      'Sign in with $email and connect Google Drive if asked.\n'
-      'Paste this Google Drive file link into the “Shared log’s Google Drive link” box in Little Log:\n'
-      'https://drive.google.com/file/d/${family.driveFileId}/view\n'
-      'Tap “Open this shared log in Google Drive” and select that file when Google asks.\n'
-      'Check that Little Log shows ${family.babyName} and owner ${family.ownerEmail ?? auth.user?.email ?? 'the sender'}, then tap “Join baby log”. Your other logs stay separate.\n\n'
-      'Google’s automatic Drive email may show only the file name. Use these steps to join.';
+      invitationEmailMessage(family, email);
 
   Future<void> invite(Family family, String email) async {
     email = email.trim();
@@ -491,10 +510,9 @@ class GoogleDrive implements FamilyCloud {
     await _request(
       'POST',
       '/drive/v3/files/${family.driveFileId}/permissions',
-      query: {
-        'sendNotificationEmail': 'true',
-        'emailMessage': invitationInstructions(family, email),
-      },
+      // Drive's notification opens its CSV viewer, not Little Log.
+      // The caller opens the native share sheet after access is granted.
+      query: {'sendNotificationEmail': 'false'},
       json: {'type': 'user', 'role': 'writer', 'emailAddress': email},
     );
   }

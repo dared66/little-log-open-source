@@ -15,6 +15,7 @@ import 'diaper_details.dart';
 /// Shared vertical rhythm for every page. Field labels sit 8 px above their
 /// controls, section headings 12 px above content, and sections 24 px apart.
 abstract final class LogSpacing {
+  static const double page = 20;
   static const double detail = 4;
   static const double label = 8;
   static const double content = 12;
@@ -55,6 +56,10 @@ class SectionHeading extends StatelessWidget {
     child: ConstrainedBox(
       constraints: BoxConstraints(minHeight: compact ? 44 : 48),
       child: Row(
+        crossAxisAlignment: action == null
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
         children: [
           Expanded(
             flex: compact ? 3 : 1,
@@ -67,13 +72,17 @@ class SectionHeading extends StatelessWidget {
           if (action != null)
             TextButton(
               onPressed: onAction,
-              style: compact
-                  ? TextButton.styleFrom(
-                      textStyle: Theme.of(context).textTheme.labelLarge
-                          ?.copyWith(fontSize: 12, fontWeight: FontWeight.w500),
-                      padding: const EdgeInsets.only(left: 8),
-                    )
-                  : null,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(44, 44),
+                padding: const EdgeInsets.only(left: LogSpacing.content),
+                alignment: Alignment.centerRight,
+                textStyle: compact
+                    ? Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      )
+                    : null,
+              ),
               child: Text(action!, textAlign: TextAlign.end),
             ),
         ],
@@ -109,6 +118,46 @@ LogPalette logPalette(BuildContext context) => LogPalette(
   background: Theme.of(context).scaffoldBackgroundColor,
 );
 
+/// Onboarding and invitation forms share the same control geometry and contrast.
+ThemeData setupTheme(BuildContext context) {
+  final theme = Theme.of(context);
+  final palette = logPalette(context);
+  final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+  final border = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: BorderSide(color: palette.secondary),
+  );
+  return theme.copyWith(
+    inputDecorationTheme: theme.inputDecorationTheme.copyWith(
+      fillColor: palette.surface,
+      contentPadding: const EdgeInsets.all(16),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border.copyWith(
+        borderSide: BorderSide(color: palette.actionInk, width: 2),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: theme.filledButtonTheme.style?.copyWith(
+        shape: WidgetStatePropertyAll(shape),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: theme.outlinedButtonTheme.style?.copyWith(
+        shape: WidgetStatePropertyAll(shape),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+        side: WidgetStatePropertyAll(BorderSide(color: palette.secondary)),
+      ),
+    ),
+    cardTheme: theme.cardTheme.copyWith(shape: shape),
+  );
+}
+
 /// Standalone pages share the log's 680-point frame, including its gutters.
 class LogPageFrame extends StatelessWidget {
   const LogPageFrame({super.key, required this.child});
@@ -127,8 +176,13 @@ class LogPageFrame extends StatelessWidget {
 
 /// Keep long page names readable with accessibility text, and keep the back
 /// control in the same centered frame as the page on wider displays.
-AppBar logPageAppBar(BuildContext context, String title) {
-  final showBack = Navigator.of(context).canPop();
+AppBar logPageAppBar(
+  BuildContext context,
+  String title, {
+  VoidCallback? onBack,
+  bool? showBackButton,
+}) {
+  final showBack = showBackButton ?? Navigator.of(context).canPop();
   final media = MediaQuery.of(context);
   final style =
       (Theme.of(context).appBarTheme.titleTextStyle ??
@@ -165,7 +219,10 @@ AppBar logPageAppBar(BuildContext context, String title) {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
-              if (showBack) ...[const BackButton(), const SizedBox(width: 8)],
+              if (showBack) ...[
+                BackButton(onPressed: onBack),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: Text(
                   title,
@@ -1065,7 +1122,12 @@ class EntrySheet extends StatelessWidget {
         Flexible(
           child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
+            padding: const EdgeInsets.fromLTRB(
+              LogSpacing.page,
+              8,
+              LogSpacing.page,
+              12,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1076,7 +1138,12 @@ class EntrySheet extends StatelessWidget {
         SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+            padding: const EdgeInsets.fromLTRB(
+              LogSpacing.page,
+              8,
+              LogSpacing.page,
+              16,
+            ),
             child: SizedBox(width: double.infinity, child: footer),
           ),
         ),

@@ -32,25 +32,8 @@ class _TipJarPageState extends State<TipJarPage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(
-                      Icons.favorite_outline,
-                      size: 40,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(height: LogSpacing.section),
-                    Text(
-                      'A little thanks goes a long way',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: LogSpacing.content),
                     const Text(
-                      'If Little Log makes your day easier, you can '
-                      'leave an optional tip to support its development.',
-                    ),
-                    const SizedBox(height: LogSpacing.content),
-                    const Text(
-                      'All features stay free. Tips are one-time '
-                      'purchases, with no subscription or extra features.',
+                      'One-time tips. All features are free; no subscription.',
                     ),
                     const SizedBox(height: LogSpacing.section),
                     if (jar.loading)

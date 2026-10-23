@@ -167,6 +167,36 @@ class FakeDrive {
 }
 
 void main() {
+  test(
+    'file authorization reason is preserved separately from other 403 errors',
+    () async {
+      final cloud = GoogleDrive(
+        TestAuth(),
+        client: MockClient(
+          (request) async => http.Response(
+            jsonEncode({
+              'error': {
+                'errors': [
+                  {'reason': 'appNotAuthorizedToFile'},
+                ],
+              },
+            }),
+            403,
+          ),
+        ),
+      );
+      await expectLater(
+        cloud.openFamily('csv123456789', 'account'),
+        throwsA(
+          isA<CloudException>()
+              .having((e) => e.reason, 'reason', 'appNotAuthorizedToFile')
+              .having((e) => e.status, 'status', 403),
+        ),
+      );
+      cloud.dispose();
+    },
+  );
+
   testWidgets('expired access returns even if Google token clearing hangs', (
     t,
   ) async {
@@ -406,23 +436,8 @@ void main() {
         if (r.method == 'POST') {
           expect(r.url.path, '/drive/v3/files/csv123456789/permissions');
           expect(jsonDecode(r.body)['role'], 'writer');
-          expect(r.url.queryParameters['sendNotificationEmail'], 'true');
-          expect(
-            r.url.queryParameters['emailMessage'],
-            contains('Baby’s baby log in Little Log'),
-          );
-          expect(
-            r.url.queryParameters['emailMessage'],
-            contains('Sign in with synthetic@example.com'),
-          );
-          expect(
-            r.url.queryParameters['emailMessage'],
-            contains('Join baby log'),
-          );
-          expect(
-            r.url.queryParameters['emailMessage'],
-            isNot(contains('littlelog://')),
-          );
+          expect(r.url.queryParameters['sendNotificationEmail'], 'false');
+          expect(r.url.queryParameters.containsKey('emailMessage'), isFalse);
           expect(jsonDecode(r.body)['emailAddress'], 'synthetic@example.com');
           return http.Response('{}', 200);
         }

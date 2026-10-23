@@ -193,15 +193,11 @@ void main() {
           await c.createLocal('Synthetic QA', 'Alexandria Robin');
           await settle();
         } else {
-          await tap('Next');
-          await snap('Introduction / tracking');
-          await tap('Next');
-          await snap('Introduction / setup');
-          await tap('Set up my baby');
+          await tap('New baby log');
           await snap('Setup / storage choices');
-          await tap('Use Google Drive');
+          await tap('Google Drive');
           await snap('Setup / Google backup');
-          await tap('Save only on this device');
+          await tap('This device');
           await snap('Setup / local name');
           await t.pumpWidget(const SizedBox());
           await c.createLocal('Synthetic QA', 'Alexandria Robin');

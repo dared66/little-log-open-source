@@ -6,6 +6,7 @@ import '../controller.dart';
 import '../design.dart';
 import '../models.dart';
 import '../services/drive_invitation.dart';
+import '../services/google_drive.dart';
 import '../services/invitation_link.dart';
 import '../services/picker.dart';
 import 'google_button.dart';
@@ -28,40 +29,20 @@ class OnboardingPage extends StatefulWidget {
 }
 
 class _OnboardingPageState extends State<OnboardingPage> {
-  static const _contentWidth = 480.0;
-  static const _gutter = 28.0;
   final baby = TextEditingController();
   final invitationLink = TextEditingController();
   final form = GlobalKey<FormState>();
   final errorKey = GlobalKey();
   final confirmationKey = GlobalKey();
   late OnboardingStage stage = widget.initialStage;
-  int slide = 0;
   bool busy = false;
+  bool nameSubmitted = false;
   bool loadingLogs = false;
   String? loadedEmail;
   String? error;
   Family? selectedLog;
   String? selectingId;
   List<Map<String, String>>? logs;
-
-  static const slides = [
-    (
-      'Less remembering. More caring.',
-      'Feeds, sleep, diapers, and the little details of each day stay together.',
-      Icons.favorite_outline,
-    ),
-    (
-      'Everyone caring for your baby stays in the loop.',
-      'Caregivers can add to the same completed history, so handoffs are easier.',
-      Icons.people_outline,
-    ),
-    (
-      'Your baby’s history, in your hands.',
-      'Save on your device, or connect Google Drive to sync and share with caregivers. You can log offline with either option.',
-      Icons.cloud_outlined,
-    ),
-  ];
 
   @override
   void initState() {
@@ -73,6 +54,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
         orElse: () => OnboardingStage.tour,
       );
     }
+    // Resume older setup checkpoints on the consolidated creation screen.
+    if (stage == OnboardingStage.setup) stage = OnboardingStage.create;
     if (widget.controller.onboardingSyncedSetup &&
         widget.initialStage != OnboardingStage.join) {
       stage = OnboardingStage.create;
@@ -219,7 +202,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       }
       return;
     }
-    await chooseSharedLog(expectedFileId: invited.fileId);
+    await openExactLog(invited.fileId);
   }
 
   Future<void> openInvitationLink() async {
@@ -227,12 +210,40 @@ class _OnboardingPageState extends State<OnboardingPage> {
     if (id == null) {
       setState(
         () => error =
-            'Paste the Google Drive file link for the shared log. It starts with https://drive.google.com/file/d/. Ask the sender to copy the joining instructions if you only received a Drive notification.',
+            'Enter the shared log’s Google Drive link, or ask the sender to share the invitation again.',
       );
       reveal(errorKey);
       return;
     }
-    await chooseSharedLog(expectedFileId: id);
+    await openExactLog(id);
+  }
+
+  Future<void> openExactLog(String fileId) async {
+    final account = widget.controller.auth.user;
+    if (account == null || busy) return;
+    var needsAuthorization = false;
+    await act(() async {
+      Family log;
+      try {
+        log = await widget.controller.drive.openFamily(fileId, account.id);
+      } on CloudException catch (e) {
+        if ((e.status == 404 && e.reason != 'trashed') ||
+            (e.status == 403 && e.reason == 'appNotAuthorizedToFile')) {
+          needsAuthorization = true;
+          return;
+        }
+        rethrow;
+      }
+      if (mounted && widget.controller.auth.user?.id == account.id) {
+        setState(() => selectedLog = log);
+        reveal(confirmationKey);
+      }
+    });
+    if (mounted &&
+        needsAuthorization &&
+        widget.controller.auth.user?.id == account.id) {
+      await chooseSharedLog(expectedFileId: fileId);
+    }
   }
 
   Future<void> preview(String fileId) => act(() async {
@@ -248,6 +259,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
         setState(() => selectedLog = baby);
         reveal(confirmationKey);
       }
+    } on CloudException catch (e) {
+      if (e.status == 403 || e.status == 404) {
+        throw StateError(
+          'This log could not be opened with ${account.email}. Check that this is the invited account and ask the sender to confirm your Editor access. If access is still shared, select the file again in Google Drive to allow Little Log to use it.',
+        );
+      }
+      rethrow;
     } finally {
       if (mounted) setState(() => selectingId = null);
     }
@@ -296,113 +314,54 @@ class _OnboardingPageState extends State<OnboardingPage> {
     }
     final canLeavePage =
         widget.initialStage == OnboardingStage.join ||
-        (stage == OnboardingStage.tour && slide == 0);
-    final pinTourActions =
-        MediaQuery.sizeOf(context).height >= 600 &&
-        MediaQuery.textScalerOf(context).scale(14) <= 21;
+        stage == OnboardingStage.tour;
     final showBack =
-        !((stage == OnboardingStage.tour &&
-                slide == 0 &&
-                widget.initialStage == OnboardingStage.tour) ||
-            (c.onboardingSyncedSetup && stage == OnboardingStage.create));
+        stage != OnboardingStage.tour &&
+        !(c.onboardingSyncedSetup && stage == OnboardingStage.create);
     return PopScope(
       canPop: !busy && !c.onboardingSyncedSetup && canLeavePage,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop && !busy) back();
       },
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          centerTitle: false,
-          titleSpacing: 0,
-          toolbarHeight: (16 + MediaQuery.textScalerOf(context).scale(22) * 1.3)
-              .clamp(kToolbarHeight, double.infinity)
-              .toDouble(),
-          title: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: _contentWidth),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: _gutter),
-                child: Row(
-                  children: [
-                    if (showBack) ...[
-                      IconButton(
-                        tooltip: 'Back',
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: busy ? null : back,
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    const Expanded(
-                      child: Text(
-                        'Little Log',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+      child: Theme(
+        data: setupTheme(context),
+        child: Scaffold(
+          appBar: logPageAppBar(
+            context,
+            stage == OnboardingStage.create || stage == OnboardingStage.local
+                ? 'New baby log'
+                : stage == OnboardingStage.join
+                ? widget.invitation == null
+                      ? 'Join a shared log'
+                      : 'Join ${widget.invitation!.babyName}’s log'
+                : 'Little Log',
+            showBackButton: showBack,
+            onBack: busy ? () {} : back,
           ),
-        ),
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: _contentWidth),
+          body: LogPageFrame(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(
-                        _gutter,
-                        20,
-                        _gutter,
-                        20,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (stage == OnboardingStage.tour) ...[
-                            ...tour(),
-                            if (!pinTourActions) ...[
-                              const SizedBox(height: 32),
-                              ...tourActions(),
-                            ],
-                          ],
-                          if (stage == OnboardingStage.setup) ...setup(),
-                          if (stage == OnboardingStage.create) ...create(),
-                          if (stage == OnboardingStage.local) ...local(),
-                          if (stage == OnboardingStage.join) ...joinView(),
-                          if (error != null && stage != OnboardingStage.join)
-                            Padding(
-                              key: errorKey,
-                              padding: const EdgeInsets.only(top: 16),
-                              child: Semantics(
-                                liveRegion: true,
-                                child: Text(
-                                  error!,
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (stage == OnboardingStage.tour && pinTourActions)
+                  if (stage == OnboardingStage.tour) ...welcome(),
+                  if (stage == OnboardingStage.setup ||
+                      stage == OnboardingStage.create)
+                    ...create(),
+                  if (stage == OnboardingStage.local) ...local(),
+                  if (stage == OnboardingStage.join) ...joinView(),
+                  if (error != null && stage != OnboardingStage.join)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        _gutter,
-                        8,
-                        _gutter,
-                        18,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: tourActions(),
+                      key: errorKey,
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
                       ),
                     ),
                 ],
@@ -414,116 +373,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  List<Widget> tour() {
-    final item = slides[slide];
-    return [
-      Align(
-        alignment: Alignment.centerRight,
-        child: TextButton(
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.zero,
-            alignment: Alignment.centerRight,
-          ),
-          onPressed: () => setState(() => slide = slides.length - 1),
-          child: const Text('Skip introduction'),
-        ),
-      ),
-      const SizedBox(height: 28),
-      CircleAvatar(
-        radius: 42,
-        backgroundColor: logPalette(context).actionTint,
-        child: Icon(item.$3, size: 42, color: logPalette(context).actionInk),
-      ),
-      const SizedBox(height: 32),
-      Text(
-        item.$1,
-        style: TextStyle(
-          fontSize: 32,
-          height: 1.12,
-          fontWeight: FontWeight.w700,
-          color: logPalette(context).actionInk,
-        ),
-      ),
-      const SizedBox(height: 18),
-      Text(
-        item.$2,
-        style: TextStyle(
-          fontSize: 17,
-          height: 1.5,
-          color: logPalette(context).secondary,
-        ),
-      ),
-      if (slide == 0) ...[
-        const SizedBox(height: LogSpacing.section),
-        Card(
-          margin: EdgeInsets.zero,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: const [
-                Row(
-                  children: [
-                    Icon(Icons.local_drink_outlined, size: 19),
-                    SizedBox(width: 12),
-                    Expanded(child: Text('8:15  Bottle · 120 ml')),
-                  ],
-                ),
-                SizedBox(height: LogSpacing.content),
-                Row(
-                  children: [
-                    Icon(Icons.bedtime_outlined, size: 19),
-                    SizedBox(width: 12),
-                    Expanded(child: Text('9:40  Nap started')),
-                  ],
-                ),
-                SizedBox(height: LogSpacing.content),
-                Row(
-                  children: [
-                    Icon(Icons.child_care_outlined, size: 19),
-                    SizedBox(width: 12),
-                    Expanded(child: Text('11:05  Diaper changed')),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-      const SizedBox(height: 32),
-      Row(
-        children: [
-          for (var i = 0; i < slides.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(right: 7),
-              child: CircleAvatar(
-                radius: 4,
-                backgroundColor: i == slide
-                    ? logPalette(context).actionInk
-                    : Theme.of(context).colorScheme.outlineVariant,
-              ),
-            ),
-        ],
-      ),
-    ];
-  }
-
-  List<Widget> tourActions() => [
-    FilledButton(
-      onPressed: () => slide < slides.length - 1
-          ? setState(() => slide++)
-          : go(OnboardingStage.setup),
-      child: Text(slide < slides.length - 1 ? 'Next' : 'Set up my baby'),
+  List<Widget> welcome() => [
+    const Text(
+      'Baby logs',
+      style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
     ),
-    const SizedBox(height: 10),
+    const SizedBox(height: 24),
+    FilledButton(
+      onPressed: () => go(OnboardingStage.create),
+      child: const Text('New baby log'),
+    ),
+    const SizedBox(height: 12),
     OutlinedButton(
       onPressed: () => go(OnboardingStage.join),
       child: const Text('Join an existing baby log'),
-    ),
-    const SizedBox(height: LogSpacing.label),
-    Text(
-      'Use an invitation from a parent or caregiver.',
-      textAlign: TextAlign.center,
-      style: TextStyle(color: logPalette(context).secondary, height: 1.4),
     ),
   ];
 
@@ -535,94 +398,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
     }
     if (widget.initialStage == OnboardingStage.join) {
       Navigator.maybePop(context);
-    } else if (stage == OnboardingStage.tour) {
-      if (slide > 0) setState(() => slide--);
-    } else if (stage == OnboardingStage.create ||
-        stage == OnboardingStage.local) {
-      go(OnboardingStage.setup);
     } else {
       go(OnboardingStage.tour);
     }
   }
-
-  List<Widget> setup() => [
-    Text(
-      'Set up my baby',
-      style: TextStyle(
-        fontSize: 29,
-        fontWeight: FontWeight.w700,
-        color: logPalette(context).actionInk,
-      ),
-    ),
-    const SizedBox(height: 10),
-    Text(
-      'Where would you like to save your baby’s log?',
-      style: TextStyle(color: logPalette(context).secondary, height: 1.5),
-    ),
-    const SizedBox(height: LogSpacing.section),
-    storageOption(
-      icon: Icons.cloud_outlined,
-      title: 'Google Drive',
-      description:
-          'Keep a synced copy in your Google Drive and share the log with caregivers. You can still log offline.',
-      action: 'Use Google Drive',
-      onPressed: () => go(OnboardingStage.create),
-      primary: true,
-    ),
-    const SizedBox(height: LogSpacing.field),
-    storageOption(
-      icon: Icons.phone_iphone,
-      title: 'This device only',
-      description:
-          'Save without a Google account. The log won’t sync or be shared with caregivers. You can connect Google Drive later in Settings.',
-      action: 'Save only on this device',
-      onPressed: () => go(OnboardingStage.local),
-    ),
-  ];
-
-  Widget storageOption({
-    required IconData icon,
-    required String title,
-    required String description,
-    required String action,
-    required VoidCallback onPressed,
-    bool primary = false,
-  }) => Card(
-    margin: EdgeInsets.zero,
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: logPalette(context).actionInk),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: LogSpacing.content),
-          Text(
-            description,
-            style: TextStyle(color: logPalette(context).secondary, height: 1.5),
-          ),
-          const SizedBox(height: LogSpacing.field),
-          if (primary)
-            FilledButton(onPressed: onPressed, child: Text(action))
-          else
-            OutlinedButton(onPressed: onPressed, child: Text(action)),
-        ],
-      ),
-    ),
-  );
 
   List<Widget> accountControls() {
     final c = widget.controller;
@@ -636,195 +415,323 @@ class _OnboardingPageState extends State<OnboardingPage> {
       return [
         AbsorbPointer(
           absorbing: busy,
-          child: googleButton(() => act(c.auth.signIn)),
+          child: googleButton(
+            () => act(c.auth.signIn),
+            primary: true,
+            style: creationButtonStyle,
+          ),
         ),
       ];
     }
+    if (stage == OnboardingStage.join) {
+      return [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: logPalette(context).surface,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.account_circle_outlined,
+                    color: logPalette(context).secondary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      c.auth.user!.email,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (widget.invitation == null || invitedAccountMatches)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: busy
+                        ? null
+                        : () => act(() async {
+                            await c.auth.signOut();
+                            loadedEmail = null;
+                            logs = null;
+                          }),
+                    child: const Text('Use a different Google account'),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        if (!c.auth.driveConnected) ...[
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: busy || c.auth.checkingDrive
+                ? null
+                : () => act(c.auth.authorize),
+            child: Text(
+              c.auth.checkingDrive ? 'Connecting…' : 'Connect Google Drive',
+            ),
+          ),
+        ],
+      ];
+    }
     return [
-      ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: const Icon(Icons.account_circle_outlined),
-        title: Text(c.auth.user!.email),
-        subtitle: const Text('Google account'),
+      Row(
+        children: [
+          Icon(
+            Icons.account_circle_outlined,
+            color: logPalette(context).secondary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Text(c.auth.user!.email)),
+          IconButton(
+            tooltip: 'Use a different Google account',
+            onPressed: busy ? null : () => act(c.auth.signOut),
+            icon: const Icon(Icons.swap_horiz),
+          ),
+        ],
       ),
-      TextButton(
-        onPressed: busy
-            ? null
-            : () => act(() async {
-                await c.auth.signOut();
-                loadedEmail = null;
-                logs = null;
-              }),
-        child: const Text('Use a different Google account'),
-      ),
-      if (!c.auth.driveConnected)
+      if (!c.auth.driveConnected) ...[
+        const SizedBox(height: 16),
         FilledButton(
+          style: creationButtonStyle,
           onPressed: busy || c.auth.checkingDrive
               ? null
               : () => act(c.auth.authorize),
           child: Text(
-            c.auth.checkingDrive
-                ? 'Checking Google Drive…'
-                : 'Connect Google Drive',
+            c.auth.checkingDrive ? 'Connecting…' : 'Connect Google Drive',
           ),
         ),
+      ],
     ];
   }
 
-  List<Widget> create() {
+  ButtonStyle get creationButtonStyle => FilledButton.styleFrom(
+    minimumSize: const Size(48, 52),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  );
+
+  List<Widget> create() => creation(localOnly: false);
+  List<Widget> local() => creation(localOnly: true);
+
+  List<Widget> creation({required bool localOnly}) {
     final c = widget.controller;
-    return [
-      Icon(
-        Icons.cloud_outlined,
-        size: 46,
-        color: logPalette(context).actionInk,
-      ),
-      const SizedBox(height: LogSpacing.section),
-      Text(
-        'Set up with Google Drive',
-        style: TextStyle(
-          fontSize: 29,
-          fontWeight: FontWeight.w700,
-          color: logPalette(context).actionInk,
+    final canChangeStorage =
+        !busy && (!c.onboardingSyncedSetup || c.family?.isLocal == true);
+    final palette = logPalette(context);
+    final outline = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: palette.secondary),
+    );
+    Widget storageOption(
+      String label,
+      bool selected,
+      OnboardingStage target,
+    ) => Expanded(
+      child: Semantics(
+        selected: selected,
+        child: OutlinedButton(
+          onPressed: canChangeStorage ? () => go(target) : null,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(48, 52),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+            backgroundColor: selected ? palette.actionTint : palette.surface,
+            foregroundColor: selected ? palette.actionInk : palette.ink,
+            side: BorderSide(
+              color: selected ? palette.actionInk : palette.secondary,
+              width: selected ? 1.5 : 1,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: Text(label, textAlign: TextAlign.center),
         ),
       ),
-      const SizedBox(height: 10),
-      Text(
-        'Save your baby’s completed history to your Google Drive and share it with caregivers.',
-        style: TextStyle(color: logPalette(context).secondary, height: 1.5),
-      ),
-      const SizedBox(height: LogSpacing.section),
-      ...accountControls(),
-      const SizedBox(height: LogSpacing.section),
+    );
+    return [
+      const FieldLabel('Baby’s name'),
       Form(
         key: form,
         child: TextFormField(
           controller: baby,
+          autovalidateMode: nameSubmitted
+              ? AutovalidateMode.onUserInteraction
+              : AutovalidateMode.disabled,
           readOnly: c.onboardingSyncedSetup,
           maxLength: 60,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
-            labelText: 'Baby’s name',
-            hintText: 'e.g. Robin',
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(
             counterText: '',
+            fillColor: palette.surface,
+            contentPadding: const EdgeInsets.all(16),
+            border: outline,
+            enabledBorder: outline,
+            focusedBorder: outline.copyWith(
+              borderSide: BorderSide(color: palette.actionInk, width: 2),
+            ),
           ),
           validator: (value) => value == null || value.trim().isEmpty
               ? 'Enter your baby’s name.'
               : null,
         ),
       ),
-      const SizedBox(height: LogSpacing.content),
-      FilledButton(
-        onPressed: busy || !c.auth.driveConnected
-            ? null
-            : () {
-                if (form.currentState!.validate()) {
-                  act(() => c.createSynced(baby.text));
-                }
-              },
-        child: Text(
-          busy
-              ? 'Saving…'
-              : c.onboardingSyncedSetup
-              ? 'Retry saving to Google Drive'
-              : 'Create baby log',
+      const SizedBox(height: 24),
+      const FieldLabel('Storage'),
+      IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            storageOption('Google Drive', !localOnly, OnboardingStage.create),
+            const SizedBox(width: 8),
+            storageOption('This device', localOnly, OnboardingStage.local),
+          ],
         ),
       ),
-      const SizedBox(height: LogSpacing.content),
-      if (!c.onboardingSyncedSetup || c.family?.isLocal == true)
-        TextButton(
-          onPressed: busy ? null : () => go(OnboardingStage.local),
-          child: const Text('Save only on this device'),
-        )
-      else
+      if (localOnly) ...[
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 18,
+              color: palette.dark
+                  ? const Color(0xFFE6BE76)
+                  : const Color(0xFF805500),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Stored only on this device. Deleting the app can delete this log.',
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: palette.secondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+      const SizedBox(height: 24),
+      if (!localOnly) ...accountControls(),
+      if (localOnly || c.auth.driveConnected) ...[
+        if (!localOnly) const SizedBox(height: 16),
+        FilledButton(
+          style: creationButtonStyle,
+          onPressed: busy
+              ? null
+              : () {
+                  setState(() => nameSubmitted = true);
+                  if (!form.currentState!.validate()) return;
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  act(() async {
+                    if (!localOnly) {
+                      await c.createSynced(baby.text);
+                    } else if (c.onboardingSyncedSetup) {
+                      await c.usePendingSetupLocally();
+                    } else {
+                      await c.createLocal(
+                        '${baby.text.trim()}’s family',
+                        baby.text,
+                      );
+                    }
+                  });
+                },
+          child: Text(
+            busy
+                ? 'Saving…'
+                : c.onboardingSyncedSetup && !localOnly
+                ? 'Retry saving to Google Drive'
+                : 'Create baby log',
+          ),
+        ),
+      ],
+      if (c.onboardingSyncedSetup && c.family?.isLocal == false) ...[
+        const SizedBox(height: 12),
         const Text(
-          'Your shared log was created. Retry saving when Drive is available.',
+          'The shared log exists. Retry when Google Drive is available.',
         ),
-    ];
-  }
-
-  List<Widget> local() {
-    final c = widget.controller;
-    return [
-      Icon(Icons.phone_iphone, size: 46, color: logPalette(context).actionInk),
-      const SizedBox(height: LogSpacing.section),
-      Text(
-        'Set up on this device',
-        style: TextStyle(
-          fontSize: 29,
-          fontWeight: FontWeight.w700,
-          color: logPalette(context).actionInk,
-        ),
-      ),
-      const SizedBox(height: 10),
-      Text(
-        'Entries stay only on this device without syncing or sharing. You can connect Google Drive later in Settings. If you lose this device or remove the app, you could lose the log.',
-        style: TextStyle(color: logPalette(context).secondary, height: 1.5),
-      ),
-      const SizedBox(height: LogSpacing.section),
-      Form(
-        key: form,
-        child: TextFormField(
-          controller: baby,
-          readOnly: c.onboardingSyncedSetup,
-          maxLength: 60,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
-            labelText: 'Baby’s name',
-            counterText: '',
-          ),
-          validator: (value) => value == null || value.trim().isEmpty
-              ? 'Enter your baby’s name.'
-              : null,
-        ),
-      ),
-      const SizedBox(height: LogSpacing.content),
-      FilledButton(
-        onPressed: busy
-            ? null
-            : () {
-                if (!form.currentState!.validate()) return;
-                act(() async {
-                  if (c.onboardingSyncedSetup) {
-                    await c.usePendingSetupLocally();
-                  } else {
-                    await c.createLocal(
-                      '${baby.text.trim()}’s family',
-                      baby.text,
-                    );
-                  }
-                });
-              },
-        child: Text(busy ? 'Saving…' : 'Create baby log'),
-      ),
+      ],
     ];
   }
 
   List<Widget> joinView() {
     final c = widget.controller;
-    return [
-      Icon(
-        Icons.people_outline,
-        size: 46,
-        color: logPalette(context).actionInk,
-      ),
-      const SizedBox(height: LogSpacing.section),
-      Text(
-        'Join your baby’s shared log',
-        style: TextStyle(
-          fontSize: 29,
-          fontWeight: FontWeight.w700,
-          color: logPalette(context).actionInk,
+    if (selectedLog != null) {
+      return [
+        Column(
+          key: confirmationKey,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (widget.invitation == null) ...[
+              Text(
+                selectedLog!.babyName,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: LogSpacing.label),
+            ],
+            Text(
+              selectedLog!.ownerEmail == null
+                  ? 'Owner unavailable'
+                  : 'Owner: ${selectedLog!.ownerEmail}',
+            ),
+            if (c.families.any(
+              (f) =>
+                  f.babyName.toLowerCase() ==
+                      selectedLog!.babyName.toLowerCase() &&
+                  f.id != selectedLog!.id,
+            ))
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'You already have a separate log named ${selectedLog!.babyName}. Joining this log keeps both histories separate. It does not combine or delete entries.',
+                ),
+              ),
+            const SizedBox(height: LogSpacing.field),
+            FilledButton(
+              onPressed: busy ? null : joinSelected,
+              child: Text(busy ? 'Loading shared history…' : 'Join baby log'),
+            ),
+            if (widget.invitation == null)
+              TextButton(
+                onPressed: busy
+                    ? null
+                    : () => setState(() {
+                        selectedLog = null;
+                        error = null;
+                      }),
+                child: const Text('Back to shared logs'),
+              ),
+          ],
         ),
-      ),
-      const SizedBox(height: 10),
-      Text(
-        widget.invitation == null
-            ? 'Join a baby log shared by a parent or caregiver. Sign in with the Google account they invited.'
-            : 'Invitation for ${widget.invitation!.babyName} · ${widget.invitation!.invitedEmail}',
-        style: TextStyle(color: logPalette(context).secondary, height: 1.5),
-      ),
-      const SizedBox(height: LogSpacing.section),
+
+        if (error != null)
+          Padding(
+            key: errorKey,
+            padding: const EdgeInsets.only(top: 16),
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          ),
+      ];
+    }
+    return [
       ...accountControls(),
       if (error != null)
         Padding(
@@ -841,173 +748,95 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (c.auth.driveConnected) ...[
         const SizedBox(height: LogSpacing.section),
         if (widget.invitation != null) ...[
-          const Text(
-            'Open this invitation',
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: LogSpacing.label),
-          Text(
-            invitedAccountMatches
-                ? 'Google will ask you to allow Little Log to use this one shared file. Check the baby and owner before joining.'
-                : 'You are signed in to a different Google account. Switch to ${widget.invitation!.invitedEmail} above to continue.',
-          ),
-          const SizedBox(height: LogSpacing.content),
-          FilledButton.icon(
-            onPressed: busy || loadingLogs || !invitedAccountMatches
+          if (!invitedAccountMatches) ...[
+            Text(
+              'Switch to ${widget.invitation!.invitedEmail} to accept this invitation.',
+            ),
+            const SizedBox(height: LogSpacing.content),
+          ],
+          FilledButton(
+            onPressed: busy || loadingLogs
                 ? null
+                : !invitedAccountMatches
+                ? () => act(() async {
+                    await c.auth.signOut();
+                    loadedEmail = null;
+                    logs = null;
+                  })
                 : openLinkedInvitation,
-            icon: const Icon(Icons.open_in_new),
-            label: Text(
-              c.families.any(
-                    (family) =>
-                        family.driveFileId == widget.invitation!.fileId &&
-                        family.accountId == c.auth.user?.id,
-                  )
-                  ? 'Open this baby log'
-                  : 'Continue with this invitation',
+            child: Text(
+              !invitedAccountMatches
+                  ? 'Switch account'
+                  : c.families.any(
+                      (family) =>
+                          family.driveFileId == widget.invitation!.fileId &&
+                          family.accountId == c.auth.user?.id,
+                    )
+                  ? 'Open log'
+                  : 'Continue',
             ),
           ),
           const SizedBox(height: LogSpacing.content),
         ],
         if (widget.invitation == null) ...[
-          const Text(
-            'Join a newly shared log',
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: LogSpacing.label),
-          const Text(
-            'Ask the sender for the Little Log joining instructions. Paste the Google Drive link from that message. Google will show that exact file for you to allow Little Log to use it.',
-          ),
-          const SizedBox(height: LogSpacing.content),
           TextField(
             controller: invitationLink,
             enabled: !busy && !loadingLogs,
             autocorrect: false,
             keyboardType: TextInputType.url,
             textCapitalization: TextCapitalization.none,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Shared log’s Google Drive link',
-              hintText: 'https://drive.google.com/file/d/…/view',
-              border: OutlineInputBorder(),
+              suffixIcon: IconButton(
+                tooltip: 'Paste link from clipboard',
+                onPressed: busy || loadingLogs
+                    ? null
+                    : () async {
+                        final data = await Clipboard.getData(
+                          Clipboard.kTextPlain,
+                        );
+                        if (data?.text != null) {
+                          invitationLink.text = data!.text!;
+                        }
+                      },
+                icon: const Icon(Icons.content_paste, size: 20),
+              ),
             ),
           ),
-          const SizedBox(height: LogSpacing.label),
-          TextButton.icon(
-            onPressed: busy || loadingLogs
-                ? null
-                : () async {
-                    final data = await Clipboard.getData(Clipboard.kTextPlain);
-                    if (data?.text != null) invitationLink.text = data!.text!;
-                  },
-            icon: const Icon(Icons.content_paste),
-            label: const Text('Paste link from clipboard'),
-          ),
-          const SizedBox(height: LogSpacing.label),
+          const SizedBox(height: LogSpacing.content),
           FilledButton(
             onPressed: busy || loadingLogs ? null : openInvitationLink,
-            child: const Text('Open this shared log in Google Drive'),
+            child: const Text('Open log'),
           ),
           const SizedBox(height: LogSpacing.content),
-          const Text(
-            'No joining message yet? You can still browse Shared with me in Google Drive.',
-          ),
           OutlinedButton.icon(
             onPressed: busy || loadingLogs ? null : () => chooseSharedLog(),
             icon: const Icon(Icons.folder_open),
             label: const Text('Browse shared logs'),
           ),
           const SizedBox(height: LogSpacing.label),
-          const Text(
-            'Check the baby and owner before joining. Your existing logs stay separate.',
-          ),
         ],
         if (widget.invitation == null) ...[
           const SizedBox(height: LogSpacing.section),
           const Divider(),
           const SizedBox(height: LogSpacing.content),
           const Text(
-            'Logs already connected to Little Log',
+            'Your logs',
             style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: LogSpacing.label),
-          const Text(
-            'A newly shared log may be missing here even when you have Editor access. Use its invitation link above to connect it once.',
-          ),
           if (loadingLogs) const LinearProgressIndicator(),
           if (logs?.isEmpty == true)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                'No baby logs available yet. If someone shared a new log with you, add it from Google Drive above.',
-              ),
+              child: Text('No baby logs available yet.'),
             ),
         ],
-        if (selectedLog != null) ...[
-          Card(
-            key: confirmationKey,
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    selectedLog!.babyName,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: LogSpacing.label),
-                  Text(selectedLog!.ownerLabel),
-                  SelectableText(
-                    'Log reference: ${selectedLog!.logReference}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: logPalette(context).secondary,
-                    ),
-                  ),
-                  if (c.families.any(
-                    (f) =>
-                        f.babyName.toLowerCase() ==
-                            selectedLog!.babyName.toLowerCase() &&
-                        f.id != selectedLog!.id,
-                  ))
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        'You already have a separate log named ${selectedLog!.babyName}. Joining this log keeps both histories separate. It does not combine or delete entries.',
-                      ),
-                    ),
-                  const SizedBox(height: LogSpacing.label),
-                  const Text(
-                    'Join this baby’s existing history. Your other babies and entries stay on this device.',
-                  ),
-                  const SizedBox(height: LogSpacing.content),
-                  FilledButton(
-                    onPressed: busy ? null : joinSelected,
-                    child: Text(
-                      busy ? 'Loading shared history…' : 'Join baby log',
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: busy
-                        ? null
-                        : () => setState(() {
-                            selectedLog = null;
-                            error = null;
-                          }),
-                    child: const Text('Choose a different baby'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ] else if (widget.invitation == null) ...[
+        if (widget.invitation == null) ...[
           for (final log in logs ?? const <Map<String, String>>[])
             Card(
               key: ValueKey('available-log-${log['id']}'),
-              margin: EdgeInsets.zero,
+              margin: const EdgeInsets.only(bottom: 12),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
                 onTap: busy ? null : () => preview(log['id']!),
@@ -1026,7 +855,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       const SizedBox(height: LogSpacing.detail),
                       Text(
                         log['ownedByMe'] == 'true'
-                            ? 'Your own log — not the invitation'
+                            ? 'Your log'
                             : 'Shared with you',
                         style: TextStyle(color: logPalette(context).secondary),
                       ),
@@ -1037,7 +866,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             : 'Owner: unavailable',
                       ),
                       if (log['ownedByMe'] != 'true' &&
-                          log['sharedByEmail']?.isNotEmpty == true)
+                          log['sharedByEmail']?.isNotEmpty == true &&
+                          log['sharedByEmail']?.toLowerCase() !=
+                              log['ownerEmail']?.toLowerCase())
                         Text('Shared by: ${log['sharedByEmail']}'),
                       Text(lastUpdatedLabel(log['modifiedTime'])),
                       if (selectingId == log['id'])
@@ -1051,7 +882,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         if (widget.invitation == null)
           OutlinedButton(
             onPressed: loadingLogs || busy ? null : findLogs,
-            child: Text(error == null ? 'Refresh available logs' : 'Try again'),
+            child: Text(error == null ? 'Refresh logs' : 'Try again'),
           ),
       ],
     ];

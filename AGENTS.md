@@ -61,6 +61,8 @@ Use `lib/design.dart` as the single source for category colors. Each of the ten 
 
 Use `test/flow_journey_test.dart` when a holistic review is warranted. Avoid regenerating full capture sets or reports for routine edits. Run relevant tests and analysis once, then build, install and verify the build number once; repeat only after a failure or material change. Do not generate PDFs unless the user explicitly asks; this project-wide preference was set September 18, 2026. Identify the build and source revision in the artifact. Clearly distinguish test-rendered sample screens from physical-device verification. Do not claim a new build is on the phone until installation succeeds.
 
+Live account verification must use real Google authorization, Drive writes and recipient access. Label mocked services, sample renders and reconstructed emails explicitly; they are not evidence of delivered email or successful cross-account sharing. Preserve unrelated local logs and compare full history before and after backup/join.
+
 # Build and device policy
 
 After app changes, refresh and launch the latest build on both the Android emulator and iOS simulator. This standing user instruction was set October 9, 2026.
@@ -70,6 +72,22 @@ Use emulators and simulators for routine builds, installation, launches, and QA.
 After a build has been uploaded to TestFlight, use the next build number for subsequent changes and installations. Do not reuse an uploaded build number. Build 58 was uploaded and distributed to Owner testing, Family beta, Reddit Beta users and Open Beta on October 15, 2026, from `932af77e873d41395583538e7e4ccb593dd05384`. It preserves build 57's app code; a new build number was required because Apple prohibits external distribution of the internal-only build 57. Current development and release preparation use version 1.0.0+59. Build 59 has not yet been uploaded; after its first upload use build 60 for further app changes. Do not advance the number merely for release bookkeeping. Build 58 excludes all work from the separate telemetry/anonymous diagnostics branch. This standing user instruction was set October 9, 2026 and supersedes the earlier published-baseline rule.
 
 # UI writing
+
+Standing user directive, October 22, 2026: minimize quips, secondary labels,
+subtitles and explanatory copy. Do not narrate obvious controls, add cheerful
+filler, or repeat a heading in helper text. Customers should feel respected,
+not coached through obvious actions. Default to the label alone. Add secondary
+copy only for a necessary permission, a consequential choice, or actionable
+error recovery. Review each screen for text that can simply be deleted.
+Do not explain invitation capabilities beneath the email field (for example,
+“They’ll be able to view, add and edit entries”). Do not duplicate the invited
+email above the account card or narrate paste, browse, or manage-access buttons.
+Audit the full affected flow before presenting it, rather than waiting for the
+user to identify each redundant sentence.
+
+Invitation links already identify their exact log. Attempt direct access first;
+never require recipients to browse/select a known file when the app can read it.
+Retain Google's narrowly scoped authorization only as a fallback when needed.
 
 Write iPhone TestFlight notes for the people using the app: short, plain-language descriptions of relevant new features and what to try. Keep internal compatibility repairs, unreleased-build history, engineering/test details, telemetry bookkeeping and Android information out of iPhone tester notes. For build 57, the user requested only three points: optional elapsed time under Quick Log → Customize, improved live timers to try in the app and on the Lock Screen, and the new Help screen with Siri commands and other help. This standing preference was clarified October 15, 2026.
 

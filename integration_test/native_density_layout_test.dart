@@ -75,19 +75,17 @@ void main() {
 
       await t.pumpWidget(LittleLogApp(controller: c));
       await t.pumpAndSettle();
-      final headline = t.getRect(find.text('Less remembering. More caring.'));
+      final headline = t.getRect(find.text('Baby logs'));
       final title = t.getRect(find.text('Little Log'));
-      final card = t.getRect(find.byType(Card));
-      final next = t.getRect(find.widgetWithText(FilledButton, 'Next'));
+      final next = t.getRect(find.widgetWithText(FilledButton, 'New baby log'));
+      final join = t.getRect(
+        find.widgetWithText(OutlinedButton, 'Join an existing baby log'),
+      );
       expect(title.left, closeTo(headline.left, .1));
-      for (final rect in [card, next]) {
+      for (final rect in [join, next]) {
         expect(rect.left, closeTo(headline.left, .1));
         expect(rect.right, closeTo(headline.right, .1));
       }
-      expect(
-        t.getTopRight(find.text('Skip introduction')).dx,
-        closeTo(headline.right, .1),
-      );
       await capture('onboarding');
       await t.runAsync(() async {
         await c.createLocal('Synthetic QA', 'Robin');
