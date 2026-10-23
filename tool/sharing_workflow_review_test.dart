@@ -87,6 +87,8 @@ void main() {
       await shot('validation');
       await t.enterText(find.byType(TextFormField), 'caregiver@example.com');
       FocusManager.instance.primaryFocus?.unfocus();
+      await settle(t);
+      expect(find.text('Enter a valid email address.'), findsNothing);
       await shot('1-invite');
       server.inviteError = 503;
       await tap(t, 'Send invitation');

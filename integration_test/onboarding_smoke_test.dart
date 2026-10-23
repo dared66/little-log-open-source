@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:little_log/controller.dart';
 import 'package:little_log/main.dart';
+import 'package:little_log/models.dart';
+import 'package:little_log/widgets/invite_caregiver.dart';
 import 'package:little_log/services/google_auth.dart';
 import 'package:little_log/services/google_drive.dart';
 import 'package:little_log/storage/repository.dart';
@@ -35,7 +37,39 @@ void main() {
     expect(find.text('New baby log'), findsOneWidget);
     expect(find.text('Baby’s name'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    await tester.tap(find.text('This device'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create baby log'));
+    await tester.pumpAndSettle();
+    expect(find.text('Enter your baby’s name.'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField), 'Robin');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    expect(find.text('Enter your baby’s name.'), findsNothing);
 
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: InviteCaregiverForm(
+            controller: controller,
+            family: const Family(
+              id: 'validation-only',
+              name: 'Robin',
+              babyName: 'Robin',
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Send invitation'));
+    await tester.pumpAndSettle();
+    expect(find.text('Enter a valid email address.'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField), 'caregiver@example.com');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    expect(find.text('Enter a valid email address.'), findsNothing);
+    // Correct the form only: no email is submitted by this smoke test.
     await tester.pumpWidget(const SizedBox());
     controller.dispose();
     await db.close();

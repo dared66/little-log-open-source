@@ -29,6 +29,7 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
   final email = TextEditingController();
   final form = GlobalKey<FormState>();
   bool busy = false;
+  bool submitted = false;
   String? error;
   String? sentTo;
   @override
@@ -38,7 +39,9 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
   }
 
   Future<void> send() async {
-    if (busy || !form.currentState!.validate()) return;
+    if (busy) return;
+    setState(() => submitted = true);
+    if (!form.currentState!.validate()) return;
     FocusManager.instance.primaryFocus?.unfocus();
     final address = email.text.trim();
     setState(() {
@@ -206,6 +209,7 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
                 sentTo = null;
                 error = null;
                 email.clear();
+                submitted = false;
               }),
               child: const Text('Invite someone else'),
             ),
@@ -215,6 +219,9 @@ class _InviteCaregiverFormState extends State<InviteCaregiverForm> {
               key: form,
               child: TextFormField(
                 controller: email,
+                autovalidateMode: submitted
+                    ? AutovalidateMode.onUserInteraction
+                    : AutovalidateMode.disabled,
                 enabled: !busy,
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],

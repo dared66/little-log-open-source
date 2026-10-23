@@ -36,6 +36,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final confirmationKey = GlobalKey();
   late OnboardingStage stage = widget.initialStage;
   bool busy = false;
+  bool nameSubmitted = false;
   bool loadingLogs = false;
   String? loadedEmail;
   String? error;
@@ -560,6 +561,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
         key: form,
         child: TextFormField(
           controller: baby,
+          autovalidateMode: nameSubmitted
+              ? AutovalidateMode.onUserInteraction
+              : AutovalidateMode.disabled,
           readOnly: c.onboardingSyncedSetup,
           maxLength: 60,
           textCapitalization: TextCapitalization.words,
@@ -626,6 +630,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           onPressed: busy
               ? null
               : () {
+                  setState(() => nameSubmitted = true);
                   if (!form.currentState!.validate()) return;
                   FocusManager.instance.primaryFocus?.unfocus();
                   act(() async {
