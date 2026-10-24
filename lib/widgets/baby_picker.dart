@@ -31,6 +31,7 @@ class BabyPickerButton extends StatelessWidget {
     return Semantics(
       label: 'Switch baby',
       child: TextButton(
+        key: const ValueKey('baby-switcher'),
         onPressed: controller.babyPickerBusy
             ? null
             : () => showModalBottomSheet<void>(
@@ -41,6 +42,7 @@ class BabyPickerButton extends StatelessWidget {
               ),
         style: TextButton.styleFrom(
           padding: EdgeInsets.zero,
+          minimumSize: const Size(48, 48),
           alignment: Alignment.centerLeft,
         ),
         child: Row(
@@ -49,7 +51,16 @@ class BabyPickerButton extends StatelessWidget {
             Flexible(child: identity),
             if (showChevron) ...[
               const SizedBox(width: 8),
-              const Icon(Icons.expand_more),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: logPalette(context).actionTint,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const SizedBox.square(
+                  dimension: 28,
+                  child: Icon(Icons.expand_more, size: 24),
+                ),
+              ),
             ],
           ],
         ),

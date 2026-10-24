@@ -30,68 +30,69 @@ class LogHeader extends StatelessWidget {
       height: 1,
       letterSpacing: 0,
     );
-    return Row(
-      children: [
-        Expanded(
-          child: BabyPickerButton(
-            controller: controller,
-            showChevron: false,
-            identity: HeaderType(
-              controller.family!.babyName,
-              style: base.copyWith(fontSize: 26, fontWeight: FontWeight.w700),
+    return LayoutBuilder(
+      builder: (context, constraints) => Row(
+        children: [
+          Expanded(
+            child: BabyPickerButton(
+              controller: controller,
+              identity: HeaderType(
+                controller.family!.babyName,
+                style: base.copyWith(fontSize: 26, fontWeight: FontWeight.w700),
+              ),
             ),
           ),
-        ),
-        if (onChooseDay != null) ...[
-          const SizedBox(width: 20),
-          Flexible(
-            fit: FlexFit.tight,
-            child: TextButton(
-              key: const ValueKey('log-day-picker'),
-              onPressed: onChooseDay,
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(44, 44),
-                alignment: Alignment.centerRight,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: HeaderType(
-                      label,
-                      style: base.copyWith(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Semantics(
-                    label: DateFormat.yMMMMd().format(day),
-                    child: Transform.translate(
-                      // Center the numeral in the open calendar body.
-                      offset: Offset(0, -1.5 * iconScale),
-                      child: CustomPaint(
-                        size: Size(28 * iconScale, 32 * iconScale),
-                        painter: _CalendarDay(
-                          day.day,
-                          base.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          Directionality.of(context),
-                          iconScale,
+          if (onChooseDay != null) ...[
+            const SizedBox(width: 20),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth * .45),
+              child: TextButton(
+                key: const ValueKey('log-day-picker'),
+                onPressed: onChooseDay,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(44, 44),
+                  alignment: Alignment.centerRight,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: HeaderType(
+                        label,
+                        style: base.copyWith(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Semantics(
+                      label: DateFormat.yMMMMd().format(day),
+                      child: Transform.translate(
+                        // Center the numeral in the open calendar body.
+                        offset: Offset(0, -1.5 * iconScale),
+                        child: CustomPaint(
+                          size: Size(28 * iconScale, 32 * iconScale),
+                          painter: _CalendarDay(
+                            day.day,
+                            base.copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            Directionality.of(context),
+                            iconScale,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

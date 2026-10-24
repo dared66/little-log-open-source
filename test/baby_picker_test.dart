@@ -10,7 +10,6 @@ import 'package:little_log/activity_details.dart';
 import 'package:little_log/storage/repository.dart';
 import 'package:little_log/services/google_auth.dart';
 import 'package:little_log/services/google_drive.dart';
-import 'package:little_log/widgets/baby_picker.dart';
 import 'package:little_log/widgets/onboarding.dart';
 import 'support/test_fonts.dart';
 
@@ -187,6 +186,7 @@ void main() {
       }
 
       expect(find.text('Robin'), findsOneWidget);
+      expect(find.byKey(const ValueKey('baby-switcher')), findsNothing);
       expect(t.getTopLeft(find.text('Robin')).dx, 20);
       await tap(find.text('Settings').last);
       await snap('settings');
@@ -250,7 +250,18 @@ void main() {
       await tap(find.byTooltip('Close').last);
       for (final tab in ['Log', 'Settings', 'Log']) {
         await tap(find.text(tab).last);
-        await tap(find.byType(BabyPickerButton));
+        final switcher = find.byKey(const ValueKey('baby-switcher'));
+        expect(
+          find.descendant(
+            of: switcher,
+            matching: find.byIcon(Icons.expand_more),
+          ),
+          findsOneWidget,
+        );
+        expect(t.getSize(switcher).height, greaterThanOrEqualTo(48));
+        await tap(switcher);
+        expect(find.text('Switch baby'), findsOneWidget);
+        expect(find.text('Robyn'), findsWidgets);
         await tap(find.text('Alex').last);
         expect(c.family!.babyName, 'Alex');
         expect(find.text('Alex'), findsOneWidget);
