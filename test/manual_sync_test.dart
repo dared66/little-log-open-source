@@ -163,11 +163,11 @@ void main() {
     },
   );
   test(
-    'connecting Drive publishes the private family log and flushes existing records',
+    'explicit backup publishes the private family log and flushes existing records',
     () async {
       await repo.add(entry('existing', synced: true));
       auth.connected();
-      await c.sync(manual: true);
+      await c.publishFamily();
       expect(drive.creations, 1);
       expect(c.family!.isLocal, false);
       expect(drive.rows.keys, ['existing']);
@@ -203,7 +203,7 @@ void main() {
     () async {
       await repo.add(entry('pending'));
       drive.fail = true;
-      await c.sync(manual: true);
+      await c.publishFamily();
       expect(c.message, 'Drive is offline.');
       expect((await repo.feeds('family')).single.synced, false);
       drive.fail = false;
@@ -215,7 +215,7 @@ void main() {
   test(
     'missing Drive file keeps local entries and clears warning after recovery',
     () async {
-      await c.sync(manual: true);
+      await c.publishFamily();
       expect(c.lastSync, isNotNull);
       await repo.add(entry('pending'));
       drive.missing = true;
@@ -240,7 +240,7 @@ void main() {
     () async {
       auth.granted = false;
       await repo.add(entry('pending'));
-      await c.sync(manual: true);
+      await c.publishFamily();
       expect(c.message, contains('Connect Google Drive'));
       expect(drive.creations, 0);
       expect((await repo.feeds('family')).single.synced, false);

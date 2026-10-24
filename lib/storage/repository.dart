@@ -38,6 +38,23 @@ class Repository {
     });
   }
 
+  Future<Family> deferSyncedSetup(String pendingId, String returnId) =>
+      db.transaction((txn) async {
+        if (pendingId == returnId ||
+            await _settings.record('pendingSyncedSetup').get(txn) !=
+                pendingId) {
+          throw StateError('The pending setup changed. Reopen the log.');
+        }
+        final target = await _families.record(returnId).get(txn);
+        if (target == null) throw StateError('Choose an existing baby log.');
+        // Keep the new log and any Drive reference intact. A later explicit
+        // backup or sync resumes it without creating a duplicate.
+        await _settings.record('activeFamily').put(txn, returnId);
+        await _settings.record('pendingSyncedSetup').delete(txn);
+        await _settings.record('onboardingStep').put(txn, 'tour');
+        return Family.fromJson(target);
+      });
+
   Future<String> onboardingStep() async =>
       await _settings.record('onboardingStep').get(db) as String? ?? 'tour';
   Future<void> saveOnboardingStep(String step) async =>

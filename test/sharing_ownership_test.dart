@@ -35,6 +35,7 @@ Future<AppController> controller(String account) async {
   final auth = HarnessAuth(account);
   final c = AppController(repo, auth, SharingDrive(auth))..loading = false;
   await repo.saveFamily(log('Robin', account));
+  await repo.setLastSync('Robin', DateTime.utc(2026, 10, 20));
   c.family = (await repo.families()).single;
   await c.refresh();
   return c;
@@ -117,6 +118,7 @@ void main() {
     await t.runAsync(() async {
       final second = log('Alex', 'owner@example.com');
       await c.repository.saveFamily(second);
+      await c.repository.setLastSync(second.id, DateTime.utc(2026, 10, 20));
       c.family = second;
       await c.refresh();
     });

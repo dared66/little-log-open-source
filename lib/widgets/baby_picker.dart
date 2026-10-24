@@ -7,6 +7,17 @@ import '../models.dart';
 import '../storage/repository.dart';
 import 'onboarding.dart';
 
+Future<bool?> _createBaby(BuildContext context, AppController controller) =>
+    Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => OnboardingPage(
+          controller: controller,
+          initialStage: OnboardingStage.create,
+          addingBaby: true,
+        ),
+      ),
+    );
+
 class BabyPickerButton extends StatelessWidget {
   const BabyPickerButton({
     super.key,
@@ -136,6 +147,21 @@ class _BabyPickerState extends State<_BabyPicker> {
                         }
                       },
               ),
+            if (c.families.length < Repository.maxBabies) ...[
+              const SizedBox(height: LogSpacing.content),
+              OutlinedButton.icon(
+                onPressed: c.babyPickerBusy
+                    ? null
+                    : () async {
+                        final created = await _createBaby(context, c);
+                        if (created == true && context.mounted) {
+                          Navigator.pop(context);
+                        }
+                      },
+                icon: const Icon(Icons.add),
+                label: const Text('Add baby'),
+              ),
+            ],
             if (error != null) ...[
               const SizedBox(height: LogSpacing.content),
               Text(
@@ -223,6 +249,11 @@ class _ManageBabies extends StatelessWidget {
                     baby.babyName,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
+                  const SizedBox(height: LogSpacing.detail),
+                  Text(
+                    baby.storageLabel,
+                    style: TextStyle(color: logPalette(context).secondary),
+                  ),
                   const SizedBox(height: LogSpacing.label),
                   Text(
                     'Background color',
@@ -268,7 +299,7 @@ class _ManageBabies extends StatelessWidget {
                                 context: context,
                                 isScrollControlled: true,
                                 useSafeArea: true,
-                                builder: (_) => _AddBaby(
+                                builder: (_) => _RenameBaby(
                                   controller: controller,
                                   baby: baby,
                                 ),
@@ -296,12 +327,7 @@ class _ManageBabies extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: controller.babyPickerBusy
                   ? null
-                  : () => showModalBottomSheet<void>(
-                      context: context,
-                      isScrollControlled: true,
-                      useSafeArea: true,
-                      builder: (_) => _AddBaby(controller: controller),
-                    ),
+                  : () => _createBaby(context, controller),
               icon: const Icon(Icons.add),
               label: const Text('Add baby'),
             )
@@ -318,16 +344,16 @@ class _ManageBabies extends StatelessWidget {
   );
 }
 
-class _AddBaby extends StatefulWidget {
-  const _AddBaby({required this.controller, this.baby});
+class _RenameBaby extends StatefulWidget {
+  const _RenameBaby({required this.controller, required this.baby});
   final AppController controller;
-  final Family? baby;
+  final Family baby;
   @override
-  State<_AddBaby> createState() => _AddBabyState();
+  State<_RenameBaby> createState() => _RenameBabyState();
 }
 
-class _AddBabyState extends State<_AddBaby> {
-  late final name = TextEditingController(text: widget.baby?.babyName);
+class _RenameBabyState extends State<_RenameBaby> {
+  late final name = TextEditingController(text: widget.baby.babyName);
   final form = GlobalKey<FormState>();
   String? error;
 
@@ -340,11 +366,7 @@ class _AddBabyState extends State<_AddBaby> {
   Future<void> save() async {
     final c = widget.controller;
     if (c.babyPickerBusy || !form.currentState!.validate()) return;
-    await c.run(
-      () => widget.baby == null
-          ? c.createLocal('${name.text.trim()}’s family', name.text)
-          : c.renameBaby(widget.baby!, name.text),
-    );
+    await c.run(() => c.renameBaby(widget.baby, name.text));
     if (!mounted) return;
     if (c.message == null) {
       Navigator.pop(context);
@@ -373,7 +395,7 @@ class _AddBabyState extends State<_AddBaby> {
               children: [
                 Expanded(
                   child: Text(
-                    widget.baby == null ? 'Add baby' : 'Edit baby name',
+                    'Edit baby name',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                 ),
@@ -384,35 +406,7 @@ class _AddBabyState extends State<_AddBaby> {
                 ),
               ],
             ),
-            if (widget.baby != null)
-              const Text('Name changes apply on this device.'),
-            if (widget.baby == null) ...[
-              const SizedBox(height: LogSpacing.section),
-              OutlinedButton.icon(
-                onPressed: widget.controller.babyPickerBusy
-                    ? null
-                    : () async {
-                        final joined = await Navigator.of(context).push<bool>(
-                          MaterialPageRoute<bool>(
-                            builder: (_) => OnboardingPage(
-                              controller: widget.controller,
-                              initialStage: OnboardingStage.join,
-                            ),
-                          ),
-                        );
-                        if (joined == true && context.mounted) {
-                          Navigator.pop(context);
-                        }
-                      },
-                icon: const Icon(Icons.people_outline),
-                label: const Text('Join an existing baby log'),
-              ),
-              const Divider(height: 32),
-              Text(
-                'Create a new baby on this device',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ],
+            const Text('Name changes apply on this device.'),
             const SizedBox(height: LogSpacing.field),
             TextFormField(
               controller: name,
@@ -429,13 +423,7 @@ class _AddBabyState extends State<_AddBaby> {
             const SizedBox(height: LogSpacing.field),
             FilledButton(
               onPressed: widget.controller.babyPickerBusy ? null : save,
-              child: Text(
-                widget.controller.working
-                    ? 'Saving…'
-                    : widget.baby == null
-                    ? 'Add baby'
-                    : 'Save name',
-              ),
+              child: Text(widget.controller.working ? 'Saving…' : 'Save name'),
             ),
             if (error != null) ...[
               const SizedBox(height: LogSpacing.content),

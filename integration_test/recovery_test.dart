@@ -81,8 +81,9 @@ void main() {
     await tap(find.text('Settings').last);
     await tap(find.text('Manage baby'));
     await tap(find.text('Add baby'));
+    await tap(find.text('This device'));
     await t.enterText(find.byType(TextFormField), 'QA Alex');
-    await tap(find.widgetWithText(FilledButton, 'Add baby'));
+    await tap(find.widgetWithText(FilledButton, 'Create baby log'));
     expect(c.family!.babyName, 'QA Alex');
     expect(c.feeds, isEmpty);
     expect(c.timers, isEmpty);

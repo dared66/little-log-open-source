@@ -367,7 +367,7 @@ class AppController extends ChangeNotifier {
       await _ensureBabyBackground(created.id);
       await refresh();
     }
-    await sync(manual: true);
+    await publishFamily();
     if (message != null || family?.isLocal != false || lastSync == null) {
       throw StateError(
         message ??
@@ -391,6 +391,33 @@ class AppController extends ChangeNotifier {
     await setOnboardingStep('tour');
     onboardingSyncedSetup = false;
     notifyListeners();
+  }
+
+  Future<void> deferSyncedSetup({String? returnToFamilyId}) async {
+    if (!onboardingSyncedSetup || babyPickerBusy) {
+      throw StateError('Please wait for the current action to finish.');
+    }
+    final pending = family!;
+    final others = families.where((baby) => baby.id != pending.id);
+    final target =
+        others.where((baby) => baby.id == returnToFamilyId).firstOrNull ??
+        others.firstOrNull;
+    if (target == null) {
+      throw StateError('Finish setting up your first baby log.');
+    }
+    switchingBaby = true;
+    notifyListeners();
+    try {
+      family = await repository.deferSyncedSetup(pending.id, target.id);
+      onboardingSyncedSetup = false;
+      onboardingInvitePending = false;
+      onboardingStep = 'tour';
+      message = null;
+      await refresh();
+    } finally {
+      switchingBaby = false;
+      notifyListeners();
+    }
   }
 
   Future<void> select(Family selected) async {
@@ -460,7 +487,8 @@ class AppController extends ChangeNotifier {
     await refresh();
   }
 
-  Future<void> publishFamily() => sync(manual: true);
+  Future<void> publishFamily() =>
+      _sync(manual: true, expectedFamilyId: family?.id, publishLocal: true);
 
   /// An explicit backup applies only to the log selected when it was requested.
   /// Ordinary sign-in (including invitation acceptance) never calls this path.
@@ -471,7 +499,7 @@ class AppController extends ChangeNotifier {
     final session = auth.captureAccount();
     if (!auth.driveConnected) await auth.authorize();
     auth.checkAccount(session);
-    await sync(manual: true, expectedFamilyId: selectedId);
+    await _sync(manual: true, expectedFamilyId: selectedId, publishLocal: true);
   }
 
   Future<void> join(String driveFileId, {String? expectedFamilyId}) async {
@@ -1309,7 +1337,14 @@ class AppController extends ChangeNotifier {
   final _pendingTimerSync = <String>{};
   bool _syncNeedsRefresh = false;
 
-  Future<void> sync({bool manual = false, String? expectedFamilyId}) async {
+  Future<void> sync({bool manual = false, String? expectedFamilyId}) =>
+      _sync(manual: manual, expectedFamilyId: expectedFamilyId);
+
+  Future<void> _sync({
+    bool manual = false,
+    String? expectedFamilyId,
+    bool publishLocal = false,
+  }) async {
     // A pull-to-refresh must wait for an in-flight upload, then flush anything
     // logged during that upload. Automatic ticks simply join the active pass.
     while (_syncTask != null) {
@@ -1324,7 +1359,7 @@ class AppController extends ChangeNotifier {
     _syncNeedsRefresh = false;
     final task = Future<void>.microtask(() async {
       try {
-        await _syncBatch(manual: manual);
+        await _syncBatch(manual: manual, publishLocal: publishLocal);
       } finally {
         syncing = false;
         if (_syncNeedsRefresh) {
@@ -1344,7 +1379,10 @@ class AppController extends ChangeNotifier {
     }
   }
 
-  Future<void> _syncBatch({required bool manual}) async {
+  Future<void> _syncBatch({
+    required bool manual,
+    required bool publishLocal,
+  }) async {
     final selected = family;
     // Persisted unsynced records are the outbox, including after a restart.
     // Only already-connected logs belonging to this account are eligible.
@@ -1360,7 +1398,7 @@ class AppController extends ChangeNotifier {
     }
     if (selected != null) {
       _pendingTimerSync.remove(selected.id);
-      await _syncOnce(selected, manual: manual);
+      await _syncOnce(selected, manual: manual, publishLocal: publishLocal);
     }
     while (_pendingTimerSync.isNotEmpty) {
       final requested = Set<String>.of(_pendingTimerSync);
@@ -1372,7 +1410,11 @@ class AppController extends ChangeNotifier {
     }
   }
 
-  Future<void> _syncOnce(Family target, {required bool manual}) async {
+  Future<void> _syncOnce(
+    Family target, {
+    required bool manual,
+    bool publishLocal = false,
+  }) async {
     if (switchingBaby) return;
     if (!_foreground && !manual) return;
     final retryAt = _syncRetryAt[target.id];
@@ -1380,6 +1422,12 @@ class AppController extends ChangeNotifier {
       return;
     }
     var selected = target;
+    // Refresh and sign-in never change the user's storage choice. Only an
+    // explicit backup or Drive creation may publish this selected local log.
+    if (selected.isLocal && !publishLocal) {
+      if (manual && family?.id == selected.id) message = null;
+      return;
+    }
     final account = auth.user;
     if (account == null) {
       if (manual) {
@@ -1388,8 +1436,6 @@ class AppController extends ChangeNotifier {
       }
       return;
     }
-    // Signing in to accept an invitation must not publish a device-only baby.
-    if (selected.isLocal && !manual) return;
     if (!selected.isLocal && selected.accountId != account.id) {
       if (manual) {
         message =
@@ -1399,7 +1445,7 @@ class AppController extends ChangeNotifier {
       return;
     }
     _syncNeedsRefresh = true;
-    message = null;
+    if (family?.id == selected.id) message = null;
     notifyListeners();
     try {
       final session = auth.captureAccount(expectedAccountId: account.id);
@@ -1452,8 +1498,8 @@ class AppController extends ChangeNotifier {
       if (family?.id == selected.id) unavailableDriveFileId = null;
     } catch (e, stack) {
       if (kDebugMode) debugPrint('Sync failed (${e.runtimeType}): $stack');
-      message = friendlyError(e);
       if (family?.id == selected.id) {
+        message = friendlyError(e);
         unavailableDriveFileId = e is CloudException && e.status == 404
             ? selected.driveFileId
             : null;
