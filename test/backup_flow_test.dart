@@ -175,6 +175,41 @@ void runBackupFlow({bool native = false}) {
       },
     );
   }
+  test(
+    'refresh never backs up device-only logs after Google sign-in',
+    () async {
+      final c = await fixture();
+      final before = {
+        for (final baby in c.families)
+          baby.id: (await c.repository.feeds(
+            baby.id,
+            includeDeleted: true,
+          )).map((row) => row.toJson()).toList(),
+      };
+      await c.auth.signIn();
+      await c.auth.authorize();
+      for (final baby in List<Family>.of(c.families)) {
+        await c.select(baby);
+        await c.sync(manual: true);
+      }
+      final drive = c.drive as BackupDrive;
+      expect(drive.creations, 0);
+      expect(drive.writes, 0);
+      expect((await c.repository.families()).every((f) => f.isLocal), true);
+      for (final baby in c.families) {
+        expect(
+          (await c.repository.feeds(
+            baby.id,
+            includeDeleted: true,
+          )).map((row) => row.toJson()).toList(),
+          before[baby.id],
+        );
+      }
+      c.dispose();
+      await c.repository.db.close();
+    },
+  );
+
   test('invitation sign-in leaves every device-only log private', () async {
     final c = await fixture();
     await c.auth.signIn();

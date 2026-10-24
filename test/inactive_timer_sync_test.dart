@@ -183,7 +183,30 @@ void main() {
     expect(drive.uploadedTo, [babyA.id]);
     expect((await repo.feeds(babyA.id)).single.synced, isTrue);
     expect(c.family!.id, babyB.id);
+    expect(c.message, 'Drive is offline.');
   });
+
+  test(
+    'another baby failure does not replace the selected log status',
+    () async {
+      drive.unavailable.add(babyA.id);
+      await repo.add(
+        Feeding(
+          id: 'pending-a',
+          familyId: babyA.id,
+          at: start,
+          method: 'bottle',
+          amountMl: 90,
+        ),
+      );
+      await c.sync(manual: true);
+      expect(c.family!.id, babyB.id);
+      expect(c.lastSync, isNotNull);
+      expect(c.message, isNull);
+      expect((await repo.feeds(babyA.id)).single.synced, isFalse);
+      expect(drive.creations, 0);
+    },
+  );
 
   test(
     'offline completion survives restart and retries with a local baby selected',

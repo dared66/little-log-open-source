@@ -394,7 +394,7 @@ void main() {
       final original = sample('bottle', c.family!.id);
       await c.repository.add(original);
       auth.user = fake.Account();
-      await c.sync(manual: true);
+      await c.publishFamily();
       await c.addFeed(
         at: at,
         method: 'bottle',

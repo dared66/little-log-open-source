@@ -243,7 +243,8 @@ void main() {
           await back();
           await tap('Add baby');
           await snap('Add baby');
-          await tap('Add baby');
+          await tap('This device');
+          await tap('Create baby log');
           await snap('Add baby / validation');
           await back();
           await tap('Delete baby');

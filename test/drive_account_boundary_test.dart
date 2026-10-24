@@ -224,11 +224,11 @@ void main() {
         ..family = local;
       await repo.saveFamily(local);
       await repo.add(feed('history'));
-      await c.sync(manual: true);
+      await c.publishFamily();
       expect(c.family!.isLocal, isTrue);
       expect((await repo.feeds(local.id)).single.id, 'history');
       auth.user = TestAccount('a');
-      await c.sync(manual: true);
+      await c.publishFamily();
       expect(c.family!.accountId, 'a');
       expect((await repo.feeds(local.id)).single.synced, isTrue);
       expect(server.fileCreates, 1);

@@ -69,7 +69,17 @@ After app changes, refresh and launch the latest build on both the Android emula
 
 Use emulators and simulators for routine builds, installation, launches, and QA. Install on a physical phone only when the user explicitly requests it. The user explicitly authorized installing build 51 on their iPhone on October 9, 2026. Routine QA remains emulator-only.
 
-After a build has been uploaded to TestFlight, use the next build number for subsequent changes and installations. Do not reuse an uploaded build number. Build 58 was uploaded and distributed to Owner testing, Family beta, Reddit Beta users and Open Beta on October 15, 2026, from `932af77e873d41395583538e7e4ccb593dd05384`. It preserves build 57's app code; a new build number was required because Apple prohibits external distribution of the internal-only build 57. Builds 59 and 60 were uploaded to Owner testing on October 23, 2026. Neither has been distributed externally. Current development uses version 1.0.0+61. Do not advance the number merely for release bookkeeping. Build 58 excludes all work from the separate telemetry/anonymous diagnostics branch. This standing user instruction was set October 9, 2026 and supersedes the earlier published-baseline rule.
+After a build has been uploaded to TestFlight, use the next build number for subsequent changes and installations. Do not reuse an uploaded build number. Build 58 was uploaded and distributed to Owner testing, Family beta, Reddit Beta users and Open Beta on October 15, 2026, from `932af77e873d41395583538e7e4ccb593dd05384`. It preserves build 57's app code; a new build number was required because Apple prohibits external distribution of the internal-only build 57. Builds 59–61 were uploaded to Owner testing on October 23, 2026. None has been distributed externally. Current development uses version 1.0.0+62. Do not advance the number merely for release bookkeeping. Build 58 excludes all work from the separate telemetry/anonymous diagnostics branch. This standing user instruction was set October 9, 2026 and supersedes the earlier published-baseline rule.
+
+# Complete workflow changes
+
+When changing a workflow, trace every entry point and reuse the same implementation.
+First-baby setup, Add baby in Settings, and Add baby in the baby switcher must use
+one creation flow with the same Drive/local choice and local-storage warning.
+Cover signed-out and connected accounts, cancellation, retries, capacity limits,
+and preservation of unrelated logs. Review the surrounding navigation and failure
+states before calling the change complete; fixing one screen is not sufficient.
+This standing user directive was clarified October 23, 2026.
 
 # UI writing
 

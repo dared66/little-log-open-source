@@ -19,10 +19,12 @@ class OnboardingPage extends StatefulWidget {
     required this.controller,
     this.initialStage = OnboardingStage.tour,
     this.invitation,
+    this.addingBaby = false,
   });
   final AppController controller;
   final OnboardingStage initialStage;
   final InvitationLink? invitation;
+  final bool addingBaby;
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
@@ -98,7 +100,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       loadedEmail = null;
       selectedLog = null;
     }
-    unawaited(widget.controller.setOnboardingStep(next.name));
+    if (!widget.addingBaby) {
+      unawaited(widget.controller.setOnboardingStep(next.name));
+    }
   });
 
   Future<void> act(Future<void> Function() action) async {
@@ -312,9 +316,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
         if (mounted) findLogs();
       });
     }
-    final canLeavePage =
-        widget.initialStage == OnboardingStage.join ||
-        stage == OnboardingStage.tour;
+    final canLeavePage = widget.addingBaby
+        ? stage != OnboardingStage.join
+        : widget.initialStage == OnboardingStage.join ||
+              stage == OnboardingStage.tour;
     final showBack =
         stage != OnboardingStage.tour &&
         !(c.onboardingSyncedSetup && stage == OnboardingStage.create);
@@ -396,7 +401,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (stage == OnboardingStage.local) go(OnboardingStage.create);
       return;
     }
-    if (widget.initialStage == OnboardingStage.join) {
+    if (widget.addingBaby && stage == OnboardingStage.join) {
+      go(OnboardingStage.create);
+    } else if (widget.addingBaby ||
+        widget.initialStage == OnboardingStage.join) {
       Navigator.maybePop(context);
     } else {
       go(OnboardingStage.tour);
@@ -629,11 +637,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
           style: creationButtonStyle,
           onPressed: busy
               ? null
-              : () {
+              : () async {
                   setState(() => nameSubmitted = true);
                   if (!form.currentState!.validate()) return;
                   FocusManager.instance.primaryFocus?.unfocus();
-                  act(() async {
+                  var created = false;
+                  await act(() async {
                     if (!localOnly) {
                       await c.createSynced(baby.text);
                     } else if (c.onboardingSyncedSetup) {
@@ -644,7 +653,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         baby.text,
                       );
                     }
+                    created = true;
                   });
+                  if (created && mounted && widget.addingBaby) {
+                    Navigator.pop(context, true);
+                  }
                 },
           child: Text(
             busy
@@ -653,6 +666,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ? 'Retry saving to Google Drive'
                 : 'Create baby log',
           ),
+        ),
+      ],
+      if (widget.addingBaby && !c.onboardingSyncedSetup) ...[
+        const SizedBox(height: 12),
+        TextButton(
+          onPressed: busy ? null : () => go(OnboardingStage.join),
+          child: const Text('Join an existing baby log'),
         ),
       ],
       if (c.onboardingSyncedSetup && c.family?.isLocal == false) ...[
