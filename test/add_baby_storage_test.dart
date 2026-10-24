@@ -222,11 +222,30 @@ void main() {
           await t.pumpAndSettle();
         }
 
+        Future<void> waitFor(bool Function() ready) async {
+          final deadline = DateTime.now().add(const Duration(seconds: 10));
+          while (!ready() && DateTime.now().isBefore(deadline)) {
+            await t.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 20)),
+            );
+            await t.pump();
+          }
+          expect(
+            ready(),
+            isTrue,
+            reason: 'The recovery action did not complete.',
+          );
+          await t.pumpAndSettle();
+        }
+
         await tap(find.byKey(const ValueKey('baby-switcher')));
         await tap(find.text('Add baby'));
         await t.enterText(find.byType(TextFormField), 'Sam');
         drive.fail = true;
         await tap(find.text('Create baby log'));
+        await waitFor(
+          () => find.text('Retry saving to Google Drive').evaluate().isNotEmpty,
+        );
         expect(c.onboardingSyncedSetup, isTrue);
         expect(c.family!.isLocal, isFalse);
         expect(drive.creations, 1);
@@ -253,6 +272,7 @@ void main() {
         } else {
           await tap(find.text('Finish later'));
         }
+        await waitFor(() => find.byType(OnboardingPage).evaluate().isEmpty);
         expect(find.byType(OnboardingPage), findsNothing);
         expect(c.onboardingSyncedSetup, isFalse);
         expect(before.keys, contains(c.family!.id));
