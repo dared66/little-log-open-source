@@ -125,6 +125,43 @@ void runBackupFlow({bool native = false}) {
     skip: AppConfig.configured,
   );
 
+  testWidgets(
+    'empty Drive log without a completed sync offers backup retry',
+    (t) async {
+      final c = (await t.runAsync(fixture))!;
+      final auth = c.auth as BackupAuth;
+      auth.user = BackupAccount();
+      auth.driveConnected = true;
+      const empty = Family(
+        id: 'empty',
+        name: 'Family',
+        babyName: 'Sam',
+        accountId: 'account',
+        driveFileId: 'empty-file',
+      );
+      await t.runAsync(() async {
+        await c.repository.saveFamily(empty);
+        c.family = empty;
+        await c.refresh();
+      });
+      expect(c.pendingCount, 0);
+      expect(c.lastSync, isNull);
+      await t.pumpWidget(
+        MaterialApp(
+          theme: littleLogTheme(),
+          home: Scaffold(body: FamilyPanel(controller: c)),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(find.text('Backup incomplete'), findsOneWidget);
+      expect(find.text('Retry backup'), findsOneWidget);
+      await t.pumpWidget(const SizedBox());
+      c.dispose();
+      await t.runAsync(c.repository.db.close);
+    },
+    skip: !AppConfig.configured,
+  );
+
   for (final state in [
     'signed out',
     'returning account',

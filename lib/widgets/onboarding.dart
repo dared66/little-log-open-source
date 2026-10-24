@@ -37,6 +37,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final errorKey = GlobalKey();
   final confirmationKey = GlobalKey();
   late OnboardingStage stage = widget.initialStage;
+  late final String? returnToFamilyId;
+
+  bool get canDeferSetup =>
+      widget.controller.onboardingSyncedSetup &&
+      widget.controller.families.any(
+        (baby) => baby.id != widget.controller.family?.id,
+      );
   bool busy = false;
   bool nameSubmitted = false;
   bool loadingLogs = false;
@@ -49,6 +56,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   void initState() {
     super.initState();
+    // Capture the original selection before creating the additional log.
+    returnToFamilyId = widget.controller.family?.id;
     widget.controller.auth.addListener(accountChanged);
     if (widget.initialStage == OnboardingStage.tour) {
       stage = OnboardingStage.values.firstWhere(
@@ -322,7 +331,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
               stage == OnboardingStage.tour;
     final showBack =
         stage != OnboardingStage.tour &&
-        !(c.onboardingSyncedSetup && stage == OnboardingStage.create);
+        !(c.onboardingSyncedSetup &&
+            !canDeferSetup &&
+            stage == OnboardingStage.create);
     return PopScope(
       canPop: !busy && !c.onboardingSyncedSetup && canLeavePage,
       onPopInvokedWithResult: (didPop, _) {
@@ -395,10 +406,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ),
   ];
 
+  Future<void> finishLater() async {
+    var deferred = false;
+    await act(() async {
+      await widget.controller.deferSyncedSetup(
+        returnToFamilyId: returnToFamilyId,
+      );
+      deferred = true;
+    });
+    if (deferred && mounted && widget.addingBaby) Navigator.pop(context, false);
+  }
+
   void back() {
     if (busy) return;
     if (widget.controller.onboardingSyncedSetup) {
-      if (stage == OnboardingStage.local) go(OnboardingStage.create);
+      if (canDeferSetup) {
+        finishLater();
+      } else if (stage == OnboardingStage.local) {
+        go(OnboardingStage.create);
+      }
       return;
     }
     if (widget.addingBaby && stage == OnboardingStage.join) {
@@ -673,6 +699,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
         TextButton(
           onPressed: busy ? null : () => go(OnboardingStage.join),
           child: const Text('Join an existing baby log'),
+        ),
+      ],
+      if (canDeferSetup) ...[
+        const SizedBox(height: 12),
+        TextButton(
+          onPressed: busy ? null : finishLater,
+          child: const Text('Finish later'),
         ),
       ],
       if (c.onboardingSyncedSetup && c.family?.isLocal == false) ...[

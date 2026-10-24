@@ -1115,10 +1115,7 @@ class _FamilyPanelState extends State<FamilyPanel> {
       final user = c.auth.user;
       final backupAttempt =
           backupAttemptId != null && backupAttemptId == c.family?.id;
-      final incompleteBackup =
-          c.family?.isLocal == false &&
-          c.lastSync == null &&
-          c.pendingCount > 0;
+      final incompleteBackup = c.family?.isLocal == false && c.lastSync == null;
       final needsBackup =
           c.family?.isLocal == true || backupAttempt || incompleteBackup;
       final fileId = c.family?.driveFileId;

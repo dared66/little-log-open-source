@@ -194,6 +194,105 @@ void main() {
     },
   );
 
+  for (final exit in ['back', 'finish later', 'restart']) {
+    testWidgets(
+      'Failed additional Drive setup can $exit without trapping existing logs',
+      (t) async {
+        var c = (await t.runAsync(fixture))!;
+        final repo = c.repository;
+        var auth = c.auth as BackupAuth;
+        auth.user = Account();
+        auth.connected();
+        var drive = c.drive as BackupDrive;
+        final originalId = c.family!.id;
+        final before = {
+          for (final baby in c.families)
+            baby.id: (await t.runAsync(
+              () => repo.feeds(baby.id, includeDeleted: true),
+            ))!.map((row) => row.toJson()).toList(),
+        };
+        await t.pumpWidget(LittleLogApp(controller: c));
+        Future<void> tap(Finder target) async {
+          await t.ensureVisible(target);
+          await t.pumpAndSettle();
+          await t.runAsync(() async {
+            await t.tap(target);
+            await Future<void>.delayed(const Duration(milliseconds: 50));
+          });
+          await t.pumpAndSettle();
+        }
+
+        await tap(find.byKey(const ValueKey('baby-switcher')));
+        await tap(find.text('Add baby'));
+        await t.enterText(find.byType(TextFormField), 'Sam');
+        drive.fail = true;
+        await tap(find.text('Create baby log'));
+        expect(c.onboardingSyncedSetup, isTrue);
+        expect(c.family!.isLocal, isFalse);
+        expect(drive.creations, 1);
+        final pending = c.family!;
+        if (exit == 'restart') {
+          await t.pumpWidget(const SizedBox());
+          c.dispose();
+          auth = BackupAuth()..ready = true;
+          auth.user = Account();
+          auth.driveConnected = true;
+          drive = BackupDrive(auth)..fail = true;
+          c = AppController(repo, auth, drive);
+          await t.runAsync(c.initialize);
+          await t.pumpWidget(LittleLogApp(controller: c));
+          await t.pumpAndSettle();
+          expect(c.onboardingSyncedSetup, isTrue);
+        }
+        if (exit == 'back') {
+          await t.runAsync(() async {
+            await t.binding.handlePopRoute();
+            await Future<void>.delayed(const Duration(milliseconds: 50));
+          });
+          await t.pumpAndSettle();
+        } else {
+          await tap(find.text('Finish later'));
+        }
+        expect(find.byType(OnboardingPage), findsNothing);
+        expect(c.onboardingSyncedSetup, isFalse);
+        expect(before.keys, contains(c.family!.id));
+        if (exit != 'restart') expect(c.family!.id, originalId);
+        expect(await t.runAsync(repo.pendingSyncedSetup), isNull);
+        expect(await t.runAsync(repo.activeFamilyId), c.family!.id);
+        expect(
+          c.families.singleWhere((f) => f.id == pending.id).driveFileId,
+          pending.driveFileId,
+        );
+        for (final id in before.keys) {
+          expect(
+            (await t.runAsync(
+              () => repo.feeds(id, includeDeleted: true),
+            ))!.map((row) => row.toJson()).toList(),
+            before[id],
+          );
+        }
+        // Existing babies remain usable while Drive is still unavailable.
+        await t.runAsync(() => c.addDiaper(kind: 'wet', at: DateTime.now()));
+        expect(c.feeds.any((r) => r.method == 'diaper'), isTrue);
+        final creations = drive.creations;
+        drive.fail = false;
+        await t.runAsync(() async {
+          await c.sync();
+          await c.select(pending);
+          await c.sync(manual: true);
+        });
+        expect(c.lastSync, isNotNull);
+        expect(c.family!.driveFileId, pending.driveFileId);
+        expect(c.families.length, 3);
+        expect(drive.creations, creations);
+        expect(t.takeException(), isNull);
+        await t.pumpWidget(const SizedBox());
+        c.dispose();
+        await t.runAsync(repo.db.close);
+      },
+    );
+  }
+
   testWidgets('Add baby cancellation and joining keep existing logs intact', (
     t,
   ) async {

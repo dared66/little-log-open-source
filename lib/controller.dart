@@ -393,6 +393,33 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> deferSyncedSetup({String? returnToFamilyId}) async {
+    if (!onboardingSyncedSetup || babyPickerBusy) {
+      throw StateError('Please wait for the current action to finish.');
+    }
+    final pending = family!;
+    final others = families.where((baby) => baby.id != pending.id);
+    final target =
+        others.where((baby) => baby.id == returnToFamilyId).firstOrNull ??
+        others.firstOrNull;
+    if (target == null) {
+      throw StateError('Finish setting up your first baby log.');
+    }
+    switchingBaby = true;
+    notifyListeners();
+    try {
+      family = await repository.deferSyncedSetup(pending.id, target.id);
+      onboardingSyncedSetup = false;
+      onboardingInvitePending = false;
+      onboardingStep = 'tour';
+      message = null;
+      await refresh();
+    } finally {
+      switchingBaby = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> select(Family selected) async {
     if (babyPickerBusy || selected.id == family?.id) return;
     switchingBaby = true;
