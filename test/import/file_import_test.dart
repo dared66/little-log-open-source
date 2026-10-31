@@ -16,6 +16,7 @@ import 'package:little_log/widgets/import_page.dart';
 import '../support/nara_export_fixture.dart';
 import '../support/nara_csv_fixture.dart';
 import '../support/nara_full_csv_fixture.dart';
+import '../support/nara_medical_csv_fixture.dart';
 
 class FailingProviderFile extends XFile {
   FailingProviderFile({this.failLength = false, this.overflow = false})
@@ -284,6 +285,81 @@ void main() {
     },
   );
 
+  for (final entry in {
+    'empty': '',
+    'note-only': 'Synthetic medical note\nSecond line, "quoted" 👶',
+  }.entries) {
+    testWidgets('${entry.key} medical row requires consent and saves its exclusion report', (t) async {
+      await open(t, babyName: 'Schema Baby');
+      final raw = naraMedicalCsvFixture(note: entry.value, medicalRow: 240);
+      picker = () async => ImportFile('nara-medical.csv', raw);
+      await tap(t, 'Choose file');
+      expect(find.text('Review import'), findsOneWidget);
+      expect(await records(t), isEmpty);
+      FilledButton importButton() => t.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Import these entries'),
+      );
+      expect(importButton().onPressed, isNull);
+      await tap(t, '1 entry not imported');
+      expect(find.text('Row 240 · Medical'), findsOneWidget);
+      expect(find.textContaining('Any notes remain in the original export'), findsOneWidget);
+      final consent = find.byKey(
+        const ValueKey('Import supported entries only-true'),
+      );
+      await t.ensureVisible(consent);
+      await t.tap(consent);
+      await settle(t);
+      expect(importButton().onPressed, isNotNull);
+      expect(await records(t), isEmpty);
+      // Selecting another file must reset consent, even for identical contents.
+      await tap(t, 'Change file');
+      expect(importButton().onPressed, isNull);
+      await t.ensureVisible(consent);
+      await t.tap(consent);
+      await settle(t);
+      await tap(t, 'Import these entries');
+      final saved = await records(t);
+      expect(saved, hasLength(239));
+      expect(saved.every((r) => r.method == 'diaper'), true);
+      final reports = await t.runAsync(
+        () => c.repository.importReports(c.family!.id),
+      );
+      expect(reports!.single['added'], 239);
+      final issue = (reports.single['issues'] as List).single as Map;
+      expect(issue['row'], 240);
+      expect(issue['type'], 'Medical');
+      expect(issue['recordId'], 'medical-entry');
+      expect(issue['requiresConsent'], true);
+      await tap(t, 'Import history');
+      await tap(t, 'Nara Baby CSV');
+      await tap(t, '1 entry not imported');
+      expect(find.text('Row 240 · Medical'), findsOneWidget);
+      await tap(t, 'Choose file');
+      expect(find.text('239 already imported'), findsOneWidget);
+      expect(find.text('Import these entries'), findsNothing);
+      expect(await records(t), hasLength(239));
+    });
+  }
+
+  testWidgets('a malformed medical replacement clears the prior recoverable preview', (t) async {
+    await open(t, babyName: 'Schema Baby');
+    await select(t, contents: naraMedicalCsvFixture(note: 'Synthetic note only'));
+    expect(find.text('Review import'), findsOneWidget);
+    await select(
+      t,
+      contents: naraMedicalCsvFixture(
+        medical: {'Temperature': '37', 'Temperature Unit': 'K'},
+      ),
+    );
+    expect(find.textContaining('Unknown temperature unit'), findsOneWidget);
+    expect(find.text('Import these entries'), findsNothing);
+    expect(await records(t), isEmpty);
+    expect(
+      await t.runAsync(() => c.repository.importReports(c.family!.id)),
+      isEmpty,
+    );
+  });
+
   testWidgets('wrong baby is rejected with no writes', (t) async {
     await open(t);
     await select(t, contents: naraExportFixture().replaceFirst('Robin', 'Sam'));
@@ -487,3 +563,4 @@ void main() {
     },
   );
 }
+
