@@ -8,6 +8,7 @@ import '../test/import/import_edit_provenance_test.dart' as provenance;
 import '../test/import/nara_csv_test.dart' as csv;
 import '../test/import/nara_full_csv_test.dart' as full_csv;
 import '../test/import/import_storage_test.dart' as storage;
+import '../test/import/nara_medical_recovery_test.dart' as medical_recovery;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +16,7 @@ void main() {
   csv.main();
   full_csv.main();
   storage.main();
+  medical_recovery.main();
   sync.main();
   provenance.main();
   portableWidgetChecks(files.main);

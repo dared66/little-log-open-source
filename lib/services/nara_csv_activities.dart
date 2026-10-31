@@ -420,4 +420,3 @@ class NaraCsvActivities {
     return result;
   }
 }
-

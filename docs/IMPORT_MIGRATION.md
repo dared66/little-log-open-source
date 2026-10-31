@@ -62,4 +62,3 @@ Build numbers stay unchanged during development. No production log, Drive file, 
 The native picker test selects a local synthetic file. Expired provider access, interrupted streams, and misleading file sizes are covered with simulated provider failures; a live iCloud/Google Drive file-provider download is not verified by those tests. Two-device sync tests use an isolated CSV-backed fake cloud rather than a production account.
 
 Build release artifacts in a separate checkout from concurrent debug builds. Run `flutter build apk --release` with dependency/plugin regeneration enabled; `--no-pub` can retain debug registration for integration_test while the release Gradle configuration excludes that plugin. iOS release validation compiles without signing; simulator runs are debug builds and are not a signed TestFlight installation.
-
