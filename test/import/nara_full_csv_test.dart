@@ -10,6 +10,7 @@ import 'package:little_log/services/history_import.dart';
 import 'package:little_log/services/sync_service.dart';
 import 'package:little_log/storage/repository.dart';
 import '../support/nara_full_csv_fixture.dart';
+import '../support/nara_medical_csv_fixture.dart';
 import 'import_sync_test.dart' show CsvCloud;
 
 const baby = Family(id: 'full-csv', name: 'Synthetic', babyName: 'Schema Baby');
@@ -41,6 +42,197 @@ ImportPlan preview(String text, [List<Feeding> existing = const []]) =>
     HistoryImport.preview(text, baby, existing, includeUnassignedPumps: true);
 
 void main() {
+
+  for (final entry in {
+    'empty': '',
+    'note-only': 'Synthetic medical note\nSecond line, "quoted" 👶',
+  }.entries) {
+    test('${entry.key} medical row 240 is excluded without losing valid rows', () {
+      final text = naraMedicalCsvFixture(note: entry.value, medicalRow: 240);
+      final plan = preview(text);
+      expect(plan.activityCount, 239);
+      expect(plan.needsConsent, true);
+      expect(plan.removals, isEmpty);
+      expect(plan.issues, hasLength(1));
+      final issue = plan.issues.single;
+      expect(issue.row, 240);
+      expect(issue.type, 'Medical');
+      expect(issue.recordId, 'medical-entry');
+      expect(issue.time, '2026-10-13T12:03:58.000Z');
+      expect(issue.requiresConsent, true);
+      expect(issue.reason, contains('no medication or temperature'));
+      expect(issue.reason, contains('original export'));
+      expect(plan.additions.every((r) => r.method == 'diaper'), true);
+      final valid = preview(
+        naraMedicalCsvFixture(
+          note: entry.value,
+          medicalRow: 240,
+          medical: {'Medication': 'Synthetic syrup, 1 (ML)'},
+        ),
+      );
+      expect(
+        snapshotFingerprint(plan.additions),
+        snapshotFingerprint(
+          valid.additions.where((r) => r.method == 'diaper').toList(),
+        ),
+      );
+      final repeated = preview(text, plan.additions);
+      expect(repeated.additions, isEmpty);
+      expect(repeated.duplicates, 239);
+      expect(repeated.issues.single.toJson(), issue.toJson());
+      expect(repeated.needsConsent, true);
+    });
+  }
+
+  test('an export containing only an empty medical entry has no additions', () {
+    final text = rewrite(
+      (rows) => rows.removeWhere((r) => r['Type'] != 'Medical'),
+      input: naraMedicalCsvFixture(note: 'Synthetic note only'),
+    );
+    final plan = preview(text);
+    expect(plan.additions, isEmpty);
+    expect(plan.activityCount, 0);
+    expect(plan.issues, hasLength(1));
+    expect(plan.needsConsent, true);
+  });
+
+  for (final invalid in <String, Map<String, String>>{
+    'invalid dose': {'Medication': 'Synthetic syrup, NaN (ML)'},
+    'negative dose': {'Medication': 'Synthetic syrup, -1 (ML)'},
+    'unknown medication unit': {'Medication': 'Synthetic syrup, 1 (XYZ)'},
+    'blank medication name': {'Medication': ' \n '},
+    'temperature without unit': {'Temperature': '37'},
+    'unit without temperature': {'Temperature Unit': 'C'},
+    'invalid temperature': {'Temperature': 'NaN', 'Temperature Unit': 'C'},
+    'negative temperature': {'Temperature': '-1', 'Temperature Unit': 'C'},
+    'zero temperature': {'Temperature': '0', 'Temperature Unit': 'C'},
+    'unknown temperature unit': {'Temperature': '37', 'Temperature Unit': 'K'},
+  }.entries) {
+    test('${invalid.key} remains fatal even with partial-import consent', () {
+      expect(
+        () => HistoryImport.preview(
+          naraMedicalCsvFixture(medical: invalid.value),
+          baby,
+          [],
+          allowPartial: true,
+        ),
+        throwsFormatException,
+      );
+    });
+  }
+
+  test('empty medical exclusion requires consent and survives disk reopen and undo', () async {
+    final dir = await Directory.systemTemp.createTemp('little-log-medical-');
+    addTearDown(() => dir.delete(recursive: true));
+    final path = '${dir.path}/history.db';
+    var db = await databaseFactoryIo.openDatabase(path);
+    addTearDown(() => db.close());
+    var repo = Repository(db);
+    final manual = Feeding(
+      id: 'manual',
+      familyId: baby.id,
+      at: DateTime.utc(2026),
+      method: 'bottle',
+      amountMl: 20,
+    );
+    await repo.add(manual);
+    final text = naraMedicalCsvFixture(note: 'Synthetic note only');
+    final plan = preview(text, [manual]);
+    await expectLater(repo.applyImport(plan), throwsStateError);
+    expect(
+      snapshotFingerprint(await repo.feeds(baby.id)),
+      snapshotFingerprint([manual]),
+    );
+    expect(await repo.importReports(baby.id), isEmpty);
+    expect(await repo.canUndoImport(baby.id), false);
+    final consented = HistoryImport.preview(
+      text,
+      baby,
+      [manual],
+      allowPartial: true,
+    );
+    expect(consented.needsConsent, false);
+    expect(consented.issues.single.requiresConsent, true);
+    await repo.applyImport(consented);
+    final saved = await repo.feeds(baby.id);
+    expect(saved, hasLength(3));
+    expect(
+      recordFingerprint(saved.singleWhere((r) => r.id == manual.id)),
+      recordFingerprint(manual),
+    );
+    await db.close();
+    db = await databaseFactoryIo.openDatabase(path);
+    repo = Repository(db);
+    expect(
+      snapshotFingerprint(await repo.feeds(baby.id)),
+      snapshotFingerprint(saved),
+    );
+    final report = (await repo.importReports(baby.id)).single;
+    expect(report['added'], 2);
+    expect(report['issues'], [plan.issues.single.toJson()]);
+    expect(await repo.canUndoImport(baby.id), true);
+    await repo.undoImport(baby.id);
+    expect(
+      snapshotFingerprint(await repo.feeds(baby.id)),
+      snapshotFingerprint([manual]),
+    );
+    final undone = (await repo.importReports(baby.id)).single;
+    expect(undone['undone'], true);
+    expect(undone['issues'], report['issues']);
+    final retry = preview(
+      text,
+      await repo.feeds(baby.id, includeDeleted: true),
+    );
+    expect(retry.additions, isEmpty);
+    expect(retry.duplicates, 2);
+    expect(retry.issues, hasLength(1));
+  });
+
+  test('corrected medical entry imports once with its notes and undo preserves prior rows', () async {
+    final db = await databaseFactoryMemory.openDatabase(newId.v4());
+    addTearDown(db.close);
+    final repo = Repository(db);
+    const note = 'Synthetic medical note\nSecond line, "quoted" 👶';
+    await repo.applyImport(
+      HistoryImport.preview(
+        naraMedicalCsvFixture(note: note),
+        baby,
+        [],
+        allowPartial: true,
+      ),
+    );
+    final before = await repo.feeds(baby.id);
+    final text = naraMedicalCsvFixture(
+      note: note,
+      medical: {'Medication': 'Synthetic syrup, 1 (ML)'},
+    );
+    final corrected = preview(text, before);
+    expect(corrected.issues, isEmpty);
+    expect(corrected.needsConsent, false);
+    expect(corrected.duplicates, 2);
+    final medical = corrected.additions.single;
+    expect(medical.method, 'health');
+    expect(medical.details, {
+      'kind': 'Medication',
+      'name': 'Synthetic syrup',
+      'dose': '1 mL',
+    });
+    expect(medical.note, note);
+    expect(medical.source['recordId'], 'medical-entry');
+    expect(medical.source['original'], containsPair('Note', note));
+    await repo.applyImport(corrected);
+    final saved = await repo.feeds(baby.id);
+    expect(saved, hasLength(3));
+    final again = preview(text, saved);
+    expect(again.additions, isEmpty);
+    expect(again.duplicates, 3);
+    await repo.undoImport(baby.id);
+    expect(
+      snapshotFingerprint(await repo.feeds(baby.id)),
+      snapshotFingerprint(before),
+    );
+  });
+
   test('all 23 baby source entries map to 32 activities and one profile', () {
     final plan = preview(naraFullCsvFixture);
     expect(plan.issues, isEmpty);

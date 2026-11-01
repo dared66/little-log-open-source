@@ -239,7 +239,9 @@ class NaraCsvActivities {
           );
         }
         if (records.isEmpty) {
-          throw const FormatException('Medication or temperature is missing.');
+          throw const NaraCsvDeferred(
+            'Medical entry has no medication or temperature. Any notes remain in the original export.',
+          );
         }
         return records;
       case 'Vaccine':
