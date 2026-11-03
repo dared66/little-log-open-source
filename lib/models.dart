@@ -109,6 +109,7 @@ class Feeding {
   final Map<String, Object?> source;
   bool get usesV6 =>
       source.isNotEmpty ||
+      _needsNursingTimingRecovery ||
       method == 'profile' ||
       (method == 'bottle' && details.isNotEmpty) ||
       (method == 'nursing' && leftSeconds != null && endedAt == null) ||
@@ -174,18 +175,19 @@ class Feeding {
   // and both side totals; the end is unknown for this combined session. Retain
   // the observed stop time in the existing v6 provenance envelope rather than
   // inventing a start time, extending the stop time, or dropping recorded time.
+  bool get _needsNursingTimingRecovery =>
+      method == 'nursing' &&
+      endedAt != null &&
+      !endedAt!.isBefore(at) &&
+      leftSeconds != null &&
+      rightSeconds != null &&
+      leftSeconds! >= 0 &&
+      rightSeconds! >= 0 &&
+      leftSeconds! + rightSeconds! > endedAt!.difference(at).inSeconds;
+
   Feeding _portableNursing() {
-    final end = endedAt, left = leftSeconds, right = rightSeconds;
-    if (method != 'nursing' ||
-        end == null ||
-        end.isBefore(at) ||
-        left == null ||
-        right == null ||
-        left < 0 ||
-        right < 0 ||
-        left + right <= end.difference(at).inSeconds) {
-      return this;
-    }
+    if (!_needsNursingTimingRecovery) return this;
+    final end = endedAt!, left = leftSeconds!, right = rightSeconds!;
     return Feeding.fromJson({
       ...toJson(),
       'endedAt': null,
