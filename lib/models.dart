@@ -166,8 +166,49 @@ class Feeding {
     author: j['author'] as String? ?? '',
     synced: j['synced'] as bool? ?? false,
     deleted: j['deleted'] as bool? ?? false,
-  );
+  )._portableNursing();
   Feeding acknowledged() => Feeding.fromJson({...toJson(), 'synced': true});
+  // A manually entered duration can be resumed before that much wall time has
+  // passed. Older writers then saved side totals longer than the start/end
+  // window, which their own shared-log reader rejects. Keep the recorded start
+  // and both side totals; the end is unknown for this combined session. Retain
+  // the observed stop time in the existing v6 provenance envelope rather than
+  // inventing a start time, extending the stop time, or dropping recorded time.
+  Feeding _portableNursing() {
+    final end = endedAt, left = leftSeconds, right = rightSeconds;
+    if (method != 'nursing' ||
+        end == null ||
+        end.isBefore(at) ||
+        left == null ||
+        right == null ||
+        left < 0 ||
+        right < 0 ||
+        left + right <= end.difference(at).inSeconds) {
+      return this;
+    }
+    return Feeding.fromJson({
+      ...toJson(),
+      'endedAt': null,
+      'source': {
+        if (source.isEmpty) ...{
+          'system': 'Little Log',
+          'recordId': id,
+          'original': <String, Object?>{},
+        },
+        ...source,
+        'littleLogNursingTiming': {
+          'version': 1,
+          'startedAt': at.toUtc().toIso8601String(),
+          'recordedEndedAt': end.toUtc().toIso8601String(),
+          'leftSeconds': left,
+          'rightSeconds': right,
+          if (source.containsKey('littleLogNursingTiming'))
+            'previous': source['littleLogNursingTiming'],
+        },
+      },
+    });
+  }
+
   // Builds 52–55 reject pumping details but preserve extensions in the v6
   // source envelope. Keep active time there on the wire, without changing the
   // real start/end, visible note or existing import provenance.
@@ -220,7 +261,7 @@ class Feeding {
     });
   }
 
-  List<Object> toRow() => _portablePumping()._toRow();
+  List<Object> toRow() => _portableNursing()._portablePumping()._toRow();
   List<Object> _toRow() => deleted
       ? [
           id,
@@ -315,7 +356,7 @@ class Feeding {
         details: Map<String, Object?>.from(payload['details']),
         source: Map<String, Object?>.from(payload['source']),
         synced: true,
-      )._restorePumpingDuration();
+      )._restorePumpingDuration()._portableNursing();
       validateRecord(record, expectedFamily);
       if (!record.usesV6) {
         throw const FormatException('Noncanonical extended record.');
@@ -402,8 +443,7 @@ class Feeding {
                 left == null ||
                 right == null ||
                 left < 0 ||
-                right < 0 ||
-                left + right > endedAt.difference(at).inSeconds))) {
+                right < 0))) {
       throw const FormatException('Invalid activity details');
     }
     return Feeding(
@@ -420,7 +460,7 @@ class Feeding {
       note: cell(6),
       author: cell(7),
       synced: true,
-    );
+    )._portableNursing();
   }
 }
 
@@ -508,7 +548,7 @@ class NursingSession {
       author: author,
       note: note,
       source: source,
-    );
+    )._portableNursing();
   }
 
   Map<String, Object?> toJson() => {

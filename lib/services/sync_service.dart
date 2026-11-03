@@ -52,7 +52,7 @@ class SyncService {
       checkAccount?.call();
       if (updates.isNotEmpty) await repository.merge(updates);
       if (remote.needsCompatibilityRewrite) {
-        // Repair already-shared build-56 rows even when this device has no
+        // Repair older incompatible timer rows even when this device has no
         // pending entries. The cloud uses its normal conditional merge/retry.
         checkAccount?.call();
         await cloud.appendFeeds(family, []);
