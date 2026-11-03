@@ -190,6 +190,26 @@ void runBackupFlow({bool native = false}) {
       await c.repository.db.close();
     });
   }
+  test('legacy entry can be deleted and backup retried from the controller', () async {
+    final c = await fixture();
+    try {
+      final legacy = Feeding(
+        id: 'legacy', familyId: 'family', method: 'sleep', at: DateTime.utc(2026, 1, 1),
+      );
+      await stringMapStoreFactory.store('feedings').record('family/legacy')
+          .put(c.repository.db, legacy.toJson());
+      await c.run(c.backUpFamily);
+      expect((c.drive as BackupDrive).creations, 0);
+      expect(c.message, contains('Edit or delete'));
+      await c.deleteRecord(legacy);
+      await c.sync(); // Wait for the automatic sync started by deletion.
+      await c.run(c.backUpFamily);
+      await verifyBackup(c);
+    } finally {
+      c.dispose();
+      await c.repository.db.close();
+    }
+  });
   for (final failure in ['cancel', 'permission', 'upload']) {
     test(
       'backup $failure failure preserves history and retries without duplicating Drive file',

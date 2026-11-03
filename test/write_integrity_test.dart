@@ -66,6 +66,68 @@ void main() {
     expect(await repo.nursingSession(family.id), isNotNull);
   });
 
+  test('a stale finish keeps the newer nursing revision and elapsed time', () async {
+    final repo = await repository();
+    final stale = NursingSession(
+      id: 'timer', familyId: family.id, startedAt: start,
+      segmentAt: start.add(const Duration(minutes: 1)),
+      side: 'left', leftSeconds: 60, paused: true,
+    );
+    await repo.saveSession(stale);
+    final latest = stale.resume(start.add(const Duration(minutes: 2)))
+        .pause(start.add(const Duration(minutes: 3)));
+    await repo.saveSession(latest);
+    await expectLater(repo.finishSession(stale, stale.finish(stale.segmentAt, '')),
+        throwsStateError);
+    expect((await repo.nursingSession(family.id))!.toJson(), latest.toJson());
+    expect(await repo.feeds(family.id), isEmpty);
+    await repo.finishSession(latest, latest.finish(latest.segmentAt, ''));
+    expect((await repo.feeds(family.id)).single.leftSeconds, 120);
+  });
+
+  for (final action in ['edit', 'delete', 'already deleted']) {
+    test('legacy local sleep supports $action and portable backup', () async {
+      final repo = await repository();
+      final local = Family(id: family.id, name: 'Family', babyName: 'Baby');
+      await repo.saveFamily(local);
+      final old = Feeding(id: 'old', familyId: family.id, at: start,
+          method: 'sleep', deleted: action == 'already deleted');
+      final raw = {...old.toJson(), 'legacyExtra': 'preserved'};
+      final key = '${family.id}/old';
+      await stringMapStoreFactory.store('feedings').record(key).put(repo.db, raw);
+      if (!old.deleted) {
+        await expectLater(repo.checkLocalBackup(local), throwsFormatException);
+        if (action == 'edit') {
+          await expectLater(repo.replace(old, unreadable), throwsFormatException);
+          expect((await repo.feeds(local.id)).single.id, old.id);
+          await repo.replace(old, Feeding(id: 'fixed', familyId: family.id,
+              at: start, method: 'sleep', endedAt: start.add(const Duration(hours: 1))));
+        } else {
+          await repo.remove(old);
+        }
+      }
+      await repo.checkLocalBackup(local);
+      await repo.prepareCsvFamily(family);
+      final rows = await repo.feeds(family.id, includeDeleted: true);
+      final backup = released.FamilyCsv.decode(FamilyCsv(family, rows).encode());
+      expect(backup.feeds.map((r) => r.id), action == 'edit' ? ['fixed'] : []);
+      final archive = stringMapStoreFactory.store('legacyOriginals').record(key);
+      expect(await archive.get(repo.db), raw);
+      await repo.deleteBaby(family.id);
+      expect(await archive.get(repo.db), isNull);
+    });
+  }
+
+  test('shared legacy originals are retained when a tombstone is unreadable', () async {
+    final repo = await repository();
+    await repo.saveFamily(family);
+    final old = Feeding(id: 'shared-old', familyId: family.id, at: start, method: 'sleep');
+    final key = '${family.id}/${old.id}';
+    await stringMapStoreFactory.store('feedings').record(key).put(repo.db, old.toJson());
+    await expectLater(repo.remove(old), throwsFormatException);
+    expect((await repo.feeds(family.id)).single.id, old.id);
+  });
+
   test('failed activity finish keeps its timer and all original details', () async {
     final repo = await repository();
     final timer = ActivityTimer(

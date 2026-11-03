@@ -10,6 +10,7 @@ import '../quick_log.dart';
 class Repository {
   Repository(this.db);
   final Database db;
+  final _legacyOriginals = stringMapStoreFactory.store('legacyOriginals');
   final _families = stringMapStoreFactory.store('families');
   final _feeds = stringMapStoreFactory.store('feedings');
   final _sessions = stringMapStoreFactory.store('nursingSessions');
@@ -229,6 +230,10 @@ class Repository {
         txn,
         finder: Finder(filter: Filter.equals('familyId', id)),
       );
+      await _legacyOriginals.delete(
+        txn,
+        finder: Finder(filter: Filter.equals('familyId', id)),
+      );
       await _timers.delete(
         txn,
         finder: Finder(filter: Filter.equals('familyId', id)),
@@ -257,16 +262,45 @@ class Repository {
     });
   }
 
+  bool _deviceOnly(Family? family, Feeding entry) =>
+      family != null &&
+      family.isLocal &&
+      family.legacySheetId == null &&
+      family.accountId == null &&
+      !entry.synced;
+
+  Future<void> checkLocalBackup(Family family) async {
+    for (final entry in await feeds(family.id, includeDeleted: true)) {
+      try {
+        checkedRecordData(entry);
+      } on FormatException {
+        if (entry.deleted && _deviceOnly(family, entry)) continue;
+        final time = entry.at.toLocal().toString().split('.').first;
+        throw FormatException(
+          'The ${entry.method} entry from $time needs correction. '
+          'Edit or delete it, then retry backup.',
+        );
+      }
+    }
+  }
+
   Future<void> prepareCsvFamily(Family family) async {
     await db.transaction((txn) async {
       final records = await _feeds.find(
         txn,
         finder: Finder(filter: Filter.equals('familyId', family.id)),
       );
+      final rawFamily = await _families.record(family.id).get(txn);
+      final prior = rawFamily == null ? null : Family.fromJson(rawFamily);
       for (final record in records) {
-        await _feeds.record(record.key).put(txn, checkedRecordData(
-          Feeding.fromJson({...record.value, 'synced': false}),
-        ));
+        final entry = Feeding.fromJson(record.value);
+        try {
+          final data = checkedRecordData(entry);
+          await _feeds.record(record.key).put(txn, {...data, 'synced': false});
+        } on FormatException {
+          if (!entry.deleted || !_deviceOnly(prior, entry)) rethrow;
+          await _archiveLocalOriginal(txn, record.key, record.value);
+        }
       }
       await _families.record(family.id).put(txn, family.toJson());
       await _settings.record('activeFamily').put(txn, family.id);
@@ -294,7 +328,12 @@ class Repository {
           .toList();
   Future<void> add(Feeding feed) async =>
       _feeds.record('${feed.familyId}/${feed.id}').put(db, checkedRecordData(feed));
-  Future<void> replace(Feeding original, Feeding replacement) async {
+  Future<void> remove(Feeding original) => _changeEntry(original, null);
+
+  Future<void> replace(Feeding original, Feeding replacement) =>
+      _changeEntry(original, replacement);
+
+  Future<void> _changeEntry(Feeding original, Feeding? replacement) async {
     await db.transaction((txn) async {
       final key = '${original.familyId}/${original.id}';
       final current = await _feeds.record(key).get(txn);
@@ -304,15 +343,37 @@ class Repository {
               jsonEncode(original.originalRow)) {
         throw StateError('This entry has changed. Reopen it before editing.');
       }
-      if (replacement.familyId != original.familyId ||
-          replacement.id == original.id) {
-        throw StateError('Invalid replacement entry.');
+      if (replacement != null) {
+        if (replacement.familyId != original.familyId ||
+            replacement.id == original.id ||
+            await _feeds.record('${replacement.familyId}/${replacement.id}').exists(txn)) {
+          throw StateError('Invalid replacement entry.');
+        }
+        await _feeds.record('${replacement.familyId}/${replacement.id}').put(
+          txn, checkedRecordData(replacement),
+        );
       }
-      await _feeds.record(key).put(txn, checkedRecordData(original.asDeleted()));
-      await _feeds
-          .record('${replacement.familyId}/${replacement.id}')
-          .put(txn, checkedRecordData(replacement));
+      try {
+        final tombstone = checkedRecordData(original.asDeleted());
+        await _feeds.record(key).put(txn, tombstone);
+      } on FormatException {
+        // Only an unshared local original can be retired without a portable
+        // tombstone. Preserve its exact stored payload on the same device.
+        final raw = await _families.record(original.familyId).get(txn);
+        final family = raw == null ? null : Family.fromJson(raw);
+        if (!_deviceOnly(family, Feeding.fromJson(current))) rethrow;
+        await _archiveLocalOriginal(txn, key, current);
+      }
     });
+  }
+
+  Future<void> _archiveLocalOriginal(
+    Transaction txn,
+    String key,
+    Map<String, Object?> raw,
+  ) async {
+    await _legacyOriginals.record(key).put(txn, raw);
+    await _feeds.record(key).delete(txn);
   }
 
   Future<void> merge(List<Feeding> feeds) async {
@@ -365,6 +426,9 @@ class Repository {
     await db.transaction((txn) async {
       final current = await _sessions.record(session.familyId).get(txn);
       if (current == null || current['id'] != session.id) return;
+      if ((current['revision'] ?? 0) != session.revision) {
+        throw StateError('This session has changed. Reopen its controls.');
+      }
       if (feed.id != session.id ||
           feed.familyId != session.familyId ||
           feed.method != 'nursing' ||

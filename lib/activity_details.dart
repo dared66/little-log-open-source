@@ -100,6 +100,7 @@ void validateActivity(Feeding record, String familyId) {
 String activityLabel(Feeding f, {required VolumeUnit unit}) {
   final d = f.details;
   return switch (f.method) {
+    'sleep' when f.endedAt == null => 'Sleep · End time missing',
     'sleep' => 'Sleep · ${f.endedAt!.difference(f.at).inMinutes} min',
     'pumping' => 'Pumping · ${volumeLabel(f.amountMl ?? 0, unit: unit)}',
     'solids' => 'Solids · ${d['food']} · ${d['reaction']}',
