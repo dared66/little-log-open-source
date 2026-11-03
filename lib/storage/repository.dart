@@ -368,7 +368,7 @@ class Repository {
       if (feed.id != session.id ||
           feed.familyId != session.familyId ||
           feed.method != 'nursing' ||
-          feed.at != session.startedAt) {
+          !feed.at.isAtSameMomentAs(session.startedAt)) {
         throw const FormatException('The entry does not match this nursing session.');
       }
       await _feeds
@@ -440,7 +440,7 @@ class Repository {
     validateActivity(activity, timer.familyId);
     if (activity.id != timer.id ||
         activity.method != timer.method ||
-        activity.at != timer.startedAt) {
+        !activity.at.isAtSameMomentAs(timer.startedAt)) {
       throw const FormatException('The activity does not match this timer.');
     }
     await db.transaction((txn) async {

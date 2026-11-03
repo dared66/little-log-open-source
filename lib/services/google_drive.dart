@@ -361,6 +361,8 @@ class GoogleDrive implements FamilyCloud {
   }
 
   Future<Family> createFamily(Family local, String accountId) async {
+    final csv = FamilyCsv(local, []).encode();
+    FamilyCsv.decode(csv);
     final session = auth.captureAccount(expectedAccountId: accountId);
     final folder = await _littleLogFolder(session);
     // Reuse a previous creation if its response or local persistence was lost.
@@ -382,7 +384,6 @@ class GoogleDrive implements FamilyCloud {
       return recovered;
     }
     final boundary = 'little_log_${newId.v4()}';
-    final csv = FamilyCsv(local, []).encode();
     final body =
         '--$boundary\r\nContent-Type: application/json; charset=utf-8\r\n\r\n'
         '${jsonEncode({

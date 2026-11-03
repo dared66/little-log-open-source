@@ -92,6 +92,11 @@ void main() {
     await expectLater(cloud.appendFeeds(family, [unreadable]), throwsFormatException);
     expect(server.writes, 0);
     expect(server.contents, before);
+    await expectLater(cloud.createFamily(const Family(
+      id: 'invalid-family', name: 'Family', babyName: '',
+    ), 'a'), throwsFormatException);
+    expect(server.fileCreates, 0);
+    expect(server.contents, before);
   });
 
   test('every released activity survives save, restart and older CSV reader', () async {
