@@ -117,7 +117,7 @@ class FamilyCsv {
         );
       }
       final feed = Feeding.fromRow(row.sublist(4), family.id);
-      needsCompatibilityRewrite |= _hasLegacyPumpingDetails(row.sublist(4));
+      needsCompatibilityRewrite |= _needsCompatibilityRewrite(row.sublist(4));
       final previous = feeds[feed.id];
       if (previous != null &&
           jsonEncode(previous.originalRow) != jsonEncode(feed.originalRow)) {
@@ -134,9 +134,19 @@ class FamilyCsv {
     );
   }
 
-  static bool _hasLegacyPumpingDetails(List<dynamic> row) {
+  static bool _needsCompatibilityRewrite(List<dynamic> row) {
     if (row[8].toString() == '5') {
-      return _hasLegacyPumpingDetails(jsonDecode(row[13].toString()) as List);
+      return _needsCompatibilityRewrite(jsonDecode(row[13].toString()) as List);
+    }
+    if (row[3] == 'nursing' &&
+        ['2', '6'].contains(row[8].toString()) &&
+        row[9].toString().isNotEmpty) {
+      // fromRow has already checked timestamps and nonnegative side totals.
+      return (int.tryParse(row[10].toString()) ?? 0) +
+              (int.tryParse(row[11].toString()) ?? 0) >
+          DateTime.parse(row[9].toString())
+              .difference(DateTime.parse(row[2].toString()))
+              .inSeconds;
     }
     if (row[3] != 'pumping' || !['3', '6'].contains(row[8].toString())) {
       return false;

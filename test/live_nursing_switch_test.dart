@@ -31,7 +31,12 @@ void main() {
         segmentAt: start,
         side: 'left',
         note: 'Keep note',
-        source: const {'qa': 'synthetic'},
+        source: const {
+          'system': 'Little Log',
+          'recordId': 'synthetic-session',
+          'original': {},
+          'qa': 'synthetic',
+        },
       );
       await t.runAsync(() async {
         await c.repository.saveSession(initial);

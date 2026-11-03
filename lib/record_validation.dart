@@ -1,6 +1,21 @@
+import 'dart:convert';
+
 import 'models.dart';
 import 'activity_details.dart';
 import 'diaper_details.dart';
+
+/// A successful write must be readable from both local JSON and the shared row.
+/// Validate the exact serialized representation before committing any change.
+Map<String, Object?> checkedRecordData(Feeding record) {
+  final local = Feeding.fromJson(record.toJson());
+  validateRecord(local, record.familyId);
+  final row = local.toRow();
+  final reread = Feeding.fromRow(row, local.familyId);
+  if (jsonEncode(reread.toRow()) != jsonEncode(row)) {
+    throw const FormatException('This entry could not be saved without losing details.');
+  }
+  return local.toJson();
+}
 
 void validateRecord(Feeding r, String familyId) {
   if (r.id.isEmpty ||

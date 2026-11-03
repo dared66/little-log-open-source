@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sembast/sembast.dart';
 import 'package:little_log/models.dart';
 import 'package:little_log/activity_details.dart';
 import 'package:little_log/services/assistant_actions.dart';
@@ -36,6 +37,11 @@ void main() {
         method: method,
         at: now.subtract(Duration(minutes: minutes)),
         endedAt: end,
+        amountMl: ['bottle', 'pumping'].contains(method) ? 60 : null,
+        minutes: method == 'nursing' ? 5 : null,
+        details: method == 'solids'
+            ? const {'food': 'Avocado', 'reaction': 'Not recorded'}
+            : const {},
         diaperKind: kind,
         deleted: deleted,
       );
@@ -65,7 +71,15 @@ void main() {
         record('other-baby', 'diaper', 0, kind: 'both', family: 'other'),
       ];
       for (final r in records) {
-        await c.repository.add(r);
+        if (r.id == 'duration-only') {
+          // Read-only history must still tolerate incomplete legacy local data.
+          // New writes must never create this end-less sleep record.
+          await stringMapStoreFactory.store('feedings')
+              .record('${r.familyId}/${r.id}')
+              .put(c.repository.db, r.toJson());
+        } else {
+          await c.repository.add(r);
+        }
       }
       // Intentionally stale in-memory history: queries must read saved data.
       expect(c.feeds, isEmpty);
@@ -290,6 +304,7 @@ void main() {
           id: 'robin-feed',
           familyId: original.id,
           method: 'bottle',
+          amountMl: 60,
           at: now.subtract(const Duration(minutes: 20)),
         ),
       );
