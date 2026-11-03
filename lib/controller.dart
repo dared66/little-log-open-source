@@ -262,7 +262,7 @@ class AppController extends ChangeNotifier {
     if (family?.id != record.familyId) {
       throw StateError('The selected child has changed.');
     }
-    await repository.add(record.asDeleted());
+    await repository.remove(record);
     await refresh();
     unawaited(sync());
   }
@@ -1453,6 +1453,8 @@ class AppController extends ChangeNotifier {
       await auth.accessToken();
       auth.checkAccount(session);
       if (selected.isLocal) {
+        await repository.checkLocalBackup(selected);
+        auth.checkAccount(session);
         selected = await drive.createFamily(selected, account.id);
         auth.checkAccount(session);
         await repository.prepareCsvFamily(selected);

@@ -1,3 +1,10 @@
+import '../test/released_build54_compatibility_test.dart'
+    as released_compatibility;
+import '../test/pumping_compatibility_test.dart' as pumping_compatibility;
+import '../test/nursing_compatibility_test.dart' as nursing_compatibility;
+import '../test/write_integrity_test.dart' as write_integrity;
+import '../test/recovery_boundary_test.dart' as repair;
+import '../test/backup_flow_test.dart' as backup;
 import 'full_harness_test.dart' as full;
 import 'import_harness_test.dart' as imports;
 import 'feature_validation_test.dart' as features;
@@ -13,6 +20,12 @@ import '../test/swipe_reminder_test.dart' as reminders;
 // Run with scripts/run_native_tests.py for automatic Android profiler routing.
 void main() {
   full.main();
+  released_compatibility.main();
+  pumping_compatibility.main();
+  nursing_compatibility.main();
+  write_integrity.main();
+  repair.main();
+  backup.runBackupFlow(native: true);
   imports.main();
   features.main();
   calendar.main();
