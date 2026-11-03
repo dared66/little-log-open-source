@@ -3,6 +3,7 @@ import '../test/released_build54_compatibility_test.dart'
 import '../test/paused_timer_state_test.dart' as paused_timers;
 import '../test/pumping_compatibility_test.dart' as pumping_compatibility;
 import '../test/nursing_compatibility_test.dart' as nursing_compatibility;
+import '../test/write_integrity_test.dart' as write_integrity;
 import '../test/live_timer_finish_test.dart' as live_timers;
 import '../test/edit_delete_action_test.dart' as edit_delete;
 import 'heavy_validation_test.dart' as heavy;
@@ -17,6 +18,7 @@ void main() {
   released_compatibility.main();
   pumping_compatibility.main();
   nursing_compatibility.main();
+  write_integrity.main();
   heavy.main();
   features.main();
   portableWidgetChecks(() {

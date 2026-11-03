@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models.dart';
+import '../record_validation.dart';
 import 'family_cloud.dart';
 import 'family_csv.dart';
 import 'google_auth.dart';
@@ -633,6 +634,7 @@ class GoogleDrive implements FamilyCloud {
         if (feed.familyId != family.id) {
           throw const FormatException('Cannot upload another family’s entry.');
         }
+        checkedRecordData(feed);
         final existing = merged[feed.id];
         if (existing != null &&
             jsonEncode(existing.originalRow) != jsonEncode(feed.originalRow)) {
@@ -647,13 +649,17 @@ class GoogleDrive implements FamilyCloud {
       }
       if (!changed) return; // Lost-response retry already exists remotely.
       final csv = FamilyCsv(snapshot.csv.family, merged.values.toList());
+      final body = csv.encode();
+      // Check the complete outgoing CSV before replacing the shared file.
+      // Post-upload verification cannot prevent an unreadable upload.
+      FamilyCsv.decode(body);
       try {
         await _request(
           session,
           'PUT',
           '/upload/drive/v2/files/${family.driveFileId}',
           query: {'uploadType': 'media'},
-          media: csv.encode(),
+          media: body,
           headers: {'If-Match': snapshot.etag},
         );
         _cache.remove(key);

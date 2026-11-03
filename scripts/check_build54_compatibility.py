@@ -43,6 +43,7 @@ def main():
         'test/released_build54_compatibility_test.dart',
         'test/pumping_compatibility_test.dart',
         'test/nursing_compatibility_test.dart',
+        'test/write_integrity_test.dart',
     ], cwd=ROOT, check=True)
 
 

@@ -3,6 +3,7 @@ import '../services/history_import.dart';
 import 'dart:convert';
 import 'package:sembast/sembast.dart';
 import '../models.dart';
+import '../record_validation.dart';
 import '../activity_details.dart';
 import '../quick_log.dart';
 
@@ -197,7 +198,7 @@ class Repository {
           );
         }
         if (current?['deleted'] == true && !feed.deleted) continue;
-        await _feeds.record(key).put(txn, feed.acknowledged().toJson());
+        await _feeds.record(key).put(txn, checkedRecordData(feed.acknowledged()));
       }
       await _families.record(family.id).put(txn, family.toJson());
       await _settings.record('activeFamily').put(txn, family.id);
@@ -263,10 +264,9 @@ class Repository {
         finder: Finder(filter: Filter.equals('familyId', family.id)),
       );
       for (final record in records) {
-        await _feeds.record(record.key).put(txn, {
-          ...record.value,
-          'synced': false,
-        });
+        await _feeds.record(record.key).put(txn, checkedRecordData(
+          Feeding.fromJson({...record.value, 'synced': false}),
+        ));
       }
       await _families.record(family.id).put(txn, family.toJson());
       await _settings.record('activeFamily').put(txn, family.id);
@@ -293,7 +293,7 @@ class Repository {
           .where((f) => includeDeleted || !f.deleted)
           .toList();
   Future<void> add(Feeding feed) async =>
-      _feeds.record('${feed.familyId}/${feed.id}').put(db, feed.toJson());
+      _feeds.record('${feed.familyId}/${feed.id}').put(db, checkedRecordData(feed));
   Future<void> replace(Feeding original, Feeding replacement) async {
     await db.transaction((txn) async {
       final key = '${original.familyId}/${original.id}';
@@ -308,10 +308,10 @@ class Repository {
           replacement.id == original.id) {
         throw StateError('Invalid replacement entry.');
       }
-      await _feeds.record(key).put(txn, original.asDeleted().toJson());
+      await _feeds.record(key).put(txn, checkedRecordData(original.asDeleted()));
       await _feeds
           .record('${replacement.familyId}/${replacement.id}')
-          .put(txn, replacement.toJson());
+          .put(txn, checkedRecordData(replacement));
     });
   }
 
@@ -324,7 +324,7 @@ class Repository {
         if (current?['deleted'] == true && !feed.deleted) continue;
         await _feeds
             .record('${feed.familyId}/${feed.id}')
-            .put(txn, feed.toJson());
+            .put(txn, checkedRecordData(feed));
       }
     });
   }
@@ -352,7 +352,7 @@ class Repository {
       }
       await _feeds
           .record('${original.familyId}/${original.id}')
-          .put(txn, original.asDeleted().toJson());
+          .put(txn, checkedRecordData(original.asDeleted()));
       await _resumedNursing.record(original.familyId).put(txn, {
         'sessionId': session.id,
         'original': original.toJson(),
@@ -365,9 +365,15 @@ class Repository {
     await db.transaction((txn) async {
       final current = await _sessions.record(session.familyId).get(txn);
       if (current == null || current['id'] != session.id) return;
+      if (feed.id != session.id ||
+          feed.familyId != session.familyId ||
+          feed.method != 'nursing' ||
+          feed.at != session.startedAt) {
+        throw const FormatException('The entry does not match this nursing session.');
+      }
       await _feeds
           .record('${feed.familyId}/${feed.id}')
-          .put(txn, feed.toJson());
+          .put(txn, checkedRecordData(feed));
       await _sessions.record(session.familyId).delete(txn);
       await _resumedNursing.record(session.familyId).delete(txn);
     });
@@ -419,11 +425,11 @@ class Repository {
         // The old ID may already be tombstoned in Drive. Restore the saved
         // portion under the continuation ID rather than resurrecting that ID.
         final original = Map<String, Object?>.from(resumed!['original'] as Map);
-        await _feeds.record('${session.familyId}/${session.id}').put(txn, {
+        await _feeds.record('${session.familyId}/${session.id}').put(txn, checkedRecordData(Feeding.fromJson({
           ...original,
           'id': session.id,
           'synced': false,
-        });
+        })));
       }
       await _sessions.record(session.familyId).delete(txn);
       await _resumedNursing.record(session.familyId).delete(txn);
@@ -446,7 +452,7 @@ class Repository {
       }
       await _feeds
           .record('${activity.familyId}/${activity.id}')
-          .put(txn, activity.toJson());
+          .put(txn, checkedRecordData(activity));
       await _timers.record(key).delete(txn);
     });
   }
@@ -517,7 +523,7 @@ class Repository {
         'reportId': reportId,
       });
       for (final f in changes) {
-        await _feeds.record('${f.familyId}/${f.id}').put(txn, f.toJson());
+        await _feeds.record('${f.familyId}/${f.id}').put(txn, checkedRecordData(f));
       }
     });
   }
@@ -546,7 +552,7 @@ class Repository {
         if (!change.deleted) {
           await _feeds
               .record('$familyId/${change.id}')
-              .put(txn, change.asDeleted().toJson());
+              .put(txn, checkedRecordData(change.asDeleted()));
         }
         final prior = before
             .where((f) => f.id == change.id && !f.deleted)
@@ -560,7 +566,7 @@ class Repository {
           });
           await _feeds
               .record('$familyId/${restored.id}')
-              .put(txn, restored.toJson());
+              .put(txn, checkedRecordData(restored));
         }
       }
       final reportId = receipt['reportId'] as String?;
